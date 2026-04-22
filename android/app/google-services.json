@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "332405363809",
+    "project_id": "mapache-c1714",
+    "storage_bucket": "mapache-c1714.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332405363809:android:4587cadf1d31e5f5708620",
+        "android_client_info": {
+          "package_name": "com.mapachesecure.mapachesecure_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_mYrOoDaTX9emNeJ5e6leqQiTUJun1nM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
