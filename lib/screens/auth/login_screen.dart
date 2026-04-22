@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
+import 'package:mapachesecure_app/screens/auth/registro_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -48,7 +50,6 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Campos de texto
             const TextField(
               decoration: InputDecoration(
                 hintText: 'Correo electronico',
@@ -64,11 +65,11 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Botón INGRESAR
+            // boton para iniciar sesióm
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2ECC71), // Verde del boceto
+                backgroundColor: const Color(0xFF2ECC71),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -81,11 +82,18 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 15),
-            // Botón CREAR CUENTA
+            // boton para crear tu cuenta
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RegistroScreen(),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE9ECEF), // Gris claro
+                backgroundColor: const Color(0xFFE9ECEF),
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -113,6 +121,7 @@ class LoginScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton(
+                    // para poder navegar al home del padre
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -138,7 +147,15 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    // para poder navegar al home del hijo
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomeHijoScreen(),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.lightBlue,
                       foregroundColor: Colors.white,

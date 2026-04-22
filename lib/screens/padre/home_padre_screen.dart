@@ -6,10 +6,8 @@ class HomePadreScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(
-        0xFFF8F9FA,
-      ), // Fondo gris muy claro para que resalten las tarjetas
-      // 1. MENÚ LATERAL (Navegación sencilla)
+      backgroundColor: const Color(0xFFF8F9FA),
+      // 1. Menu de hamburguesa
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -86,7 +84,7 @@ class HomePadreScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // SECCIÓN: RESUMEN GENERAL
+            // Resumen general
             const Text(
               'Actividad de hoy',
               style: TextStyle(
@@ -100,7 +98,7 @@ class HomePadreScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            // SECCIÓN: DESGLOSE POR ACTIVIDAD
+            // Las actividades
             const Text(
               '¿En qué gastaron el tiempo?',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -110,7 +108,7 @@ class HomePadreScreen extends StatelessWidget {
 
             const SizedBox(height: 35),
 
-            // SECCIÓN: ESTADO DE DISPOSITIVOS
+            // Los dispositivos de los niños
             const Text(
               'Hijos conectados',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -134,9 +132,7 @@ class HomePadreScreen extends StatelessWidget {
     );
   }
 
-  // --- BLOQUES DE CONSTRUCCIÓN (Para mantener el código ordenado) ---
-
-  // Tarjeta blanca con las 3 estadísticas principales
+  // Las estadisticas del resumen de hoy
   Widget _buildResumenHoy() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -168,7 +164,7 @@ class HomePadreScreen extends StatelessWidget {
     );
   }
 
-  // Cuadricula de categorías corregida (Suman 2h 45m)
+  // Las categorias
   Widget _buildCuadriculaCategorias() {
     return Center(
       child: Wrap(
@@ -199,7 +195,7 @@ class HomePadreScreen extends StatelessWidget {
     );
   }
 
-  // Widget para cada dato del resumen (Tiempo, Desafíos, etc.)
+  // El resumen de datos
   Widget _buildDatoIndividual(
     String titulo,
     String valor,
@@ -219,7 +215,7 @@ class HomePadreScreen extends StatelessWidget {
     );
   }
 
-  // Widget para los botones de categorías
+  // Tarjeta para las categorias
   Widget _buildChipCategoria(
     String nombre,
     IconData icono,
@@ -255,7 +251,7 @@ class HomePadreScreen extends StatelessWidget {
     );
   }
 
-  // Widget para la lista de hijos
+  // tarjeta que muestra a los hijos
   Widget _buildTarjetaHijo(
     String nombre,
     String detalle,
@@ -280,7 +276,7 @@ class HomePadreScreen extends StatelessWidget {
     );
   }
 
-  // Item del menú lateral
+  // Lo que hay dentro del menu hamburguesa
   Widget _buildDrawerItem(
     BuildContext context,
     IconData icon,
