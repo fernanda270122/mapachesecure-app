@@ -1,44 +1,49 @@
-import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class AuthService {
-    final ApiService _api = ApiService();
+  final ApiService _api = ApiService();
 
-    Future<Map<String, dynamic>> login(String email, String password) async {
-      final response = await _api.post(
-        '/auth/login',
-        {'email': email, 'password': password},
-        auth: false,
-      );
-      if (response['access_token'] != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', response['access_token']);
-        await prefs.setString('user_id', response['user_id']);
-        await prefs.setString('rol', response['perfil']['rol']);
-      }
-      return response;
-    }
-
-    Future<Map<String, dynamic>> registro(String email, String password, String nombre, String rol) async {
-      return await _api.post(
-        '/auth/registro',
-        {'email': email, 'password': password, 'nombre': nombre, 'rol': rol},
-        auth: false,
-      );
-    }
-
-    Future<void> logout() async {
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final response = await _api.post('/auth/login', {
+      'email': email,
+      'password': password,
+    }, auth: false);
+    if (response['access_token'] != null) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await prefs.setString('token', response['access_token']);
+      await prefs.setString('user_id', response['user_id']);
+      await prefs.setString('rol', response['perfil']['rol']);
     }
+    return response;
+  }
 
-    Future<String?> getRol() async {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('rol');
-    }
+  Future<Map<String, dynamic>> registro(
+    String email,
+    String password,
+    String nombre,
+    String rol,
+  ) async {
+    return await _api.post('/auth/registro', {
+      'email': email,
+      'password': password,
+      'nombre': nombre,
+      'rol': rol,
+    }, auth: false);
+  }
 
-    Future<bool> isLoggedIn() async {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('token') != null;
-    }
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
+  Future<String?> getRol() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('rol');
+  }
+
+  Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') != null;
+  }
 }
