@@ -2,9 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/screens/auth/registro_screen.dart';
+import 'package:mapachesecure_app/services/auth_service.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();                                                                                                                     
+  final TextEditingController _passwordController = TextEditingController();
+  bool _cargando = false;
+  String? _error;
+
+  Future<void> _login() async {                                                                                                                                                                 setState(() {
+      _cargando = true;
+      _error = null;
+    });
+
+    try {
+      final authService = AuthService();
+      final respuesta = await authService.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      final rol = respuesta['perfil']['rol'];
+
+      if (rol == 'padre') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePadreScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeHijoScreen()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Correo o contraseña incorrectos';
+      });
+    } finally {
+      setState(() {
+        _cargando = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,24 +97,25 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(
                 hintText: 'Correo electronico',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 15),
-            const TextField(
+             TextField(
+              controller: _passwordController,
               obscureText: true,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Contrasena',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
-            // boton para iniciar sesióm
             ElevatedButton(
-              onPressed: () {},
+              onPressed: _cargando ? null : _login,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF2ECC71),
                 foregroundColor: Colors.white,
@@ -76,13 +124,24 @@ class LoginScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                'INGRESAR',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              child: _cargando
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'INGRESAR',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
             ),
+            const SizedBox(height: 10),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             const SizedBox(height: 15),
-            // boton para crear tu cuenta
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -116,12 +175,10 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 20),
             const Text('Iniciar como:', textAlign: TextAlign.center),
             const SizedBox(height: 15),
-            // Botones de Rol
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    // para poder navegar al home del padre
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -147,7 +204,6 @@ class LoginScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
-                    // para poder navegar al home del hijo
                     onPressed: () {
                       Navigator.push(
                         context,

@@ -10,7 +10,7 @@ class ApiService{
         return prefs.getString('token');
     }
     Future<Map<String, String>> _headers({bool auth = true}) async {
-        final headers = {'Content-Type': 'aplication/json'};
+        final headers = {'Content-Type': 'application/json'};
         if (auth){
             final token = await _getToken();
             if(token != null) headers ['Authorization'] = 'Bearer $token';

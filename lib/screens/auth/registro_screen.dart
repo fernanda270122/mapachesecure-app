@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/services/auth_service.dart';
+import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -10,6 +12,41 @@ class RegistroScreen extends StatefulWidget {
 class _RegistroScreenState extends State<RegistroScreen> {
   String _rolSeleccionado = 'Padre'; 
 
+  final TextEditingController _nombreController = TextEditingController();                                                                                                                    
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _cargando = false;
+  String? _error;
+
+Future<void> _registro() async {
+    setState(() {
+      _cargando = true;
+      _error = null;
+    });
+
+    try {
+      final authService = AuthService();
+      await authService.registro(
+        _emailController.text,
+        _passwordController.text,
+        _nombreController.text,
+        _rolSeleccionado.toLowerCase(),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    } catch (e) {
+      setState(() {
+        _error = 'Error al crear la cuenta. Intenta de nuevo.';
+      });
+    } finally {
+      setState(() {
+        _cargando = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,11 +78,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ),
             const SizedBox(height: 40),
 
-            _buildTextField('Nombre Completo', Icons.person_outline),
+            _buildTextField('Nombre Completo', Icons.person_outline, controller: _nombreController),
             const SizedBox(height: 20),
-            _buildTextField('Correo Electrónico', Icons.email_outlined),
+            _buildTextField('Correo Electrónico', Icons.email_outlined, controller: _emailController),
             const SizedBox(height: 20),
-            _buildTextField('Contraseña', Icons.lock_outline, obscure: true),
+            _buildTextField('Contraseña', Icons.lock_outline, obscure: true, controller: _passwordController),
 
             const SizedBox(height: 30),
             const Align(
@@ -82,10 +119,17 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
             const SizedBox(height: 40),
 
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             ElevatedButton(
-              onPressed: () {
-                // Aquí irá el registro en Firebase después
-              },
+              onPressed: _cargando ? null : _registro,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 minimumSize: const Size(double.infinity, 50),
@@ -93,10 +137,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   borderRadius: BorderRadius.circular(15),
                 ),
               ),
-              child: const Text(
-                'Registrarse',
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              child: _cargando
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'Registrarse',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
             ),
           ],
         ),
@@ -104,8 +150,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, {bool obscure = false}) {
+  Widget _buildTextField(String label, IconData icon, {bool obscure = false, TextEditingController? controller}) {                                                                              
     return TextField(
+      controller: controller,
       obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,
