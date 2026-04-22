@@ -14,6 +14,7 @@ class AuthService {
       await prefs.setString('token', response['access_token']);
       await prefs.setString('user_id', response['user_id']);
       await prefs.setString('rol', response['perfil']['rol']);
+      await prefs.setString('nombre', response['perfil']['nombre']);
     }
     return response;
   }
