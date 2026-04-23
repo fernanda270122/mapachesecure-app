@@ -39,4 +39,21 @@ class ApiService {
     );
     return jsonDecode(response.body);
   }
+
+  Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: await _headers(),
+      body: jsonEncode(body),
+    );
+    return jsonDecode(response.body);
+  }
+
+  Future<dynamic> delete(String endpoint) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: await _headers(),
+    );
+    return jsonDecode(response.body);
+  }
 }

@@ -4,6 +4,7 @@ import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/screens/padre/desafios_screen.dart';
 import 'package:mapachesecure_app/screens/padre/recompensas_screen.dart';
 import 'package:mapachesecure_app/screens/padre/agregar_hijo_screen.dart';
+import 'package:mapachesecure_app/screens/padre/configurar_hijo.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -230,11 +231,19 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                         : Column(
                             children: _hijos
                                 .map(
-                                  (hijo) => _buildTarjetaHijo(
-                                    hijo['nombre'] ?? 'Sin nombre',
-                                    'Smartphone - En línea', 
-                                    Icons.smartphone,
-                                    Colors.green,
+                                  (hijo) => GestureDetector(
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ConfigurarHijoScreen(hijo: hijo),
+                                      ),
+                                    ),
+                                    child: _buildTarjetaHijo(
+                                      hijo['nombre'] ?? 'Sin nombre',
+                                      'Toca para configurar',
+                                      Icons.smartphone,
+                                      Colors.green,
+                                    ),
                                   ),
                                 )
                                 .toList(),
