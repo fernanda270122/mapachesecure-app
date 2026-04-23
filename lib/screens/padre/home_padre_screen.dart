@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/screens/padre/desafios_screen.dart';
 import 'package:mapachesecure_app/screens/padre/recompensas_screen.dart';
+import 'package:mapachesecure_app/screens/padre/agregar_hijo_screen.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -88,6 +89,21 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               Icons.home,
               'Inicio / Panel de control',
               () => Navigator.pop(context),
+            ),
+
+            _buildDrawerItem(                                                                                                                                                                             
+              context,
+              Icons.person_add,                                                                                                                                                                           'Agregar Hijo',
+              () async {
+                Navigator.pop(context);
+                final resultado = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AgregarHijoScreen(),
+                  ),
+                );
+                if (resultado == true) _cargarDatos();
+              },
             ),
 
             _buildDrawerItem(
