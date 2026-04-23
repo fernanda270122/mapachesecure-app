@@ -16,6 +16,8 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   String _nombre = '';
   List<dynamic> _hijos = [];
   bool _cargando = true;
+  int _totalDesafios = 0;
+  int _totalPuntos = 0;
 
   @override
   void initState() {
@@ -31,9 +33,27 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
     try {
       final api = ApiService();
       final hijos = await api.get('/usuarios/$padreId/hijos');
+      final listaHijos = hijos is List ? hijos : [];
+
+      int totalDesafios = 0;
+      int totalPuntos = 0;
+
+      for (final hijo in listaHijos) {
+        final hijoId = hijo['id'];
+        final completados = await api.get('/desafios/completados/$hijoId');
+        if (completados is List) totalDesafios += completados.length;
+
+        final puntos = await api.get('/desafios/puntos/$hijoId');
+        if (puntos is Map && puntos['total_puntos'] != null) {
+          totalPuntos += (puntos['total_puntos'] as num).toInt();
+        }
+      }
+
       setState(() {
         _nombre = nombre;
-        _hijos = hijos is List ? hijos : [];
+        _hijos = listaHijos;
+        _totalDesafios = totalDesafios;
+        _totalPuntos = totalPuntos;
         _cargando = false;
       });
     } catch (e) {
@@ -247,11 +267,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
           ),
           _buildDatoIndividual(
             'Desafíos',
-            '3 / 6',
+            '$_totalDesafios',
             Icons.task_alt,
             Colors.green,
           ),
-          _buildDatoIndividual('Puntos', '75', Icons.stars, Colors.orange),
+          _buildDatoIndividual('Puntos', '$_totalPuntos', Icons.stars, Colors.orange),
         ],
       ),
     );
