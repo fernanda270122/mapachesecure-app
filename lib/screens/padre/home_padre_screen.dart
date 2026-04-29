@@ -5,6 +5,8 @@ import 'package:mapachesecure_app/screens/padre/desafios_screen.dart';
 import 'package:mapachesecure_app/screens/padre/recompensas_screen.dart';
 import 'package:mapachesecure_app/screens/padre/agregar_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/configurar_hijo.dart';
+import 'package:mapachesecure_app/services/auth_service.dart';
+import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -164,8 +166,15 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               () {},
             ),
             const Divider(),
-            _buildDrawerItem(context, Icons.exit_to_app, 'Cerrar Sesión', () {
-              Navigator.pushReplacementNamed(context, '/');
+            _buildDrawerItem(context, Icons.exit_to_app, 'Cerrar Sesión', () async {
+              final auth = AuthService();
+              await auth.logout();
+              if (!context.mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
             }),
           ],
         ),

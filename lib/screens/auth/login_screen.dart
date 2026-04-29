@@ -62,30 +62,12 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: SizedBox(
-                width: 200,
-                child: Container(
+             Center(
+                child: Image.asset(
+                  'assets/logo.png',
                   height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(color: Colors.green, width: 2),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Nuestro\nLogo\nBello',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 30),
             const Text(
               'Iniciar Sesion',
