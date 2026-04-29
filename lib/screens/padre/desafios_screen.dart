@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class DesafiosScreen extends StatefulWidget {
   const DesafiosScreen({super.key});
@@ -11,7 +12,8 @@ class DesafiosScreen extends StatefulWidget {
 }
 
 class _DesafiosScreenState extends State<DesafiosScreen> {
-  final ApiService _api = ApiService();
+  final ApiService _api = ApiService(); 
+  final FlutterTts _tts = FlutterTts();
   bool _cargando = false;
   List<dynamic> _desafiosCognitiva = [];
   List<dynamic> _desafiosFisica = [];
@@ -25,6 +27,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     _cargarDesafiosSistema();
     _cargarDesafiosIA();
     _cargarHijos();
+    _tts.setLanguage('es-MX');
   }
 
   Future<void> _cargarHijos() async {
@@ -204,6 +207,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                   ..._desafiosIA.asMap().entries.map((entry) =>
                     _buildChallengeCard(
                       entry.value['titulo'] ?? '',
+                      entry.value['descripcion'] ?? '',
                       '${entry.value['puntos']} pts · ${entry.value['tiempo_estimado_minutos']} min',
                       Colors.purple,
                       Icons.auto_awesome,
@@ -242,6 +246,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         const SizedBox(height: 10),
         ...desafios.map((d) => _buildChallengeCard(
           d['titulo'] ?? '',
+          d['descripcion'] ?? '',
           '${d['puntos']} pts · ${d['tiempo_estimado_minutos']} min',
           color,
           icono,
@@ -253,28 +258,50 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
 
   Widget _buildChallengeCard(
     String titulo,
-    String subtitulo,
+    String descripcion,
+    String metainfo,
     Color color,
     IconData icono, {
     VoidCallback? onEliminar,
   }) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 15),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
+    return Card(                                                                                                                                                                                  elevation: 2,
+      margin: const EdgeInsets.only(bottom: 15),                                                                                                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.1),
           child: Icon(icono, color: color),
         ),
-        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitulo),
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         trailing: onEliminar != null
             ? IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                 onPressed: onEliminar,
               )
             : null,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (descripcion.isNotEmpty)
+                  Text(descripcion, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(metainfo, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up, color: Colors.indigo),
+                      tooltip: 'Escuchar actividad',
+                      onPressed: () => _tts.speak(descripcion),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
