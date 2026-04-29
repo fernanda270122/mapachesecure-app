@@ -63,7 +63,7 @@ class HomeHijoScreen extends StatelessWidget {
             ),
             _buildDrawerOption(
               Icons.rocket_launch,
-              'Centro de Desafíos',
+              'Mis desafíos',
               Colors.orange,
               () {
                 Navigator.push(
