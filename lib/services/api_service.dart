@@ -37,7 +37,11 @@ class ApiService {
       headers: await _headers(auth: auth),
       body: jsonEncode(body),
     );
-    return jsonDecode(response.body);
+    final data = jsonDecode(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+    }
+    return data;
   }
 
   Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {

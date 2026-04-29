@@ -2,146 +2,272 @@ import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 
 class AgregarHijoScreen extends StatefulWidget {
-const AgregarHijoScreen({super.key});
+  const AgregarHijoScreen({super.key});
 
-@override
-State<AgregarHijoScreen> createState() => _AgregarHijoScreenState();
+  @override
+  State<AgregarHijoScreen> createState() => _AgregarHijoScreenState();
 }
 
 class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
-final _formKey = GlobalKey<FormState>();
-final _nombreCtrl = TextEditingController();
-final _emailCtrl = TextEditingController();
-final _passwordCtrl = TextEditingController();
-final _edadCtrl = TextEditingController();
-bool _cargando = false;
+  final _formKey = GlobalKey<FormState>();
+  final _nombreCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _edadCtrl = TextEditingController();
+  bool _cargando = false;
 
-@override
-void dispose() {
+  String? _sexo;
+  String? _nivelEscolar;
+  String? _personalidad;
+  final List<String> _interesesSeleccionados = [];
+
+  static const _opcionesSexo = ['masculino', 'femenino', 'otro'];
+  static const _opcionesNivel = ['pre-basica', 'basica', 'media'];
+  static const _opcionesPersonalidad = ['curioso', 'activo', 'tranquilo', 'creativo', 'sociable'];
+  static const _opcionesIntereses = [
+    'deportes', 'música', 'lectura', 'arte', 'tecnología',
+    'naturaleza', 'cocina', 'videojuegos', 'ciencias', 'manualidades'
+  ];
+
+  @override
+  void dispose() {
     _nombreCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _edadCtrl.dispose();
     super.dispose();
-}
+  }
 
-Future<void> _agregarHijo() async {
+  Future<void> _agregarHijo() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _cargando = true);
 
     try {
-    final api = ApiService();
-    final respuesta = await api.post('/auth/registro-hijo', {
+      final api = ApiService();
+      final respuesta = await api.post('/auth/registro-hijo', {
         'nombre': _nombreCtrl.text.trim(),
         'email': _emailCtrl.text.trim(),
         'password': _passwordCtrl.text,
         'edad': int.parse(_edadCtrl.text),
-    });
+        if (_sexo != null) 'sexo': _sexo,
+        if (_nivelEscolar != null) 'nivel_escolar': _nivelEscolar,
+        if (_personalidad != null) 'personalidad': _personalidad,
+        if (_interesesSeleccionados.isNotEmpty) 'intereses': _interesesSeleccionados,
+      });
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (respuesta['mensaje'] != null) {
+      if (respuesta['mensaje'] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+          const SnackBar(
             content: Text('Hijo agregado exitosamente'),
             backgroundColor: Colors.green,
-        ),
+          ),
         );
         Navigator.pop(context, true);
-    } else {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+          SnackBar(
             content: Text(respuesta['detail'] ?? 'Error al agregar hijo'),
             backgroundColor: Colors.red,
-        ),
+          ),
         );
-    }
+      }
     } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-        content: Text('Error de conexión'),
-        backgroundColor: Colors.red,
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
         ),
-    );
+      );
     } finally {
-    setState(() => _cargando = false);
+      setState(() => _cargando = false);
     }
-}
+  }
 
-@override
-Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-    appBar: AppBar(
+      appBar: AppBar(
         title: const Text('Agregar Hijo', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1A237E),
         foregroundColor: Colors.white,
-    ),
-    body: SingleChildScrollView(
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
-        key: _formKey,
-        child: Column(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            const SizedBox(height: 10),
-            TextFormField(
+              const SizedBox(height: 10),
+
+              // --- Datos de cuenta ---
+              _seccionTitulo('Datos de acceso'),
+              const SizedBox(height: 12),
+              TextFormField(
                 controller: _nombreCtrl,
                 decoration: _inputDecor('Nombre del hijo', Icons.person),
                 validator: (v) => v == null || v.isEmpty ? 'Ingresa el nombre' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _emailCtrl,
                 decoration: _inputDecor('Correo electrónico', Icons.email),
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => v == null || v.isEmpty ? 'Ingresa el correo' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _passwordCtrl,
                 decoration: _inputDecor('Contraseña', Icons.lock),
                 obscureText: true,
                 validator: (v) => v == null || v.length < 6 ? 'Mínimo 6 caracteres' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
                 controller: _edadCtrl,
                 decoration: _inputDecor('Edad', Icons.cake),
                 keyboardType: TextInputType.number,
                 validator: (v) => v == null || v.isEmpty ? 'Ingresa la edad' : null,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
+              ),
+
+              const SizedBox(height: 28),
+
+              // --- Perfil del hijo ---
+              _seccionTitulo('Perfil del hijo'),
+              const SizedBox(height: 12),
+
+              _dropdownField(
+                label: 'Sexo',
+                icon: Icons.wc,
+                value: _sexo,
+                opciones: _opcionesSexo,
+                onChanged: (v) => setState(() => _sexo = v),
+              ),
+              const SizedBox(height: 16),
+
+              _dropdownField(
+                label: 'Nivel escolar',
+                icon: Icons.school,
+                value: _nivelEscolar,
+                opciones: _opcionesNivel,
+                onChanged: (v) => setState(() => _nivelEscolar = v),
+              ),
+              const SizedBox(height: 16),
+
+              _dropdownField(
+                label: 'Personalidad',
+                icon: Icons.psychology,
+                value: _personalidad,
+                opciones: _opcionesPersonalidad,
+                onChanged: (v) => setState(() => _personalidad = v),
+              ),
+
+              const SizedBox(height: 28),
+
+              // --- Intereses ---
+              _seccionTitulo('Intereses'),
+              const SizedBox(height: 4),
+              const Text(
+                'Selecciona los que más le gustan al niño',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _opcionesIntereses.map((interes) {
+                  final seleccionado = _interesesSeleccionados.contains(interes);
+                  return FilterChip(
+                    label: Text(interes),
+                    selected: seleccionado,
+                    onSelected: (val) {
+                      setState(() {
+                        if (val) {
+                          _interesesSeleccionados.add(interes);
+                        } else {
+                          _interesesSeleccionados.remove(interes);
+                        }
+                      });
+                    },
+                    selectedColor: const Color(0xFF1A237E).withOpacity(0.15),
+                    checkmarkColor: const Color(0xFF1A237E),
+                    labelStyle: TextStyle(
+                      color: seleccionado ? const Color(0xFF1A237E) : Colors.black87,
+                      fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 36),
+
+              SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                onPressed: _cargando ? null : _agregarHijo,
-                style: ElevatedButton.styleFrom(
+                  onPressed: _cargando ? null : _agregarHijo,
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A237E),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _cargando
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Agregar Hijo', style: TextStyle(fontSize: 16)),
                 ),
-                child: _cargando
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Agregar Hijo', style: TextStyle(fontSize: 16)),
-                ),
-            ),
-            ],
-        ),
-        ),
-    ),
-    );
-}
+              ),
 
-InputDecoration _inputDecor(String label, IconData icon) {
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _seccionTitulo(String titulo) {
+    return Text(
+      titulo,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1A237E),
+      ),
+    );
+  }
+
+  Widget _dropdownField({
+    required String label,
+    required IconData icon,
+    required String? value,
+    required List<String> opciones,
+    required void Function(String?) onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: _inputDecor(label, icon),
+      items: opciones
+          .map((o) => DropdownMenuItem(value: o, child: Text(_capitalizar(o))))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  String _capitalizar(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  InputDecoration _inputDecor(String label, IconData icon) {
     return InputDecoration(
-    labelText: label,
-    prefixIcon: Icon(icon, color: const Color(0xFF1A237E)),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-    focusedBorder: OutlineInputBorder(
+      labelText: label,
+      prefixIcon: Icon(icon, color: const Color(0xFF1A237E)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFF1A237E), width: 2),
-    ),
+      ),
     );
-}
+  }
 }
