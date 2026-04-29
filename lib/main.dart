@@ -43,6 +43,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _verificarSesion() async {
     final auth = AuthService();
+    await Future.delayed(const Duration(seconds: 3));
     final loggedIn = await auth.isLoggedIn();
     if (!mounted) return;
     if (loggedIn) {
@@ -58,10 +59,21 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+@override                                                                                                                                                                                   Widget build(BuildContext context) {
+    return Scaffold(                                                                                                                                                                              body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Opacity(
+            opacity: 0.3,
+            child: Image.asset('assets/fondo2.jpeg', 
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            ),
+          ),
+          const ColoredBox(color: Color(0x881A237E)),
+        ],
+      ),
     );
   }
 }
