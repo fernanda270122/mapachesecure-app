@@ -12,18 +12,22 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
+  // Aquí guardo lo que el usuario escribe para que no se me pierda nada
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
 
+  // Variables para saber si algo falló o si todavía estamos esperando al servidor
   DateTime? _fechaSeleccionada;
   bool _cargando = false;
   String? _error;
 
+  // Esta función abre el calendario para que el usuario elija su cumple
   Future<void> _seleccionarFecha(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
+
       initialDate: DateTime.now().subtract(const Duration(days: 6570)),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
@@ -37,7 +41,9 @@ class _RegistroScreenState extends State<RegistroScreen> {
     }
   }
 
+  // la funcion del registro
   Future<void> _registro() async {
+    
     if (_fechaSeleccionada == null) {
       setState(() => _error = 'Por favor, ingresa tu fecha de nacimiento.');
       return;
@@ -49,7 +55,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     });
 
     try {
-      
+      // Primero lo mandamos a la pantalla de verificación para asegurar que todo sea real
       if (mounted) {
         Navigator.push(
           context,
@@ -58,26 +64,35 @@ class _RegistroScreenState extends State<RegistroScreen> {
           ),
         );
       }
-    } catch (e) {}
+    } catch (e) {
+      // Si algo sale mal con el cambio de pantalla, aquí lo atrapamos
+    }
 
     try {
+      // Llamo a mi servicio de autenticación y le paso todos los datos que juntamos
       final authService = AuthService();
       await authService.registro(
         _emailController.text,
         _passwordController.text,
         _nombreController.text,
-        _fechaSeleccionada!.toIso8601String(),
+        _fechaSeleccionada!
+            .toIso8601String(), // La fecha va en formato de base de datos
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+      // Si todo salió bien, lo mando directo al Login para que estrene su cuenta
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     } catch (e) {
+      // Si el servidor se pone pesado o hay un error, le mostramos este mensaje
       setState(() {
         _error = 'Error al crear la cuenta. Intenta de nuevo.';
       });
     } finally {
+      // Pase lo que pase, dejamos de mostrar el circulito de carga
       setState(() {
         _cargando = false;
       });
@@ -93,13 +108,15 @@ class _RegistroScreenState extends State<RegistroScreen> {
         backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.green),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () =>
+              Navigator.pop(context), // Para que pueda volver si se arrepiente
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           children: [
+            // El título llamativo de la pantalla
             const Text(
               'Crea tu cuenta',
               style: TextStyle(
@@ -115,6 +132,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ),
             const SizedBox(height: 40),
 
+            // Aquí uso mi "plantilla" para no escribir el mismo diseño de input una y otra vez
             _buildTextField(
               'Nombre Completo',
               Icons.person_outline,
@@ -130,11 +148,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
             _buildTextField(
               'Contraseña',
               Icons.lock_outline,
-              obscure: true,
+              obscure:
+                  true, // Para que la contraseña no se vea mientras la escribe
               controller: _passwordController,
             ),
             const SizedBox(height: 20),
 
+            // El campo de la fecha es especial: no dejamos que escriba, solo que toque para abrir el calendario
             TextField(
               controller: _fechaController,
               readOnly: true,
@@ -157,6 +177,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
             const SizedBox(height: 40),
 
+            // Si hay un error, lo mostramos aquí en rojito para que resalte
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 15),
@@ -166,6 +187,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
+
+            // Botón final: si está cargando muestra el círculo, si no, dice "Registrarse"
             ElevatedButton(
               onPressed: _cargando ? null : _registro,
               style: ElevatedButton.styleFrom(
@@ -188,6 +211,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
     );
   }
 
+  // Esta es mi "fábrica" de campos de texto, para que todos se vean igual de bien
   Widget _buildTextField(
     String label,
     IconData icon, {

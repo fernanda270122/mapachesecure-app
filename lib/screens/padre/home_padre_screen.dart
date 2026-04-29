@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/screens/padre/revisar_evidencias_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/screens/padre/desafios_screen.dart';
@@ -114,9 +115,10 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               () => Navigator.pop(context),
             ),
 
-            _buildDrawerItem(                                                                                                                                                                             
+            _buildDrawerItem(
               context,
-              Icons.person_add,                                                                                                                                                                           'Agregar Hijo',
+              Icons.person_add,
+              'Agregar Hijo',
               () async {
                 Navigator.pop(context);
                 final resultado = await Navigator.push(
@@ -143,6 +145,22 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
+
+            _buildDrawerItem(
+              context,
+              Icons.fact_check_outlined, 
+              'Revisar Evidencias',
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RevisarEvidenciasScreen(),
+                  ),
+                );
+              },
+            ),
+
             _buildDrawerItem(context, Icons.stars, 'Tienda de Recompensas', () {
               Navigator.pop(context);
               Navigator.push(
@@ -244,7 +262,8 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                                     onTap: () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ConfigurarHijoScreen(hijo: hijo),
+                                        builder: (context) =>
+                                            ConfigurarHijoScreen(hijo: hijo),
                                       ),
                                     ),
                                     child: _buildTarjetaHijo(
@@ -289,7 +308,12 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
             Icons.task_alt,
             Colors.green,
           ),
-          _buildDatoIndividual('Puntos', '$_totalPuntos', Icons.stars, Colors.orange),
+          _buildDatoIndividual(
+            'Puntos',
+            '$_totalPuntos',
+            Icons.stars,
+            Colors.orange,
+          ),
         ],
       ),
     );

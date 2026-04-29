@@ -12,25 +12,32 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();                                                                                                                     
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  // Variables de estado
   bool _cargando = false;
   String? _error;
 
-  Future<void> _login() async {                                                                                                                                                                 setState(() {
+  // Función principal para el inicio de sesión
+  Future<void> _login() async {
+    setState(() {
       _cargando = true;
       _error = null;
     });
 
     try {
       final authService = AuthService();
+
       final respuesta = await authService.login(
         _emailController.text,
         _passwordController.text,
       );
 
+      // Extrae el rol del perfil para decidir a qué pantalla navegar
       final rol = respuesta['perfil']['rol'];
 
+      // Dependiendo tu rol te lleva a tu home correspondiente
       if (rol == 'padre') {
         Navigator.pushReplacement(
           context,
@@ -79,6 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // email
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -87,7 +96,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 15),
-             TextField(
+
+            // contraseña
+            TextField(
               controller: _passwordController,
               obscureText: true,
               decoration: const InputDecoration(
@@ -96,6 +107,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Boton de Ingreso
             ElevatedButton(
               onPressed: _cargando ? null : _login,
               style: ElevatedButton.styleFrom(
@@ -114,6 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
             ),
             const SizedBox(height: 10),
+
+            // Muestra el mensaje de error solo si la variable _error no es nula
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
@@ -124,6 +139,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             const SizedBox(height: 15),
+
+            // boton de registro
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -147,6 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 10),
+
+            // para recuperar la contraseña(de momento no sirve de nada, pero ahi esta)
             TextButton(
               onPressed: () {},
               child: const Text(
@@ -157,6 +176,8 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             const Text('Iniciar como:', textAlign: TextAlign.center),
             const SizedBox(height: 15),
+
+            // no los borren pls, los uso para cambiar de padre a hijo y vicebersa
             Row(
               children: [
                 Expanded(
