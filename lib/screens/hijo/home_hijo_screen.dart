@@ -67,6 +67,8 @@ class HomeHijoScreen extends StatelessWidget {
               'Mis desafíos',
               Colors.orange,
               () {
+                Navigator.pop(context);
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
