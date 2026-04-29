@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:mapachesecure_app/screens/auth/verificar_identidad_sreen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 
@@ -10,19 +12,53 @@ class RegistroScreen extends StatefulWidget {
 }
 
 class _RegistroScreenState extends State<RegistroScreen> {
-  String _rolSeleccionado = 'Padre'; 
-
-  final TextEditingController _nombreController = TextEditingController();                                                                                                                    
+  final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _fechaController = TextEditingController();
+
+  DateTime? _fechaSeleccionada;
   bool _cargando = false;
   String? _error;
 
-Future<void> _registro() async {
+  Future<void> _seleccionarFecha(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 6570)),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _fechaSeleccionada = picked;
+        _fechaController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  Future<void> _registro() async {
+    if (_fechaSeleccionada == null) {
+      setState(() => _error = 'Por favor, ingresa tu fecha de nacimiento.');
+      return;
+    }
+
     setState(() {
       _cargando = true;
       _error = null;
     });
+
+    try {
+      
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const VerificarIdentidadScreen(),
+          ),
+        );
+      }
+    } catch (e) {}
 
     try {
       final authService = AuthService();
@@ -30,7 +66,7 @@ Future<void> _registro() async {
         _emailController.text,
         _passwordController.text,
         _nombreController.text,
-        _rolSeleccionado.toLowerCase(),
+        _fechaSeleccionada!.toIso8601String(),
       );
 
       Navigator.pushReplacement(
@@ -47,6 +83,7 @@ Future<void> _registro() async {
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,43 +115,44 @@ Future<void> _registro() async {
             ),
             const SizedBox(height: 40),
 
-            _buildTextField('Nombre Completo', Icons.person_outline, controller: _nombreController),
-            const SizedBox(height: 20),
-            _buildTextField('Correo Electrónico', Icons.email_outlined, controller: _emailController),
-            const SizedBox(height: 20),
-            _buildTextField('Contraseña', Icons.lock_outline, obscure: true, controller: _passwordController),
-
-            const SizedBox(height: 30),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '¿Quién usará la cuenta?',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+            _buildTextField(
+              'Nombre Completo',
+              Icons.person_outline,
+              controller: _nombreController,
             ),
+            const SizedBox(height: 20),
+            _buildTextField(
+              'Correo Electrónico',
+              Icons.email_outlined,
+              controller: _emailController,
+            ),
+            const SizedBox(height: 20),
+            _buildTextField(
+              'Contraseña',
+              Icons.lock_outline,
+              obscure: true,
+              controller: _passwordController,
+            ),
+            const SizedBox(height: 20),
 
-            // Selección de Rol
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: const Text('Padre'),
-                    value: 'Padre',
-                    groupValue: _rolSeleccionado,
-                    activeColor: Colors.green,
-                    onChanged: (val) => setState(() => _rolSeleccionado = val!),
-                  ),
+            TextField(
+              controller: _fechaController,
+              readOnly: true,
+              onTap: () => _seleccionarFecha(context),
+              decoration: InputDecoration(
+                labelText: 'Fecha de Nacimiento',
+                prefixIcon: const Icon(
+                  Icons.cake_outlined,
+                  color: Colors.green,
                 ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: const Text('Hijo'),
-                    value: 'Hijo',
-                    groupValue: _rolSeleccionado,
-                    activeColor: Colors.green,
-                    onChanged: (val) => setState(() => _rolSeleccionado = val!),
-                  ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
                 ),
-              ],
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: const BorderSide(color: Colors.green, width: 2),
+                ),
+              ),
             ),
 
             const SizedBox(height: 40),
@@ -150,7 +188,12 @@ Future<void> _registro() async {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, {bool obscure = false, TextEditingController? controller}) {                                                                              
+  Widget _buildTextField(
+    String label,
+    IconData icon, {
+    bool obscure = false,
+    TextEditingController? controller,
+  }) {
     return TextField(
       controller: controller,
       obscureText: obscure,
