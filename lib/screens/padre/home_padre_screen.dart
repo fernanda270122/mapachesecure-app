@@ -8,6 +8,7 @@ import 'package:mapachesecure_app/screens/padre/agregar_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/configurar_hijo.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
+import 'package:mapachesecure_app/screens/padre/tienda_recompensas_screen.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -166,7 +167,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const RecompensasScreen(),
+                  builder: (context) => const TiendaRecompensasScreen(),
                 ),
               );
             }),
