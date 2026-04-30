@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/mis_desafios_screen.dart';
 
 class HomeHijoScreen extends StatelessWidget {
@@ -66,6 +67,8 @@ class HomeHijoScreen extends StatelessWidget {
               'Mis desafíos',
               Colors.orange,
               () {
+                Navigator.pop(context);
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -74,12 +77,15 @@ class HomeHijoScreen extends StatelessWidget {
                 );
               },
             ),
-            _buildDrawerOption(
-              Icons.history,
-              'Mi Actividad',
-              Colors.blue,
-              () {},
-            ),
+            _buildDrawerOption(Icons.history, 'Mi Actividad', Colors.blue, () {
+              Navigator.pop(context); // Cierra el menú
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MiActividadScreen(),
+                ),
+              );
+            }),
             _buildDrawerOption(Icons.settings, 'Ajustes', Colors.grey, () {}),
             const Divider(),
             _buildDrawerOption(
