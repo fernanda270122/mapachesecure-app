@@ -1,21 +1,95 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/mis_desafios_screen.dart';
+import 'package:mapachesecure_app/services/auth_service.dart';
+import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 
-class HomeHijoScreen extends StatelessWidget {
+class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
+
+  @override
+  State<HomeHijoScreen> createState() => _HomeHijoScreenState();
+}
+
+class _HomeHijoScreenState extends State<HomeHijoScreen> {
+  // Variables de estado para datos reales
+  String _nombre = '';
+  int _puntos = 0;
+  List<dynamic> _desafios = [];
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  // Carga de datos siguiendo el patrón del HomePadre[cite: 1]
+  Future<void> _cargarDatos() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nombre = prefs.getString('nombre') ?? 'Explorador';
+    final hijoId = prefs.getString('user_id') ?? '';
+
+    try {
+      final api = ApiService();
+
+      // Obtener puntos totales del endpoint definido en desafíos_service.py[cite: 1]
+      final puntosData = await api.get('/desafios/puntos/$hijoId');
+
+      // Obtener lista de desafíos del endpoint en desafíos.py[cite: 1]
+      final desafiosData = await api.get('/desafios/');
+
+      setState(() {
+        _nombre = nombre;
+        _puntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
+        _desafios = desafiosData is List ? desafiosData : [];
+        _cargando = false;
+      });
+    } catch (e) {
+      setState(() {
+        _nombre = nombre;
+        _cargando = false;
+      });
+    }
+  }
+
+  // Asignación de iconos basada en las categorías de ia_service.py[cite: 1]
+  IconData _getIcono(String? tipo) {
+    switch (tipo) {
+      case 'cognitiva':
+        return Icons.calculate;
+      case 'fisica':
+        return Icons.fitness_center;
+      case 'hogar':
+        return Icons.bed;
+      default:
+        return Icons.star;
+    }
+  }
+
+  // Asignación de colores basada en las categorías de ia_service.py[cite: 1]
+  Color _getColor(String? tipo) {
+    switch (tipo) {
+      case 'cognitiva':
+        return Colors.blue;
+      case 'fisica':
+        return Colors.green;
+      case 'hogar':
+        return Colors.orange;
+      default:
+        return Colors.blueGrey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F8),
-      // menu hamburguesa
       drawer: Drawer(
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(30),
-            bottomRight: Radius.circular(30),
-          ),
+          borderRadius: BorderRadius.only(topRight: Radius.circular(30)),
         ),
         child: ListView(
           padding: EdgeInsets.zero,
@@ -38,9 +112,9 @@ class HomeHijoScreen extends StatelessWidget {
                     child: Icon(Icons.star, color: Colors.orange, size: 35),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    '¡Hola, Mimi!',
-                    style: TextStyle(
+                  Text(
+                    '¡Hola, $_nombre!',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -68,7 +142,6 @@ class HomeHijoScreen extends StatelessWidget {
               Colors.orange,
               () {
                 Navigator.pop(context);
-
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -78,7 +151,7 @@ class HomeHijoScreen extends StatelessWidget {
               },
             ),
             _buildDrawerOption(Icons.history, 'Mi Actividad', Colors.blue, () {
-              Navigator.pop(context); // Cierra el menú
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -92,136 +165,148 @@ class HomeHijoScreen extends StatelessWidget {
               Icons.exit_to_app,
               'Cerrar Sesión',
               Colors.red,
-              () {
-                Navigator.pushReplacementNamed(context, '/');
+              () async {
+                final auth = AuthService();
+                await auth.logout();
+                if (!mounted) return;
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
               },
             ),
           ],
         ),
       ),
-
-      // boton del menu
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 2, 148, 216),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // saludo que aparece debajo del appbar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
+      body: _cargando
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh:
+                  _cargarDatos, // Implementa refresco manual como en el Padre[cite: 1]
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '¡Hola, $_nombre!',
+                                style: const TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A237E),
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: const Text(
+                                  'Nivel 5 - Explorador Mapache',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.greenAccent,
+                            child: Icon(
+                              Icons.face,
+                              size: 40,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      _buildPointsCard(),
+                      const SizedBox(height: 30),
                       const Text(
-                        '¡Hola, Mimi!',
+                        'Desafíos disponibles:',
                         style: TextStyle(
-                          fontSize: 26,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A237E),
                         ),
                       ),
-                      const SizedBox(height: 5),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Text(
-                          'Nivel 5 - Explorador Mapache',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 15),
+
+                      // Generación dinámica de desafíos desde el Backend[cite: 1]
+                      _desafios.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(
+                                child: Text("No hay desafíos disponibles"),
+                              ),
+                            )
+                          : Column(
+                              children: _desafios.map((desafio) {
+                                return _buildChallengeCard(
+                                  desafio['titulo'] ?? 'Desafío',
+                                  '+${desafio['puntos']} pts | ${desafio['tiempo_estimado_minutos']} min',
+                                  _getIcono(desafio['tipo']),
+                                  _getColor(desafio['tipo']),
+                                );
+                              }).toList(),
+                            ),
+
+                      const SizedBox(height: 30),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.emoji_events,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            'VER MIS PREMIOS',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                              vertical: 15,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 30),
                     ],
-                  ),
-                  const CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.greenAccent,
-                    child: Icon(Icons.face, size: 40, color: Colors.white),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 30),
-
-              // mapachepoints
-              _buildPointsCard(),
-              const SizedBox(height: 30),
-
-              // desafios
-              const Text(
-                'Desafíos disponibles:',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
-
-              _buildChallengeCard(
-                '[Cognitivo] Suma rápida',
-                '+25 pts | 5 min',
-                Icons.calculate,
-                Colors.blue,
-              ),
-              _buildChallengeCard(
-                '[Físico] 10 sentadillas',
-                '+30 pts | 10 min',
-                Icons.fitness_center,
-                Colors.green,
-              ),
-              _buildChallengeCard(
-                '[Hogar] Tender cama',
-                '+20 pts | Sin límite',
-                Icons.bed,
-                Colors.orange,
-              ),
-
-              const SizedBox(height: 30),
-
-              // premios
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.emoji_events, color: Colors.white),
-                  label: const Text(
-                    'VER MIS PREMIOS',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 15,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
-  // tarjeta para lo que esta dentro del menu de hamburguesa
   Widget _buildDrawerOption(
     IconData icon,
     String title,
@@ -238,8 +323,15 @@ class HomeHijoScreen extends StatelessWidget {
     );
   }
 
-  // tarjeta de los mapachepoints
   Widget _buildPointsCard() {
+    // Definimos una meta de puntos para el nivel actual (ejemplo: 2000 pts)
+    const int metaPuntos = 2000;
+
+    // Calculamos el porcentaje real (valor entre 0.0 y 1.0 para el indicador)
+    double porcentajeDinamico = _puntos / metaPuntos;
+    if (porcentajeDinamico > 1.0)
+      porcentajeDinamico = 1.0; // Evita que se pase del 100%
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -260,9 +352,9 @@ class HomeHijoScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            '1.250 pts',
-            style: TextStyle(
+          Text(
+            '$_puntos pts', // Muestra los puntos reales del back
+            style: const TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
               color: Colors.greenAccent,
@@ -279,19 +371,21 @@ class HomeHijoScreen extends StatelessWidget {
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: const LinearProgressIndicator(
-              value: 0.6,
+            child: LinearProgressIndicator(
+              value: porcentajeDinamico, // AHORA ES DINÁMICO
               minHeight: 15,
-              backgroundColor: Color(0xFFE0E0E0),
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+              backgroundColor: const Color(0xFFE0E0E0),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Colors.greenAccent,
+              ),
             ),
           ),
           const SizedBox(height: 5),
-          const Align(
+          Align(
             alignment: Alignment.centerRight,
             child: Text(
-              '60%',
-              style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+              '${(porcentajeDinamico * 100).toInt()}%', // Muestra el % real
+              style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
             ),
           ),
         ],
@@ -299,7 +393,6 @@ class HomeHijoScreen extends StatelessWidget {
     );
   }
 
-  // tarjeta de desafio
   Widget _buildChallengeCard(
     String titulo,
     String desc,

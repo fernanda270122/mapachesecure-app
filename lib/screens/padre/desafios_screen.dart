@@ -12,7 +12,7 @@ class DesafiosScreen extends StatefulWidget {
 }
 
 class _DesafiosScreenState extends State<DesafiosScreen> {
-  final ApiService _api = ApiService(); 
+  final ApiService _api = ApiService();
   final FlutterTts _tts = FlutterTts();
   bool _cargando = false;
   List<dynamic> _desafiosCognitiva = [];
@@ -64,7 +64,11 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     }
   }
 
-  Future<void> _generarDesafios(String categoria, String dificultad, String hijoId) async {
+  Future<void> _generarDesafios(
+    String categoria,
+    String dificultad,
+    String hijoId,
+  ) async {
     setState(() => _cargando = true);
     try {
       final resultado = await _api.post('/ia/generar', {
@@ -81,9 +85,9 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         _desafiosIA = acumulados;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al generar desafíos: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al generar desafíos: $e')));
     } finally {
       setState(() => _cargando = false);
     }
@@ -116,19 +120,25 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Generar desafíos con IA',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Generar desafíos con IA',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 20),
               const Text('Categoría'),
               DropdownButton<String>(
                 isExpanded: true,
                 value: categoriaSeleccionada,
                 items: const [
-                  DropdownMenuItem(value: 'cognitiva', child: Text('Cognitiva')),
+                  DropdownMenuItem(
+                    value: 'cognitiva',
+                    child: Text('Cognitiva'),
+                  ),
                   DropdownMenuItem(value: 'fisica', child: Text('Física')),
                   DropdownMenuItem(value: 'hogar', child: Text('Hogar')),
                 ],
-                onChanged: (v) => setModalState(() => categoriaSeleccionada = v!),
+                onChanged: (v) =>
+                    setModalState(() => categoriaSeleccionada = v!),
               ),
               const SizedBox(height: 10),
               const Text('Dificultad'),
@@ -140,7 +150,8 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                   DropdownMenuItem(value: 'medio', child: Text('Medio')),
                   DropdownMenuItem(value: 'dificil', child: Text('Difícil')),
                 ],
-                onChanged: (v) => setModalState(() => dificultadSeleccionada = v!),
+                onChanged: (v) =>
+                    setModalState(() => dificultadSeleccionada = v!),
               ),
               const SizedBox(height: 10),
               const Text('Hijo'),
@@ -166,7 +177,11 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                   onPressed: () {
                     if (hijoSeleccionado == null) return;
                     Navigator.pop(context);
-                    _generarDesafios(categoriaSeleccionada, dificultadSeleccionada, hijoSeleccionado!);
+                    _generarDesafios(
+                      categoriaSeleccionada,
+                      dificultadSeleccionada,
+                      hijoSeleccionado!,
+                    );
                   },
                   child: const Text('Generar'),
                 ),
@@ -194,25 +209,44 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                _buildSeccion('Cognitiva', _desafiosCognitiva, Colors.blue, Icons.psychology),
-                _buildSeccion('Física', _desafiosFisica, Colors.orange, Icons.fitness_center),
-                _buildSeccion('Hogar', _desafiosHogar, Colors.green, Icons.home),
+                _buildSeccion(
+                  'Cognitiva',
+                  _desafiosCognitiva,
+                  Colors.blue,
+                  Icons.psychology,
+                ),
+                _buildSeccion(
+                  'Física',
+                  _desafiosFisica,
+                  Colors.orange,
+                  Icons.fitness_center,
+                ),
+                _buildSeccion(
+                  'Hogar',
+                  _desafiosHogar,
+                  Colors.green,
+                  Icons.home,
+                ),
                 if (_desafiosIA.isNotEmpty) ...[
                   const SizedBox(height: 10),
                   const Text(
                     'Generados con IA',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A237E),
+                    ),
                   ),
                   const SizedBox(height: 10),
-                  ..._desafiosIA.asMap().entries.map((entry) =>
-                    _buildChallengeCard(
+                  ..._desafiosIA.asMap().entries.map(
+                    (entry) => _buildChallengeCard(
                       entry.value['titulo'] ?? '',
                       entry.value['descripcion'] ?? '',
                       '${entry.value['puntos']} pts · ${entry.value['tiempo_estimado_minutos']} min',
                       Colors.purple,
                       Icons.auto_awesome,
                       onEliminar: () => _eliminarDesafioIA(entry.key),
-                    )
+                    ),
                   ),
                 ],
                 const SizedBox(height: 20),
@@ -223,10 +257,15 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                       backgroundColor: const Color(0xFF2ECC71),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: () => _mostrarFormularioIA(context),
-                    child: const Text('Generar nuevos desafíos', style: TextStyle(fontSize: 16)),
+                    child: const Text(
+                      'Generar nuevos desafíos',
+                      style: TextStyle(fontSize: 16),
+                    ),
                   ),
                 ),
               ],
@@ -234,23 +273,34 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     );
   }
 
-  Widget _buildSeccion(String titulo, List<dynamic> desafios, Color color, IconData icono) {
+  Widget _buildSeccion(
+    String titulo,
+    List<dynamic> desafios,
+    Color color,
+    IconData icono,
+  ) {
     if (desafios.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           titulo,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A237E)),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A237E),
+          ),
         ),
         const SizedBox(height: 10),
-        ...desafios.map((d) => _buildChallengeCard(
-          d['titulo'] ?? '',
-          d['descripcion'] ?? '',
-          '${d['puntos']} pts · ${d['tiempo_estimado_minutos']} min',
-          color,
-          icono,
-        )),
+        ...desafios.map(
+          (d) => _buildChallengeCard(
+            d['titulo'] ?? '',
+            d['descripcion'] ?? '',
+            '${d['puntos']} pts · ${d['tiempo_estimado_minutos']} min',
+            color,
+            icono,
+          ),
+        ),
         const SizedBox(height: 10),
       ],
     );
@@ -264,14 +314,19 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     IconData icono, {
     VoidCallback? onEliminar,
   }) {
-    return Card(                                                                                                                                                                                  elevation: 2,
-      margin: const EdgeInsets.only(bottom: 15),                                                                                                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.1),
           child: Icon(icono, color: color),
         ),
-        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        title: Text(
+          titulo,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
         trailing: onEliminar != null
             ? IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -285,11 +340,21 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (descripcion.isNotEmpty)
-                  Text(descripcion, style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                  Text(
+                    descripcion,
+                    style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text(metainfo, style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+                    Text(
+                      metainfo,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.volume_up, color: Colors.indigo),
