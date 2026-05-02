@@ -3,6 +3,7 @@ import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/screens/auth/registro_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
+import 'recuperar_password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -71,11 +72,11 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
              Center(
                 child: Image.asset(
-                  'assets/logo.png',
-                  height: 150,
+                  'assets/logo3.png',
+                  height:150,
                 ),
               ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
             const Text(
               'Iniciar Sesion',
               textAlign: TextAlign.center,
@@ -167,7 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // para recuperar la contraseña(de momento no sirve de nada, pero ahi esta)
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(                                                                                                                                                                                 context,
+                  MaterialPageRoute(builder: (context) => const RecuperarPassword()),                                                                                                                         );
+              },
               child: const Text(
                 'Olvide mi contrasena',
                 style: TextStyle(color: Colors.blue),
