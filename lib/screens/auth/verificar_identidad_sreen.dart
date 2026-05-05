@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class VerificarIdentidadScreen extends StatefulWidget {
   const VerificarIdentidadScreen({super.key});
@@ -12,21 +14,21 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
         centerTitle: true,
         title: const Text(
           'Verificación',
-          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.green),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30),
         child: Column(
           children: [
@@ -107,7 +109,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

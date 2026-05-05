@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';                                                                                                                                                   
+import '../../services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
+
 class ResetPasswordScreen extends StatefulWidget {
   final String accessToken;
   const ResetPasswordScreen({super.key, required this.accessToken});
@@ -32,8 +35,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       await ApiService().post('/auth/cambiar-password', {
         'access_token': widget.accessToken,
         'nueva_password': _passwordCtrl.text,
-      });}
-      
+      });
       setState(() => _listo = true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,13 +49,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Nueva contraseña'),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: AppBackground(child: Padding(
         padding: const EdgeInsets.all(32),
         child: _listo
             ? const Center(
@@ -101,7 +103,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                 ],
               ),
-      ),
+      )),
     );
   }
 }

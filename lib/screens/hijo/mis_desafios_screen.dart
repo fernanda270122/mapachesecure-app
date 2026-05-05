@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class MisDesafiosScreen extends StatefulWidget {
   const MisDesafiosScreen({super.key});
@@ -87,17 +89,17 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Mis desafíos',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color.fromARGB(255, 2, 148, 216),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _cargarDatos,
@@ -179,6 +181,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 

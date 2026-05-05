@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class MiActividadScreen extends StatelessWidget {
   const MiActividadScreen({super.key});
@@ -6,14 +8,14 @@ class MiActividadScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Mi Actividad'),
-        backgroundColor: const Color.fromARGB(255, 2, 148, 216),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(child: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +92,7 @@ class MiActividadScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

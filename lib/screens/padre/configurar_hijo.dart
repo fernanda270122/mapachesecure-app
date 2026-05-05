@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 const _appsPopulares = [
   {'nombre': 'TikTok', 'package': 'com.zhiliaoapp.musically', 'icono': Icons.music_video},
@@ -117,13 +119,14 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text('Configurar a ${widget.hijo['nombre']}',
             style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(20),
@@ -193,6 +196,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                 }),
               ],
             ),
+      ),
     );
   }
 }

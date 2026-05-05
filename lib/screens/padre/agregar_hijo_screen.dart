@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class AgregarHijoScreen extends StatefulWidget {
   const AgregarHijoScreen({super.key});
@@ -89,12 +91,13 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Agregar Hijo', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
@@ -192,10 +195,10 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                         }
                       });
                     },
-                    selectedColor: const Color(0xFF1A237E).withOpacity(0.15),
-                    checkmarkColor: const Color(0xFF1A237E),
+                    selectedColor: AppColors.card.withOpacity(0.5),
+                    checkmarkColor: AppColors.white,
                     labelStyle: TextStyle(
-                      color: seleccionado ? const Color(0xFF1A237E) : Colors.black87,
+                      color: seleccionado ? AppColors.white: AppColors.white,
                       fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
                     ),
                   );
@@ -210,7 +213,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                 child: ElevatedButton(
                   onPressed: _cargando ? null : _agregarHijo,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A237E),
+                    backgroundColor: AppColors.secondary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -224,7 +227,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -234,7 +237,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       style: const TextStyle(
         fontSize: 15,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A237E),
+        color: Colors.white,
       ),
     );
   }
@@ -262,7 +265,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
   InputDecoration _inputDecor(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, color: const Color(0xFF1A237E)),
+      prefixIcon: Icon(icon, color: AppColors.white),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

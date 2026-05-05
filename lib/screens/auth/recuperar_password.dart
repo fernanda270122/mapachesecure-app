@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';                                                                                                                                                   
+import '../../services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
+
 class RecuperarPassword extends StatefulWidget {
   const RecuperarPassword({super.key});
 
@@ -21,8 +24,9 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
       });
       setState(() => _enviado = true);
     } catch (e) {
+      print('ERROR RECUPERAR PASSWORD: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al enviar el correo')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       setState(() => _cargando = false);
@@ -32,13 +36,13 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Recuperar contraseña'),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: AppBackground(child: Padding(
         padding: const EdgeInsets.all(32),
         child: _enviado
             ? const Center(
@@ -81,7 +85,7 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
                   ),
                 ],
               ),
-      ),
+      )),
     );
   }
 }

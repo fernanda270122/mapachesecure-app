@@ -4,6 +4,8 @@ import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/screens/auth/registro_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'recuperar_password.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -64,15 +66,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
+      backgroundColor: AppColors.background,
+      body: AppBackground(child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
              Center(
                 child: Image.asset(
-                  'assets/logo3.png',
+                  'assets/racculogo.png',
                   height:150,
                 ),
               ),
@@ -83,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A237E),
+                color: AppColors.white,
               ),
             ),
             const SizedBox(height: 20),
@@ -91,8 +93,10 @@ class _LoginScreenState extends State<LoginScreen> {
             // email
             TextField(
               controller: _emailController,
+              style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Correo electronico',
+                hintStyle: TextStyle(color: Colors.white70),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -101,9 +105,11 @@ class _LoginScreenState extends State<LoginScreen> {
             // contraseña
             TextField(
               controller: _passwordController,
+              style: const TextStyle(color: Colors.white),
               obscureText: true,
               decoration: const InputDecoration(
                 hintText: 'Contrasena',
+                hintStyle: TextStyle(color: Colors.white70),
                 border: OutlineInputBorder(),
               ),
             ),
@@ -113,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: _cargando ? null : _login,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2ECC71),
+                backgroundColor: AppColors.accent,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -152,8 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE9ECEF),
-                foregroundColor: Colors.black,
+                backgroundColor: AppColors.secondary,
+                foregroundColor: AppColors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -166,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 10),
 
-            // para recuperar la contraseña(de momento no sirve de nada, pero ahi esta)
+            // para recuperar la contraseña
             TextButton(
               onPressed: () {
                 Navigator.push(                                                                                                                                                                                 context,
@@ -174,67 +180,12 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               child: const Text(
                 'Olvide mi contrasena',
-                style: TextStyle(color: Colors.blue),
+                style: TextStyle(color:AppColors.accent),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text('Iniciar como:', textAlign: TextAlign.center),
-            const SizedBox(height: 15),
-
-            // no los borren pls, los uso para cambiar de padre a hijo y vicebersa
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomePadreScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.indigo,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Padre / Tutor',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomeHijoScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Hijo'),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

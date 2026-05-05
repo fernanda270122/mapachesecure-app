@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 const _recompensasSistema = [
   {'nombre': 'Elegir la película',         'icono': '🎬', 'color': Color(0xFFFF9800), 'puntos': 150},
@@ -106,9 +108,9 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      border: Border.all(color: icono == e ? const Color(0xFF1A237E) : Colors.grey),
+                      border: Border.all(color: icono == e ? AppColors.background : Colors.grey),
                       borderRadius: BorderRadius.circular(8),
-                      color: icono == e ? const Color(0xFF1A237E).withOpacity(0.1) : null,
+                      color: icono == e ? AppColors.secondary .withOpacity(0.1) : null,
                     ),
                     child: Text(e, style: const TextStyle(fontSize: 24)),
                   ),
@@ -118,7 +120,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A237E)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
                   onPressed: () async {
                     if (nombreCtrl.text.isEmpty) return;
                     try {
@@ -165,7 +167,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1A237E)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary),
             onPressed: () {
               Navigator.pop(context);
               setState(() => _confirmado = true);
@@ -180,35 +182,36 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Tienda de Recompensas', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
       floatingActionButton: Column(                                                                                                                                                                 mainAxisSize: MainAxisSize.min,
         children: [                                                                                                                                                                                   if (!_confirmado)
             FloatingActionButton.extended(
               onPressed: _confirmarSeleccion,
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.secondary,
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text('Confirmar', style: TextStyle(color: Colors.white)),
             ),
           const SizedBox(height: 10),
           FloatingActionButton(
             onPressed: _confirmado ? null : _mostrarFormulario,
-            backgroundColor: const Color(0xFF1A237E),
+            backgroundColor: AppColors.textDark,
             child: const Icon(Icons.add, color: Colors.white),
           ),
         ],
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _cargarComunidad,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  const Text('Del sistema', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
+                  const Text('Del sistema', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                   const SizedBox(height: 4),
                   const Text('Activa las recompensas que quieres ofrecer a tu hijo',
                       style: TextStyle(color: Colors.grey, fontSize: 13)),
@@ -233,7 +236,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                               fontWeight: FontWeight.w500,
                             )),
                         value: activa,
-                        activeColor: const Color(0xFF1A237E),
+                        activeColor: AppColors.background,
                         onChanged: _confirmado ? null: (val) {
                           if (val && _activas.where((a) => a).length >=3) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -249,7 +252,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                   }),
                   const SizedBox(height: 20),
                   const Text('Recomendadas por la comunidad',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                   const SizedBox(height: 8),
                   if (_comunidad.isEmpty)
                     const Padding(
@@ -263,6 +266,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                 ],
               ),
             ),
+      ),
     );
   }
 

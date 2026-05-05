@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/mis_desafios_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
@@ -86,7 +88,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: AppColors.background,
       drawer: Drawer(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(topRight: Radius.circular(30)),
@@ -184,7 +186,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh:
@@ -304,6 +306,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 

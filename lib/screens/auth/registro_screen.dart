@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:mapachesecure_app/screens/auth/verificar_identidad_sreen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -102,112 +104,92 @@ class _RegistroScreenState extends State<RegistroScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.green),
-          onPressed: () =>
-              Navigator.pop(context), // Para que pueda volver si se arrepiente
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          children: [
-            // El título llamativo de la pantalla
-            const Text(
-              'Crea tu cuenta',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Únete a la familia MapacheSecure',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 40),
-
-            // Aquí uso mi "plantilla" para no escribir el mismo diseño de input una y otra vez
-            _buildTextField(
-              'Nombre Completo',
-              Icons.person_outline,
-              controller: _nombreController,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              'Correo Electrónico',
-              Icons.email_outlined,
-              controller: _emailController,
-            ),
-            const SizedBox(height: 20),
-            _buildTextField(
-              'Contraseña',
-              Icons.lock_outline,
-              obscure:
-                  true, // Para que la contraseña no se vea mientras la escribe
-              controller: _passwordController,
-            ),
-            const SizedBox(height: 20),
-
-            // El campo de la fecha es especial: no dejamos que escriba, solo que toque para abrir el calendario
-            TextField(
-              controller: _fechaController,
-              readOnly: true,
-              onTap: () => _seleccionarFecha(context),
-              decoration: InputDecoration(
-                labelText: 'Fecha de Nacimiento',
-                prefixIcon: const Icon(
-                  Icons.cake_outlined,
-                  color: Colors.green,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Colors.green, width: 2),
+      body: AppBackground(
+          child: SingleChildScrollView(                                                                                                                                                                 padding: EdgeInsets.fromLTRB(30, kToolbarHeight + 40, 30, 30),
+            child: Column(                                                                                                                                                                              children: [
+              // El título llamativo de la pantalla
+              const Text(
+                'Crea tu cuenta',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 40),
-
-            // Si hay un error, lo mostramos aquí en rojito para que resalte
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 15),
-                child: Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
+              const SizedBox(height: 10),
+              const Text(
+                'Únete a la familia Raccu',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 40),
+              _buildTextField(
+                'Nombre Completo',
+                Icons.person_outline,
+                controller: _nombreController,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                'Correo Electrónico',
+                Icons.email_outlined,
+                controller: _emailController,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                'Contraseña',
+                Icons.lock_outline,
+                obscure: true,
+                controller: _passwordController,
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _fechaController,
+                readOnly: true,
+                onTap: () => _seleccionarFecha(context),
+                decoration: InputDecoration(
+                  labelText: 'Fecha de Nacimiento',
+                  prefixIcon: const Icon(Icons.cake_outlined, color: Colors.white),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
+                  ),
                 ),
               ),
-
-            // Botón final: si está cargando muestra el círculo, si no, dice "Registrarse"
-            ElevatedButton(
-              onPressed: _cargando ? null : _registro,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+              const SizedBox(height: 40),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 15),
+                  child: Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
                 ),
+              ElevatedButton(
+                onPressed: _cargando ? null : _registro,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+                child: _cargando
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Registrarse', style: TextStyle(color: Colors.white, fontSize: 16)),
               ),
-              child: _cargando
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'Registrarse',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
+            ],
             ),
-          ],
+          ),
         ),
-      ),
     );
   }
 
@@ -223,7 +205,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
       obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: Colors.green),
+        prefixIcon: Icon(icon, color: Colors.white),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),

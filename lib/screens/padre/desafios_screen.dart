@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class DesafiosScreen extends StatefulWidget {
   const DesafiosScreen({super.key});
@@ -171,7 +173,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2ECC71),
+                    backgroundColor: AppColors.textDark,
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
@@ -196,15 +198,16 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Gestionar Desafíos',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(20),
@@ -234,7 +237,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                      color: AppColors.white,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -254,7 +257,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2ECC71),
+                      backgroundColor: AppColors.secondary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -270,6 +273,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                 ),
               ],
             ),
+      ),
     );
   }
 

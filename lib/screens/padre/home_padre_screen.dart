@@ -9,6 +9,8 @@ import 'package:mapachesecure_app/screens/padre/configurar_hijo.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/screens/padre/tienda_recompensas_screen.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -73,13 +75,13 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.background,
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: Color(0xFF1A237E)),
+              decoration: const BoxDecoration(color: AppColors.primary),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +91,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                     backgroundColor: Colors.white,
                     child: Icon(
                       Icons.person,
-                      color: Color(0xFF1A237E),
+                      color: AppColors.primary,
                       size: 35,
                     ),
                   ),
@@ -203,11 +205,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
           'Panel de Control',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _cargarDatos,
@@ -222,7 +224,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A237E),
+                        color: AppColors.white,
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -233,6 +235,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: AppColors.white,
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -243,6 +246,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: AppColors.white,
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -281,6 +285,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 
@@ -416,7 +421,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.indigo.shade50,
-          child: Icon(icono, color: const Color(0xFF1A237E)),
+          child: Icon(icono, color: AppColors.primary),
         ),
         title: Text(
           nombre,
@@ -435,7 +440,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF1A237E)),
+      leading: Icon(icon, color: AppColors.primary),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       onTap: onTap,
     );

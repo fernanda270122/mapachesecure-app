@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
+import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class RevisarEvidenciasScreen extends StatefulWidget {
   const RevisarEvidenciasScreen({super.key});
@@ -49,19 +51,20 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
           'Revisar Evidencias',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: _cargando
+      body: AppBackground(child: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _evidencias.isEmpty
           ? const Center(
-              child: Text("No hay evidencias pendientes por ahora 👏"),
+              child: Text("No hay evidencias pendientes por ahora 👏", style: TextStyle(color: Colors.white) ),
             )
           : ListView.builder(
               padding: const EdgeInsets.all(15),
@@ -71,6 +74,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
                 return _buildEvidenciaCard(item);
               },
             ),
+      ),
     );
   }
 
