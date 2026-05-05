@@ -99,7 +99,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
             DrawerHeader(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.lightBlue, Colors.blueAccent],
+                  colors: [AppColors.accent, AppColors.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -152,7 +152,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                 );
               },
             ),
-            _buildDrawerOption(Icons.history, 'Mi Actividad', Colors.blue, () {
+            _buildDrawerOption(Icons.history, 'Mi Actividad', Colors.white, () {
               Navigator.pop(context);
               Navigator.push(
                 context,
@@ -182,7 +182,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 2, 148, 216),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -209,7 +209,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                                 style: const TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1A237E),
+                                  color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 5),
@@ -252,6 +252,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white
                         ),
                       ),
                       const SizedBox(height: 15),

@@ -7,6 +7,7 @@ import 'package:mapachesecure_app/screens/auth/reset_password_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -118,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       if (rol == 'padre') {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePadreScreen()));
-      } else {
+      } else if(rol == 'hijo'){ 
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
       }
     } else {

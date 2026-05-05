@@ -3,7 +3,6 @@ import 'package:mapachesecure_app/screens/padre/revisar_evidencias_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/screens/padre/desafios_screen.dart';
-import 'package:mapachesecure_app/screens/padre/recompensas_screen.dart';
 import 'package:mapachesecure_app/screens/padre/agregar_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/configurar_hijo.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';

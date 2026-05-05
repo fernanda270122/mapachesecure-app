@@ -150,7 +150,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A237E),
+                          color: AppColors.white,
                         ),
                       ),
                     ),
