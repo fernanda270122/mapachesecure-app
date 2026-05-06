@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 
-class RecompensasScreen extends StatelessWidget {
+const _recompensas = [
+    {'nombre': 'Elegir la película',         'icono': Icons.movie,          'color': Color(0xFFFF9800), 'puntos': 150},
+    {'nombre': 'Postre especial',            'icono': Icons.icecream,        'color': Color(0xFFE91E63), 'puntos': 250},
+    {'nombre': 'Elegir la cena',             'icono': Icons.restaurant,      'color': Color(0xFF009688), 'puntos': 400},
+    {'nombre': 'Noche de juegos de mesa',    'icono': Icons.casino,          'color': Color(0xFF3F51B5), 'puntos': 550},
+    {'nombre': 'Noche de pizza',             'icono': Icons.local_pizza,     'color': Color(0xFFF44336), 'puntos': 700},
+    {'nombre': 'Salida al parque',           'icono': Icons.park,            'color': Color(0xFF4CAF50), 'puntos': 850},
+    {'nombre': '30 min extra de juegos',     'icono': Icons.videogame_asset, 'color': Color(0xFF9C27B0), 'puntos': 1000},
+    {'nombre': '30 min menos al desbloqueo', 'icono': Icons.lock_open,       'color': Color(0xFF1A237E), 'puntos': 1200},
+  ];
+class RecompensasScreen extends StatefulWidget {
   const RecompensasScreen({super.key});
 
-  @override
+@override
+State<RecompensasScreen> createState() => _RecompensasScreenState();
+}
+class _RecompensasScreenState extends State<RecompensasScreen> {                                                                                                                              final List<bool> _activas = List.filled(_recompensas.length, false);
+                                                                                                                                                                                                @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -14,88 +28,41 @@ class RecompensasScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF1A237E),
         foregroundColor: Colors.white,
       ),
-      body: GridView.count(
-        crossAxisCount: 2,
-        padding: const EdgeInsets.all(20),
-        mainAxisSpacing: 15,
-        crossAxisSpacing: 15,
-        children: [
-          _buildRewardCard(
-            '30 min de Juegos',
-            '500 pts',
-            Icons.videogame_asset,
-            Colors.purple,
-          ),
-          _buildRewardCard(
-            'Postre especial',
-            '300 pts',
-            Icons.icecream,
-            Colors.pink,
-          ),
-          _buildRewardCard(
-            'Salida al parque',
-            '1000 pts',
-            Icons.park,
-            Colors.green,
-          ),
-          _buildRewardCard(
-            'Elegir película',
-            '200 pts',
-            Icons.movie,
-            Colors.orange,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF1A237E),
-        child: const Icon(Icons.stars, color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildRewardCard(
-    String titulo,
-    String costo,
-    IconData icono,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _recompensas.length,
+        itemBuilder: (context, i) {
+          final r = _recompensas[i];
+          final color = r['color'] as Color;
+          final activa = _activas[i];
+          return Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.only(bottom: 10),
+            child: SwitchListTile(
+              secondary: CircleAvatar(
+                backgroundColor: activa ? color.withOpacity(0.15) : Colors.grey.shade100,
+                child: Icon(
+                  r['icono'] as IconData,
+                  color: activa ? color : Colors.grey,
+                ),
+              ),
+              title: Text(
+                r['nombre'] as String,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                '${r['puntos']} MapachePoints',
+                style: TextStyle(
+                  color: activa ? color : Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              value: activa,
+              activeColor: const Color(0xFF1A237E),
+              onChanged: (val) => setState(() => _activas[i] = val),
             ),
-            child: Icon(icono, size: 30, color: color),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            titulo,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            costo,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
