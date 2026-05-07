@@ -143,7 +143,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
             ),
             _buildDrawerOption(
               Icons.emoji_events,
-              'Mis Premios',
+              'Tienda de recompensas',
               Colors.purple,
               () {},
             ),
@@ -295,7 +295,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                               color: Colors.white,
                             ),
                             label: const Text(
-                              'VER MIS PREMIOS',
+                              'Recompensas',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
