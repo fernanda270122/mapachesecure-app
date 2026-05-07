@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/screens/hijo/tienda_recompensa_hijo_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
@@ -145,7 +146,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
               Icons.emoji_events,
               'Tienda de recompensas',
               Colors.purple,
-              () {},
+              () {
+                Navigator.pop(context); // Cerrar drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TiendaRecompensasHijoScreen(),
+                  ),
+                );
+              },
             ),
             _buildDrawerOption(
               Icons.rocket_launch,
@@ -289,7 +298,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                         const SizedBox(height: 10),
                         Center(
                           child: ElevatedButton.icon(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const TiendaRecompensasHijoScreen(),
+                                ),
+                              );
+                            },
                             icon: const Icon(
                               Icons.emoji_events,
                               color: Colors.white,
