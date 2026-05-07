@@ -254,9 +254,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 15),
                         _buildPointsCard(),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         const Text(
                           'Desafíos disponibles:',
                           style: TextStyle(
