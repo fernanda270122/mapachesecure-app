@@ -286,7 +286,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                                 }).toList(),
                               ),
 
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 10),
                         Center(
                           child: ElevatedButton.icon(
                             onPressed: () {},
