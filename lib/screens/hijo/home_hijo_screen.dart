@@ -16,7 +16,6 @@ class HomeHijoScreen extends StatefulWidget {
 }
 
 class _HomeHijoScreenState extends State<HomeHijoScreen> {
-  // Variables de estado para datos reales
   String _nombre = '';
   int _puntos = 0;
   List<dynamic> _desafios = [];
@@ -28,7 +27,6 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     _cargarDatos();
   }
 
-  // Carga de datos siguiendo el patrón del HomePadre[cite: 1]
   Future<void> _cargarDatos() async {
     final prefs = await SharedPreferences.getInstance();
     final nombre = prefs.getString('nombre') ?? 'Explorador';
@@ -36,17 +34,28 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
 
     try {
       final api = ApiService();
-
-      // Obtener puntos totales del endpoint definido en desafíos_service.py[cite: 1]
       final puntosData = await api.get('/desafios/puntos/$hijoId');
-
-      // Obtener lista de desafíos del endpoint en desafíos.py[cite: 1]
       final desafiosData = await api.get('/desafios/');
 
       setState(() {
         _nombre = nombre;
         _puntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
-        _desafios = desafiosData is List ? desafiosData : [];
+
+        if (desafiosData is List) {
+          // 1. Filtramos para que no existan títulos repetidos
+          final nombresVistos = <String>{};
+          var listaLimpia = desafiosData
+              .where((d) => nombresVistos.add(d['titulo'] ?? ''))
+              .toList();
+
+          // 2. Mezclamos la lista limpia de forma aleatoria
+          listaLimpia.shuffle();
+
+          // 3. Tomamos solo los primeros 3 para el Home
+          _desafios = listaLimpia.take(3).toList();
+        } else {
+          _desafios = [];
+        }
         _cargando = false;
       });
     } catch (e) {
@@ -186,127 +195,128 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AppBackground(child: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh:
-                  _cargarDatos, // Implementa refresco manual como en el Padre[cite: 1]
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '¡Hola, $_nombre!',
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: const Text(
-                                  'Nivel 5 - Explorador Mapache',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.orange,
+      body: AppBackground(
+        child: _cargando
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh:
+                    _cargarDatos, // Implementa refresco manual como en el Padre[cite: 1]
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '¡Hola, $_nombre!',
+                                  style: const TextStyle(
+                                    fontSize: 26,
                                     fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const CircleAvatar(
-                            radius: 35,
-                            backgroundColor: Colors.greenAccent,
-                            child: Icon(
-                              Icons.face,
-                              size: 40,
-                              color: Colors.white,
+                                const SizedBox(height: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: const Text(
+                                    'Nivel 5 - Explorador Mapache',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-                      _buildPointsCard(),
-                      const SizedBox(height: 30),
-                      const Text(
-                        'Desafíos disponibles:',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white
+                            const CircleAvatar(
+                              radius: 35,
+                              backgroundColor: Colors.greenAccent,
+                              child: Icon(
+                                Icons.face,
+                                size: 40,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 15),
-
-                      // Generación dinámica de desafíos desde el Backend[cite: 1]
-                      _desafios.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 20),
-                              child: Center(
-                                child: Text("No hay desafíos disponibles"),
-                              ),
-                            )
-                          : Column(
-                              children: _desafios.map((desafio) {
-                                return _buildChallengeCard(
-                                  desafio['titulo'] ?? 'Desafío',
-                                  '+${desafio['puntos']} pts | ${desafio['tiempo_estimado_minutos']} min',
-                                  _getIcono(desafio['tipo']),
-                                  _getColor(desafio['tipo']),
-                                );
-                              }).toList(),
-                            ),
-
-                      const SizedBox(height: 30),
-                      Center(
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.emoji_events,
+                        const SizedBox(height: 30),
+                        _buildPointsCard(),
+                        const SizedBox(height: 30),
+                        const Text(
+                          'Desafíos disponibles:',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
-                          label: const Text(
-                            'VER MIS PREMIOS',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 15,
+                        ),
+                        const SizedBox(height: 15),
+
+                        // Generación dinámica de desafíos desde el Backend[cite: 1]
+                        _desafios.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20),
+                                child: Center(
+                                  child: Text("No hay desafíos disponibles"),
+                                ),
+                              )
+                            : Column(
+                                children: _desafios.map((desafio) {
+                                  return _buildChallengeCard(
+                                    desafio['titulo'] ?? 'Desafío',
+                                    '+${desafio['puntos']} pts',
+                                    _getIcono(desafio['tipo']),
+                                    _getColor(desafio['tipo']),
+                                  );
+                                }).toList(),
+                              ),
+
+                        const SizedBox(height: 30),
+                        Center(
+                          child: ElevatedButton.icon(
+                            onPressed: () {},
+                            icon: const Icon(
+                              Icons.emoji_events,
+                              color: Colors.white,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                            label: const Text(
+                              'VER MIS PREMIOS',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 15,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
       ),
     );
   }
