@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://mapachesecure-backend.onrender.com';
+  static const String _baseUrl = 'http://10.0.2.2:8000';
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -39,7 +39,9 @@ class ApiService {
     );
     final data = jsonDecode(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+      throw Exception(
+        data['detail'] ?? 'Error del servidor (${response.statusCode})',
+      );
     }
     return data;
   }

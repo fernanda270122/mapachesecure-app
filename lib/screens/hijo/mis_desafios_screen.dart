@@ -4,6 +4,7 @@ import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';
 
 class MisDesafiosScreen extends StatefulWidget {
   const MisDesafiosScreen({super.key});
@@ -99,88 +100,90 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AppBackground(child: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _cargarDatos,
-              child: Column(
-                children: [
-                  // Cabecera de progreso con datos reales[cite: 1]
-                  Container(
-                    margin: const EdgeInsets.all(20),
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                        ),
-                      ],
+      body: AppBackground(
+        child: _cargando
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _cargarDatos,
+                child: Column(
+                  children: [
+                    // Cabecera de progreso con datos reales[cite: 1]
+                    Container(
+                      margin: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _StatWidget(
+                            label: 'Completados',
+                            value: '$_completadosCount',
+                            color: Colors.green,
+                          ),
+                          _StatWidget(
+                            label: 'Pendientes',
+                            value: '$_pendientesCount',
+                            color: Colors.orange,
+                          ),
+                          _StatWidget(
+                            label: 'Puntos hoy',
+                            value: '+$_puntosHoy',
+                            color: Colors.blue,
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _StatWidget(
-                          label: 'Completados',
-                          value: '$_completadosCount',
-                          color: Colors.green,
-                        ),
-                        _StatWidget(
-                          label: 'Pendientes',
-                          value: '$_pendientesCount',
-                          color: Colors.orange,
-                        ),
-                        _StatWidget(
-                          label: 'Puntos hoy',
-                          value: '+$_puntosHoy',
-                          color: Colors.blue,
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Misiones activas',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.white,
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Misiones activas',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  // Lista dinámica de desafíos desde el backend[cite: 1]
-                  Expanded(
-                    child: _desafiosActivos.isEmpty
-                        ? const Center(
-                            child: Text("¡No tienes misiones pendientes! 🦝"),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(20),
-                            itemCount: _desafiosActivos.length,
-                            itemBuilder: (context, index) {
-                              final desafio = _desafiosActivos[index];
-                              return _buildDesafioCard(
-                                context,
-                                desafio['titulo'] ?? 'Sin título',
-                                desafio['descripcion'] ?? 'Sin descripción',
-                                '${desafio['puntos']} pts',
-                                _getIcono(desafio['tipo']),
-                                _getColor(desafio['tipo']),
-                              );
-                            },
-                          ),
-                  ),
-                ],
+                    // Lista dinámica de desafíos desde el backend[cite: 1]
+                    Expanded(
+                      child: _desafiosActivos.isEmpty
+                          ? const Center(
+                              child: Text("¡No tienes misiones pendientes! 🦝"),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _desafiosActivos.length,
+                              itemBuilder: (context, index) {
+                                final desafio = _desafiosActivos[index];
+                                return _buildDesafioCard(
+                                  context,
+                                  desafio['titulo'] ?? 'Sin título',
+                                  desafio['descripcion'] ?? 'Sin descripción',
+                                  '${desafio['puntos']} pts',
+                                  _getIcono(desafio['tipo']),
+                                  _getColor(desafio['tipo']),
+                                  desafio,
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
               ),
-            ),
       ),
     );
   }
@@ -192,6 +195,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
     String puntos,
     IconData icono,
     Color color,
+    Map<String, dynamic> desafio, // Asegúrate de pasar el mapa del desafío aquí
   ) {
     return Card(
       elevation: 3,
@@ -216,8 +220,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.volume_up, color: Colors.indigo),
-              onPressed: () =>
-                  _tts.speak(subtitulo), // Lee la instrucción completa[cite: 1]
+              onPressed: () => _tts.speak(subtitulo),
             ),
             const SizedBox(width: 5),
             Column(
@@ -240,7 +243,20 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
             ),
           ],
         ),
-        onTap: () {},
+        // ESTA ES LA PARTE QUE TE FALTABA:
+        onTap: () async {
+          final resultado = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetalleDesafioScreen(desafio: desafio),
+            ),
+          );
+
+          // Si el niño envió la evidencia, refrescamos la lista principal
+          if (resultado == true) {
+            _cargarDatos();
+          }
+        },
       ),
     );
   }
