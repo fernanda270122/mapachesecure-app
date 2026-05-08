@@ -119,8 +119,9 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
       if (rol == 'padre') {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePadreScreen()));
-      } else if(rol == 'hijo'){ 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      } else if(rol == 'hijo'){
+        // sesión persistente: hijo va directo al home, no al login
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeHijoScreen()));
       }
     } else {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
