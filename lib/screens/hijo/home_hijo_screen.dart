@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/tienda_recompensa_hijo_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,7 @@ class HomeHijoScreen extends StatefulWidget {
 }
 
 class _HomeHijoScreenState extends State<HomeHijoScreen> {
+  final FlutterTts _tts = FlutterTts();
   String _nombre = '';
   int _puntos = 0;
   List<dynamic> _desafios = [];
@@ -27,6 +29,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
+    _tts.setLanguage('es-MX');
   }
 
   Future<void> _cargarDatos() async {
@@ -429,91 +432,108 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     Map<String, dynamic> desafio,
   ) {
     final String titulo = desafio['titulo'] ?? 'Desafío';
+    final String descripcion = desafio['descripcion'] ?? 'Sin descripción';
     final String puntos = '+${desafio['puntos']} pts';
-    final String tipo = desafio['tipo'] ?? 'general';
-    final IconData icono = _getIcono(tipo);
-    final Color color = _getColor(tipo);
+
+    // Normalizamos el tipo para el estilo (acoplando cognitivo/cognitiva)
+    String tipoRaw = (desafio['tipo'] ?? 'general').toString().toLowerCase();
+    if (tipoRaw == 'cognitivo') tipoRaw = 'cognitiva';
+    if (tipoRaw == 'fisico') tipoRaw = 'fisica';
+
+    final IconData icono = _getIcono(tipoRaw);
+    final Color color = _getColor(tipoRaw);
 
     return Card(
-      elevation: 0,
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 15),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: color.withOpacity(0.2), width: 1),
-      ),
-      child: InkWell(
-        // Usamos InkWell para que toda la tarjeta sea clickeable
-        borderRadius: BorderRadius.circular(20),
-        onTap: () async {
-          // Navega a la pantalla de enviar evidencia
-          final resultado = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DetalleDesafioScreen(desafio: desafio),
-            ),
-          );
-
-          // Si completó el desafío, refrescamos los puntos en el Home
-          if (resultado == true) {
-            _cargarDatos();
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icono, color: color, size: 30),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      titulo,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      tipo.toUpperCase(),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Text(
-                  puntos,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Theme(
+        // Quitamos las líneas divisorias que ExpansionTile pone por defecto
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: CircleAvatar(
+            backgroundColor: color.withOpacity(0.1),
+            child: Icon(icono, color: color),
           ),
+          title: Text(
+            titulo,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Text(
+            tipoRaw.toUpperCase(),
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              puntos,
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          descripcion,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.volume_up, color: Colors.indigo),
+                        onPressed: () => _tts.speak(descripcion),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final resultado = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DetalleDesafioScreen(desafio: desafio),
+                          ),
+                        );
+                        if (resultado == true) _cargarDatos();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: const Text(
+                        '¡Ir a realizar el desafío!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

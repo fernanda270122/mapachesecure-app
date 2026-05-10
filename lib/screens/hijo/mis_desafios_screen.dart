@@ -136,16 +136,35 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                               itemCount: _desafiosActivos.length,
                               itemBuilder: (context, index) {
                                 final desafio = _desafiosActivos[index];
-                                final String tipoActual =
-                                    desafio['tipo'] ?? 'General';
 
-                                // --- CAMBIO 3: LÓGICA DE ENCABEZADOS POR SECCIÓN ---
+                                // --- NORMALIZACIÓN PARA ACOPLAR RAMAS ---
+                                // Convertimos a minúsculas y si es 'cognitivo' lo tratamos como 'cognitiva'
+                                String tipoRaw = (desafio['tipo'] ?? 'General')
+                                    .toString()
+                                    .toLowerCase();
+                                if (tipoRaw == 'cognitivo')
+                                  tipoRaw = 'cognitiva';
+                                if (tipoRaw == 'fisico') tipoRaw = 'fisica';
+
+                                final String tipoActual =
+                                    tipoRaw; // Ahora tipoActual es consistente
+
+                                // --- LÓGICA DE ENCABEZADOS POR SECCIÓN ---
                                 bool mostrarEncabezado = false;
                                 if (index == 0) {
                                   mostrarEncabezado = true;
                                 } else {
-                                  final tipoAnterior =
-                                      _desafiosActivos[index - 1]['tipo'];
+                                  // También normalizamos el tipo anterior para comparar peras con peras
+                                  String tipoAnterior =
+                                      (_desafiosActivos[index - 1]['tipo'] ??
+                                              '')
+                                          .toString()
+                                          .toLowerCase();
+                                  if (tipoAnterior == 'cognitivo')
+                                    tipoAnterior = 'cognitiva';
+                                  if (tipoAnterior == 'fisico')
+                                    tipoAnterior = 'fisica';
+
                                   if (tipoActual != tipoAnterior)
                                     mostrarEncabezado = true;
                                 }
@@ -161,7 +180,8 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                                           left: 5,
                                         ),
                                         child: Text(
-                                          tipoActual.toUpperCase(),
+                                          tipoActual
+                                              .toUpperCase(), // Se verá siempre igual (ej: COGNITIVA)
                                           style: TextStyle(
                                             color: _getColor(tipoActual),
                                             fontWeight: FontWeight.bold,
