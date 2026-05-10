@@ -35,18 +35,22 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
 
     try {
       final api = ApiService();
-
-      // 1. Obtener todos los desafíos disponibles (Pendientes)[cite: 1]
       final desafiosData = await api.get('/desafios/');
-
-      // 2. Obtener desafíos ya completados para el contador[cite: 1]
       final completadosData = await api.get('/desafios/completados/$hijoId');
-
-      // 3. Obtener puntos totales[cite: 1]
       final puntosData = await api.get('/desafios/puntos/$hijoId');
 
       setState(() {
-        _desafiosActivos = desafiosData is List ? desafiosData : [];
+        if (desafiosData is List) {
+          // --- CAMBIO 1: ORDENAR POR TIPO ---
+          List<dynamic> listaTemporal = List.from(desafiosData);
+          listaTemporal.sort((a, b) {
+            String tipoA = (a['tipo'] ?? '').toString().toLowerCase();
+            String tipoB = (b['tipo'] ?? '').toString().toLowerCase();
+            return tipoA.compareTo(tipoB);
+          });
+          _desafiosActivos = listaTemporal;
+        }
+
         _completadosCount = completadosData is List
             ? completadosData.length
             : 0;
@@ -60,28 +64,28 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
     }
   }
 
-  // Helpers para iconos y colores según el tipo del backend[cite: 1]
+  // --- CAMBIO 2: HELPERS ACTUALIZADOS PARA TUS TIPOS ---
   IconData _getIcono(String? tipo) {
-    switch (tipo) {
-      case 'cognitiva':
-        return Icons.calculate;
-      case 'fisica':
-        return Icons.fitness_center;
-      case 'hogar':
-        return Icons.bed;
+    switch (tipo?.toLowerCase()) {
+      case 'cognitivo':
+        return Icons.psychology;
+      case 'fisico':
+        return Icons.directions_run;
+      case 'orden':
+        return Icons.auto_awesome;
       default:
         return Icons.rocket_launch;
     }
   }
 
   Color _getColor(String? tipo) {
-    switch (tipo) {
-      case 'cognitiva':
+    switch (tipo?.toLowerCase()) {
+      case 'cognitivo':
         return Colors.blue;
-      case 'fisica':
+      case 'fisico':
         return Colors.orange;
-      case 'hogar':
-        return Colors.purple;
+      case 'orden':
+        return Colors.teal;
       default:
         return Colors.blueAccent;
     }
@@ -107,42 +111,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                 onRefresh: _cargarDatos,
                 child: Column(
                   children: [
-                    // Cabecera de progreso con datos reales[cite: 1]
-                    Container(
-                      margin: const EdgeInsets.all(20),
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _StatWidget(
-                            label: 'Completados',
-                            value: '$_completadosCount',
-                            color: Colors.green,
-                          ),
-                          _StatWidget(
-                            label: 'Pendientes',
-                            value: '$_pendientesCount',
-                            color: Colors.orange,
-                          ),
-                          _StatWidget(
-                            label: 'Puntos hoy',
-                            value: '+$_puntosHoy',
-                            color: Colors.blue,
-                          ),
-                        ],
-                      ),
-                    ),
-
+                    _buildProgresoHeader(),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       child: Align(
@@ -152,13 +121,11 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.white,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ),
-
-                    // Lista dinámica de desafíos desde el backend[cite: 1]
                     Expanded(
                       child: _desafiosActivos.isEmpty
                           ? const Center(
@@ -169,14 +136,51 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                               itemCount: _desafiosActivos.length,
                               itemBuilder: (context, index) {
                                 final desafio = _desafiosActivos[index];
-                                return _buildDesafioCard(
-                                  context,
-                                  desafio['titulo'] ?? 'Sin título',
-                                  desafio['descripcion'] ?? 'Sin descripción',
-                                  '${desafio['puntos']} pts',
-                                  _getIcono(desafio['tipo']),
-                                  _getColor(desafio['tipo']),
-                                  desafio,
+                                final String tipoActual =
+                                    desafio['tipo'] ?? 'General';
+
+                                // --- CAMBIO 3: LÓGICA DE ENCABEZADOS POR SECCIÓN ---
+                                bool mostrarEncabezado = false;
+                                if (index == 0) {
+                                  mostrarEncabezado = true;
+                                } else {
+                                  final tipoAnterior =
+                                      _desafiosActivos[index - 1]['tipo'];
+                                  if (tipoActual != tipoAnterior)
+                                    mostrarEncabezado = true;
+                                }
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (mostrarEncabezado)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 15,
+                                          bottom: 8,
+                                          left: 5,
+                                        ),
+                                        child: Text(
+                                          tipoActual.toUpperCase(),
+                                          style: TextStyle(
+                                            color: _getColor(tipoActual),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            letterSpacing: 1.1,
+                                          ),
+                                        ),
+                                      ),
+                                    _buildDesafioCard(
+                                      context,
+                                      desafio['titulo'] ?? 'Sin título',
+                                      desafio['descripcion'] ??
+                                          'Sin descripción',
+                                      '${desafio['puntos']} pts',
+                                      _getIcono(tipoActual),
+                                      _getColor(tipoActual),
+                                      desafio,
+                                    ),
+                                  ],
                                 );
                               },
                             ),
@@ -188,6 +192,41 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
     );
   }
 
+  // Header separado para limpiar el build principal
+  Widget _buildProgresoHeader() {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _StatWidget(
+            label: 'Completados',
+            value: '$_completadosCount',
+            color: Colors.green,
+          ),
+          _StatWidget(
+            label: 'Pendientes',
+            value: '$_pendientesCount',
+            color: Colors.orange,
+          ),
+          _StatWidget(
+            label: 'Puntos hoy',
+            value: '+$_puntosHoy',
+            color: Colors.blue,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDesafioCard(
     BuildContext context,
     String titulo,
@@ -195,7 +234,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
     String puntos,
     IconData icono,
     Color color,
-    Map<String, dynamic> desafio, // Asegúrate de pasar el mapa del desafío aquí
+    Map<String, dynamic> desafio,
   ) {
     return Card(
       elevation: 3,
@@ -243,7 +282,6 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
             ),
           ],
         ),
-        // ESTA ES LA PARTE QUE TE FALTABA:
         onTap: () async {
           final resultado = await Navigator.push(
             context,
@@ -251,11 +289,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
               builder: (context) => DetalleDesafioScreen(desafio: desafio),
             ),
           );
-
-          // Si el niño envió la evidencia, refrescamos la lista principal
-          if (resultado == true) {
-            _cargarDatos();
-          }
+          if (resultado == true) _cargarDatos();
         },
       ),
     );
@@ -266,7 +300,6 @@ class _StatWidget extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-
   const _StatWidget({
     required this.label,
     required this.value,

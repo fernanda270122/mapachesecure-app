@@ -79,17 +79,41 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         'dificultad': dificultad,
         'cantidad': 3,
       });
-      final nuevos = List<dynamic>.from(resultado['desafios'] ?? []);
-      final acumulados = List<dynamic>.from(_desafiosIA)..addAll(nuevos);
+
+      final nuevosDesafiosIA = List<dynamic>.from(resultado['desafios'] ?? []);
+
+      for (var desafio in nuevosDesafiosIA) {
+        await _api.post('/desafios/', {
+          'titulo': desafio['titulo'],
+          'descripcion': desafio['descripcion'],
+          'puntos': desafio['puntos'] ?? 50,
+          'tipo': categoria,
+          'hijo_id': hijoId,
+        });
+      }
+
+      final acumulados = List<dynamic>.from(_desafiosIA)
+        ..addAll(nuevosDesafiosIA);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('desafios_ia', jsonEncode(acumulados));
+
       setState(() {
         _desafiosIA = acumulados;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Misiones enviadas al dispositivo del hijo! 🦝'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      _cargarDesafiosSistema();
     } catch (e) {
+      print("Error al sincronizar con el hijo: $e");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error al generar desafíos: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error al asignar desafíos: $e')));
     } finally {
       setState(() => _cargando = false);
     }
@@ -207,72 +231,73 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: AppBackground(child: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                _buildSeccion(
-                  'Cognitiva',
-                  _desafiosCognitiva,
-                  Colors.blue,
-                  Icons.psychology,
-                ),
-                _buildSeccion(
-                  'Física',
-                  _desafiosFisica,
-                  Colors.orange,
-                  Icons.fitness_center,
-                ),
-                _buildSeccion(
-                  'Hogar',
-                  _desafiosHogar,
-                  Colors.green,
-                  Icons.home,
-                ),
-                if (_desafiosIA.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Generados con IA',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
+      body: AppBackground(
+        child: _cargando
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  _buildSeccion(
+                    'Cognitiva',
+                    _desafiosCognitiva,
+                    Colors.blue,
+                    Icons.psychology,
                   ),
-                  const SizedBox(height: 10),
-                  ..._desafiosIA.asMap().entries.map(
-                    (entry) => _buildChallengeCard(
-                      entry.value['titulo'] ?? '',
-                      entry.value['descripcion'] ?? '',
-                      '${entry.value['puntos']} pts · ${entry.value['tiempo_estimado_minutos']} min',
-                      Colors.purple,
-                      Icons.auto_awesome,
-                      onEliminar: () => _eliminarDesafioIA(entry.key),
+                  _buildSeccion(
+                    'Física',
+                    _desafiosFisica,
+                    Colors.orange,
+                    Icons.fitness_center,
+                  ),
+                  _buildSeccion(
+                    'Hogar',
+                    _desafiosHogar,
+                    Colors.green,
+                    Icons.home,
+                  ),
+                  if (_desafiosIA.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Generados con IA',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ..._desafiosIA.asMap().entries.map(
+                      (entry) => _buildChallengeCard(
+                        entry.value['titulo'] ?? '',
+                        entry.value['descripcion'] ?? '',
+                        '${entry.value['puntos']} pts · ${entry.value['tiempo_estimado_minutos']} min',
+                        Colors.purple,
+                        Icons.auto_awesome,
+                        onEliminar: () => _eliminarDesafioIA(entry.key),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => _mostrarFormularioIA(context),
+                      child: const Text(
+                        'Generar nuevos desafíos',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () => _mostrarFormularioIA(context),
-                    child: const Text(
-                      'Generar nuevos desafíos',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/tienda_recompensa_hijo_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
@@ -67,31 +68,29 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     }
   }
 
-  // Asignación de iconos basada en las categorías de ia_service.py[cite: 1]
   IconData _getIcono(String? tipo) {
-    switch (tipo) {
-      case 'cognitiva':
-        return Icons.calculate;
-      case 'fisica':
-        return Icons.fitness_center;
-      case 'hogar':
-        return Icons.bed;
+    switch (tipo?.toLowerCase()) {
+      case 'cognitivo':
+        return Icons.psychology;
+      case 'fisico':
+        return Icons.directions_run;
+      case 'orden':
+        return Icons.auto_awesome;
       default:
-        return Icons.star;
+        return Icons.rocket_launch;
     }
   }
 
-  // Asignación de colores basada en las categorías de ia_service.py[cite: 1]
   Color _getColor(String? tipo) {
-    switch (tipo) {
-      case 'cognitiva':
+    switch (tipo?.toLowerCase()) {
+      case 'cognitivo':
         return Colors.blue;
-      case 'fisica':
-        return Colors.green;
-      case 'hogar':
+      case 'fisico':
         return Colors.orange;
+      case 'orden':
+        return Colors.teal;
       default:
-        return Colors.blueGrey;
+        return Colors.blueAccent;
     }
   }
 
@@ -276,21 +275,22 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                         ),
                         const SizedBox(height: 15),
 
-                        // Generación dinámica de desafíos desde el Backend[cite: 1]
+                        // Generación dinámica de desafíos desde el Backend
                         _desafios.isEmpty
                             ? const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 20),
                                 child: Center(
-                                  child: Text("No hay desafíos disponibles"),
+                                  child: Text(
+                                    "No hay desafíos disponibles",
+                                    style: TextStyle(color: Colors.white70),
+                                  ),
                                 ),
                               )
                             : Column(
                                 children: _desafios.map((desafio) {
                                   return _buildChallengeCard(
-                                    desafio['titulo'] ?? 'Desafío',
-                                    '+${desafio['puntos']} pts',
-                                    _getIcono(desafio['tipo']),
-                                    _getColor(desafio['tipo']),
+                                    context, // Agregamos el context para navegar
+                                    desafio, // Pasamos el mapa completo
                                   );
                                 }).toList(),
                               ),
@@ -425,11 +425,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
   }
 
   Widget _buildChallengeCard(
-    String titulo,
-    String desc,
-    IconData icono,
-    Color color,
+    BuildContext context,
+    Map<String, dynamic> desafio,
   ) {
+    final String titulo = desafio['titulo'] ?? 'Desafío';
+    final String puntos = '+${desafio['puntos']} pts';
+    final String tipo = desafio['tipo'] ?? 'general';
+    final IconData icono = _getIcono(tipo);
+    final Color color = _getColor(tipo);
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 15),
@@ -437,30 +441,78 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: color.withOpacity(0.2), width: 1),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(15),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icono, color: color, size: 30),
-        ),
-        title: Text(
-          titulo,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(desc),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: const Text(
-            'Hacer',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      child: InkWell(
+        // Usamos InkWell para que toda la tarjeta sea clickeable
+        borderRadius: BorderRadius.circular(20),
+        onTap: () async {
+          // Navega a la pantalla de enviar evidencia
+          final resultado = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetalleDesafioScreen(desafio: desafio),
+            ),
+          );
+
+          // Si completó el desafío, refrescamos los puntos en el Home
+          if (resultado == true) {
+            _cargarDatos();
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icono, color: color, size: 30),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      tipo.toUpperCase(),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  puntos,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

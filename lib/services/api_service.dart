@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // URL de producción — no cambiar a 10.0.2.2:8000 (solo funciona en emulador)
+  // URL de producción — no cambiar a 'http://10.0.2.2:8000'; (solo funciona en emulador)
   static const String _baseUrl = 'https://mapachesecure-backend.onrender.com';
 
   Future<String?> _getToken() async {
