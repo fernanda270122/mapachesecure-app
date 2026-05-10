@@ -10,6 +10,7 @@ import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/screens/padre/tienda_recompensas_screen.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -181,9 +182,15 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
             ),
             _buildDrawerItem(
               context,
-              Icons.settings_suggest,
-              'Límites y Reglas',
-              () {},
+              Icons.lightbulb_outline,
+              'Consejos para Padres',
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ConsejosPadresScreen()),
+                );
+              },
             ),
             const Divider(),
             _buildDrawerItem(context, Icons.exit_to_app, 'Cerrar Sesión', () async {
