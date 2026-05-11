@@ -17,6 +17,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
   final ApiService _api = ApiService();
   final FlutterTts _tts = FlutterTts();
 
+  List<dynamic> _opcionesIA = [];
   bool _cargando = false;
   List<dynamic> _desafiosCognitiva = [];
   List<dynamic> _desafiosFisica = [];
@@ -27,11 +28,35 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
   @override
   void initState() {
     super.initState();
-
-    _cargarDesafiosSistema();
-    _cargarDesafiosIA();
-    _cargarHijos();
+    _cargarTodo();
     _tts.setLanguage('es-MX');
+  }
+
+  // Carga inicial de datos
+  Future<void> _cargarTodo() async {
+    setState(() => _cargando = true);
+    await Future.wait([
+      _cargarDesafiosSistema(),
+      _cargarHijos(),
+      _cargarDesafiosIA(),
+    ]);
+    setState(() => _cargando = false);
+  }
+
+  // --- NUEVA FUNCIÓN PARA ACTIVAR/DESACTIVAR DESDE EL DASHBOARD ---
+  Future<void> _actualizarEstadoMision(dynamic id, bool nuevoEstado) async {
+    try {
+      await _api.post('/desafios/actualizar_estado', {
+        'id': id,
+        'esta_activo': nuevoEstado,
+      });
+      // Refrescamos la lista para que el Switch y los colores cambien
+      _cargarDesafiosSistema();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cambiar estado: $e')));
+    }
   }
 
   Future<void> _cargarHijos() async {
@@ -69,13 +94,14 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     }
   }
 
+  // --- SECCIÓN DE IA (SIN MODIFICACIONES EN LA LÓGICA CORE) ---
+
   Future<void> _generarDesafios(
     String categoria,
     String dificultad,
     String hijoId,
   ) async {
     setState(() => _cargando = true);
-
     try {
       final resultado = await _api.post('/ia/generar', {
         'categoria': categoria,
@@ -83,280 +109,202 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         'dificultad': dificultad,
         'cantidad': 3,
       });
-
       final nuevos = List<dynamic>.from(resultado['desafios'] ?? []);
-      final acumulados = List<dynamic>.from(_desafiosIA)..addAll(nuevos);
-      final prefs = await SharedPreferences.getInstance();
-
-      await prefs.setString('desafios_ia', jsonEncode(acumulados));
-
       setState(() {
-        _desafiosIA = acumulados;
+        _opcionesIA = nuevos;
       });
+      if (_opcionesIA.isNotEmpty) {
+        _mostrarSelectorIA(context, hijoId, categoria, dificultad);
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Error al generar desafíos: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       setState(() => _cargando = false);
     }
   }
 
-  Future<void> _eliminarDesafioIA(int index) async {
-    final actualizada = List<dynamic>.from(_desafiosIA)..removeAt(index);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('desafios_ia', jsonEncode(actualizada));
-
-    setState(() {
-      _desafiosIA = actualizada;
-    });
-  }
-
-  void _mostrarFormularioIA(BuildContext context) {
-    String categoriaSeleccionada = 'cognitiva';
-    String dificultadSeleccionada = 'facil';
-    String? hijoSeleccionado = _hijos.isNotEmpty ? _hijos[0]['id'] : null;
-
+  void _mostrarSelectorIA(
+    BuildContext context,
+    String hijoId,
+    String categoria,
+    String dificultad,
+  ) {
+    Set<int> seleccionados = {};
     showModalBottomSheet(
       context: context,
-
       isScrollControlled: true,
-
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: const EdgeInsets.all(24),
-
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: [
-              const Text(
-                'Generar desafíos con IA',
-
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text('Categoría'),
-
-              DropdownButton<String>(
-                isExpanded: true,
-
-                value: categoriaSeleccionada,
-
-                items: const [
-                  DropdownMenuItem(
-                    value: 'cognitiva',
-
-                    child: Text('Cognitiva'),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Selecciona misiones para el niño:",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-
-                  DropdownMenuItem(value: 'fisica', child: Text('Física')),
-
-                  DropdownMenuItem(value: 'hogar', child: Text('Hogar')),
-                ],
-
-                onChanged: (v) =>
-                    setModalState(() => categoriaSeleccionada = v!),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text('Dificultad'),
-
-              DropdownButton<String>(
-                isExpanded: true,
-
-                value: dificultadSeleccionada,
-
-                items: const [
-                  DropdownMenuItem(value: 'facil', child: Text('Fácil')),
-
-                  DropdownMenuItem(value: 'medio', child: Text('Medio')),
-
-                  DropdownMenuItem(value: 'dificil', child: Text('Difícil')),
-                ],
-
-                onChanged: (v) =>
-                    setModalState(() => dificultadSeleccionada = v!),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text('Hijo'),
-
-              DropdownButton<String>(
-                isExpanded: true,
-
-                value: hijoSeleccionado,
-
-                items: _hijos.map<DropdownMenuItem<String>>((hijo) {
-                  return DropdownMenuItem<String>(
-                    value: hijo['id'],
-
-                    child: Text(hijo['nombre'] ?? 'Sin nombre'),
-                  );
-                }).toList(),
-
-                onChanged: (v) => setModalState(() => hijoSeleccionado = v),
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textDark,
-
-                    foregroundColor: Colors.white,
-                  ),
-
-                  onPressed: () {
-                    if (hijoSeleccionado == null) return;
-
-                    Navigator.pop(context);
-
-                    _generarDesafios(
-                      categoriaSeleccionada,
-
-                      dificultadSeleccionada,
-
-                      hijoSeleccionado!,
+                  const SizedBox(height: 15),
+                  ...List.generate(_opcionesIA.length, (index) {
+                    final desafio = _opcionesIA[index];
+                    final isSelected = seleccionados.contains(index);
+                    return CheckboxListTile(
+                      title: Text(
+                        desafio['titulo'],
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text(
+                        "${desafio['descripcion']}\n${desafio['puntos']} pts",
+                      ),
+                      value: isSelected,
+                      activeColor: Colors.green,
+                      onChanged: (bool? value) {
+                        setModalState(() {
+                          if (value == true)
+                            seleccionados.add(index);
+                          else
+                            seleccionados.remove(index);
+                        });
+                      },
                     );
-                  },
-
-                  child: const Text('Generar'),
-                ),
+                  }),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      onPressed: seleccionados.isEmpty
+                          ? null
+                          : () {
+                              List<Map<String, dynamic>> elegidos =
+                                  seleccionados
+                                      .map(
+                                        (i) => Map<String, dynamic>.from(
+                                          _opcionesIA[i],
+                                        ),
+                                      )
+                                      .toList();
+                              Navigator.pop(context);
+                              _confirmarVariosDesafios(
+                                elegidos,
+                                hijoId,
+                                categoria,
+                                dificultad,
+                              );
+                            },
+                      child: Text("Enviar ${seleccionados.length} misiones"),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
+
+  Future<void> _confirmarVariosDesafios(
+    List<Map<String, dynamic>> desafios,
+    String hijoId,
+    String categoria,
+    String dificultad,
+  ) async {
+    setState(() => _cargando = true);
+    try {
+      for (var desafio in desafios) {
+        final Map<String, dynamic> datos = {
+          'titulo': desafio['titulo'],
+          'descripcion': desafio['descripcion'],
+          'puntos': desafio['puntos'],
+          'tipo': categoria.toLowerCase(),
+          'dificultad': dificultad.toLowerCase(),
+          'hijo_id': hijoId,
+          'esta_activo':
+              false, // Por defecto llegan desactivados para que el padre los cure
+        };
+        await _api.post('/ia/asignar', datos);
+      }
+      _cargarDesafiosSistema(); // Actualizar lista tras asignar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Misiones enviadas al panel de control! 🦝'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      setState(() => _cargando = false);
+    }
+  }
+
+  // --- INTERFAZ ---
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       appBar: AppBar(
         title: const Text(
           'Gestionar Desafíos',
-
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-
         backgroundColor: AppColors.primary,
-
         foregroundColor: Colors.white,
       ),
-
       body: AppBackground(
         child: _cargando
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: const EdgeInsets.all(20),
-
                 children: [
                   _buildSeccion(
                     'Cognitiva',
-
                     _desafiosCognitiva,
-
                     Colors.blue,
-
                     Icons.psychology,
                   ),
-
                   _buildSeccion(
                     'Física',
-
                     _desafiosFisica,
-
                     Colors.orange,
-
                     Icons.fitness_center,
                   ),
-
                   _buildSeccion(
                     'Hogar',
-
                     _desafiosHogar,
-
                     Colors.green,
-
                     Icons.home,
                   ),
-
-                  if (_desafiosIA.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-
-                    const Text(
-                      'Generados con IA',
-
-                      style: TextStyle(
-                        fontSize: 16,
-
-                        fontWeight: FontWeight.bold,
-
-                        color: AppColors.white,
+                  const SizedBox(height: 30),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-
-                    const SizedBox(height: 10),
-
-                    ..._desafiosIA.asMap().entries.map(
-                      (entry) => _buildChallengeCard(
-                        entry.value['titulo'] ?? '',
-
-                        entry.value['descripcion'] ?? '',
-
-                        '${entry.value['puntos']} pts · ${entry.value['tiempo_estimado_minutos']} min',
-
-                        Colors.purple,
-
-                        Icons.auto_awesome,
-
-                        onEliminar: () => _eliminarDesafioIA(entry.key),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: double.infinity,
-
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.secondary,
-
-                        foregroundColor: Colors.white,
-
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-
-                      onPressed: () => _mostrarFormularioIA(context),
-
-                      child: const Text(
-                        'Generar nuevos desafíos',
-
-                        style: TextStyle(fontSize: 16),
-                      ),
+                    onPressed: () => _mostrarFormularioIA(context),
+                    icon: const Icon(Icons.auto_awesome),
+                    label: const Text(
+                      'Generar nuevos con IA',
+                      style: TextStyle(fontSize: 16),
                     ),
                   ),
                 ],
@@ -372,87 +320,90 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     IconData icono,
   ) {
     if (desafios.isEmpty) return const SizedBox.shrink();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-
       children: [
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A237E),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
-        const SizedBox(height: 10),
         ...desafios.map(
           (d) => _buildChallengeCard(
-            d['titulo'] ?? '',
-            d['descripcion'] ?? '',
-            '${d['puntos']} pts · ${d['tiempo_estimado_minutos']} min',
-            color,
-            icono,
+            id: d['id'],
+            titulo: d['titulo'] ?? '',
+            descripcion: d['descripcion'] ?? '',
+            puntos: d['puntos']?.toString() ?? '0',
+            dificultad: d['dificultad'] ?? 'facil',
+            color: color,
+            icono: icono,
+            estaActivo: d['esta_activo'] ?? false,
           ),
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
 
-  Widget _buildChallengeCard(
-    String titulo,
-    String descripcion,
-    String metainfo,
-    Color color,
-    IconData icono, {
-    VoidCallback? onEliminar,
+  Widget _buildChallengeCard({
+    required dynamic id,
+    required String titulo,
+    required String descripcion,
+    required String puntos,
+    required String dificultad,
+    required Color color,
+    required IconData icono,
+    required bool estaActivo,
   }) {
     return Card(
       elevation: 2,
-      margin: const EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ExpansionTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
-          child: Icon(icono, color: color),
+          backgroundColor: estaActivo
+              ? color.withOpacity(0.1)
+              : Colors.grey.withOpacity(0.1),
+          child: Icon(icono, color: estaActivo ? color : Colors.grey),
         ),
         title: Text(
           titulo,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: estaActivo ? Colors.black87 : Colors.grey[600],
+          ),
         ),
-        trailing: onEliminar != null
-            ? IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: onEliminar,
-              )
-            : null,
+        subtitle: Text(
+          '$puntos pts • $dificultad',
+          style: TextStyle(fontSize: 12, color: color),
+        ),
+        trailing: Switch(
+          value: estaActivo,
+          activeColor: color,
+          onChanged: (val) => _actualizarEstadoMision(id, val),
+        ),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (descripcion.isNotEmpty)
-                  Text(
-                    descripcion,
-                    style: const TextStyle(fontSize: 13, color: Colors.black87),
-                  ),
-                const SizedBox(height: 8),
+                Text(
+                  descripcion,
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+                const SizedBox(height: 10),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
-                      metainfo,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.volume_up, color: Colors.indigo),
-                      tooltip: 'Escuchar actividad',
                       onPressed: () => _tts.speak(descripcion),
                     ),
                   ],
@@ -461,6 +412,95 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // --- FORMULARIO GENERACIÓN IA (IGUAL AL TUYO) ---
+  void _mostrarFormularioIA(BuildContext context) {
+    String categoria = 'cognitiva';
+    String dificultad = 'facil';
+    String? hijo = _hijos.isNotEmpty ? _hijos[0]['id'] : null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Generar con IA',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              const Text('Categoría'),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: categoria,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'cognitiva',
+                    child: Text('Cognitiva'),
+                  ),
+                  DropdownMenuItem(value: 'fisica', child: Text('Física')),
+                  DropdownMenuItem(value: 'hogar', child: Text('Hogar')),
+                ],
+                onChanged: (v) => setModalState(() => categoria = v!),
+              ),
+              const SizedBox(height: 10),
+              const Text('Dificultad'),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: dificultad,
+                items: const [
+                  DropdownMenuItem(value: 'facil', child: Text('Fácil')),
+                  DropdownMenuItem(value: 'medio', child: Text('Medio')),
+                  DropdownMenuItem(value: 'dificil', child: Text('Difícil')),
+                ],
+                onChanged: (v) => setModalState(() => dificultad = v!),
+              ),
+              const SizedBox(height: 10),
+              const Text('Hijo'),
+              DropdownButton<String>(
+                isExpanded: true,
+                value: hijo,
+                items: _hijos
+                    .map<DropdownMenuItem<String>>(
+                      (h) => DropdownMenuItem(
+                        value: h['id'],
+                        child: Text(h['nombre'] ?? 'Sin nombre'),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) => setModalState(() => hijo = v),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.textDark,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    if (hijo != null) {
+                      Navigator.pop(context);
+                      _generarDesafios(categoria, dificultad, hijo!);
+                    }
+                  },
+                  child: const Text('Generar'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

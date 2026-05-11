@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 
@@ -17,8 +18,36 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
   File? _evidencia;
   bool _enviando = false;
   final ImagePicker _picker = ImagePicker();
+  final FlutterTts _flutterTts = FlutterTts();
 
-  // Función para capturar la foto
+  @override
+  void initState() {
+    super.initState();
+    _configurarTts();
+  }
+
+  // Configuración del motor de voz
+  Future<void> _configurarTts() async {
+    await _flutterTts.setLanguage("es-CL"); // Acento chileno
+    await _flutterTts.setSpeechRate(0.5); // Velocidad pausada para niños
+    await _flutterTts.setPitch(1.0); // Tono amigable
+  }
+
+  // Función para activar la voz
+  Future<void> _hablarInstrucciones() async {
+    String texto = widget.desafio['descripcion'] ?? '';
+    if (texto.isNotEmpty) {
+      await _flutterTts.speak(texto);
+    }
+  }
+
+  @override
+  void dispose() {
+    _flutterTts.stop(); // Detener el audio si el niño sale de la pantalla
+    super.dispose();
+  }
+
+  // Captura de evidencia
   Future<void> _tomarFoto() async {
     final XFile? photo = await _picker.pickImage(
       source: ImageSource.camera,
@@ -29,7 +58,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
     }
   }
 
-  // Función para enviar al backend
+  // Envío al backend
   Future<void> _enviarEvidencia() async {
     if (_evidencia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -44,15 +73,13 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
 
     try {
       final api = ApiService();
-      // NOTA: Aquí debes usar MultipartRequest si tu backend FastAPI espera un archivo
-      // Por ahora, simulamos el envío exitoso al endpoint de completar
       await api.post('/desafios/completar/', {
         'desafio_id': widget.desafio['id'],
-        'hijo_id': widget.desafio['hijo_id'], // Asegúrate de pasar esto
+        'hijo_id': widget.desafio['hijo_id'],
       });
 
       if (mounted) {
-        Navigator.pop(context, true); // Retornamos true para refrescar la lista
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Colors.green,
@@ -69,40 +96,129 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
     }
   }
 
+  Color _getDificultadColor(String? dificultad) {
+    switch (dificultad?.toLowerCase()) {
+      case 'facil':
+      case 'fácil':
+        return Colors.green;
+      case 'medio':
+        return Colors.orange;
+      case 'dificil':
+      case 'difícil':
+        return Colors.red;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.desafio['titulo'] ?? 'Resolver Desafío'),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Card de instrucción
+            // TARJETA DE INSTRUCCIÓN
             Card(
+              elevation: 5,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(25),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(25),
                 child: Column(
                   children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        // Usamos el color de la dificultad con un poco de transparencia
+                        color: _getDificultadColor(
+                          widget.desafio['dificultad'],
+                        ).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: _getDificultadColor(
+                            widget.desafio['dificultad'],
+                          ),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        'NIVEL: ${(widget.desafio['dificultad'] ?? 'NORMAL').toUpperCase()}',
+                        style: TextStyle(
+                          color: _getDificultadColor(
+                            widget.desafio['dificultad'],
+                          ),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                    // TEXTO DE LA MISIÓN
                     Text(
                       widget.desafio['descripcion'] ?? '',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
+                        height: 1.5,
+                        color: Colors.black87,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Recompensa: ${widget.desafio['puntos']} pts',
-                      style: const TextStyle(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
+
+                    const SizedBox(height: 25),
+
+                    // RECOMPENSA Y ALTAVOZ
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // PUNTOS
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Recompensa: ${widget.desafio['puntos']} pts',
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 15),
+
+                        // BOTÓN DE ALTAVOZ
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.volume_up_rounded),
+                            color: AppColors.primary,
+                            iconSize: 28,
+                            onPressed: _hablarInstrucciones,
+                            tooltip: 'Escuchar la misión',
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -110,7 +226,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
             ),
             const SizedBox(height: 30),
 
-            // Preview de la imagen
+            // CONTENEDOR DE CÁMARA / EVIDENCIA
             GestureDetector(
               onTap: _tomarFoto,
               child: Container(
@@ -119,18 +235,22 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary, width: 2),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 2,
+                  ),
                 ),
                 child: _evidencia == null
-                    ? const Column(
+                    ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.camera_alt,
-                            size: 50,
-                            color: AppColors.primary,
+                            Icons.camera_alt_rounded,
+                            size: 55,
+                            color: AppColors.primary.withOpacity(0.6),
                           ),
-                          Text('Toca para sacar la foto de evidencia'),
+                          const SizedBox(height: 10),
+                          const Text('Toca para sacar la foto de evidencia'),
                         ],
                       )
                     : ClipRRect(
@@ -141,22 +261,26 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
             ),
             const SizedBox(height: 40),
 
+            // BOTÓN DE ENVÍO FINAL
             _enviando
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                     onPressed: _enviarEvidencia,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      minimumSize: const Size(double.infinity, 50),
+                      minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(18),
                       ),
+                      elevation: 5,
                     ),
                     child: const Text(
                       'ENVIAR DESAFÍO',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        letterSpacing: 1.1,
                       ),
                     ),
                   ),

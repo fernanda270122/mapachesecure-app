@@ -41,14 +41,20 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
 
       setState(() {
         if (desafiosData is List) {
-          // --- CAMBIO 1: ORDENAR POR TIPO ---
-          List<dynamic> listaTemporal = List.from(desafiosData);
-          listaTemporal.sort((a, b) {
+          // --- FILTRO CRÍTICO: Solo mostrar lo que el padre activó ---
+          // Esto hace que si 'esta_activo' es false, el niño ni se entere que existe
+          List<dynamic> listaFiltrada = desafiosData
+              .where((d) => d['esta_activo'] == true)
+              .toList();
+
+          // --- ORDENAR POR TIPO (Usando la lista ya filtrada) ---
+          listaFiltrada.sort((a, b) {
             String tipoA = (a['tipo'] ?? '').toString().toLowerCase();
             String tipoB = (b['tipo'] ?? '').toString().toLowerCase();
             return tipoA.compareTo(tipoB);
           });
-          _desafiosActivos = listaTemporal;
+
+          _desafiosActivos = listaFiltrada;
         }
 
         _completadosCount = completadosData is List
@@ -88,6 +94,21 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
         return Colors.teal;
       default:
         return Colors.blueAccent;
+    }
+  }
+
+  Color _getDificultadColor(String? dificultad) {
+    switch (dificultad?.toLowerCase()) {
+      case 'facil':
+      case 'fácil':
+        return Colors.green;
+      case 'medio':
+        return Colors.orange;
+      case 'dificil':
+      case 'difícil':
+        return Colors.red;
+      default:
+        return Colors.blueGrey;
     }
   }
 
@@ -256,70 +277,117 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
     Color color,
     Map<String, dynamic> desafio,
   ) {
+    // Extraemos la dificultad
+    final String dificultad = desafio['dificultad'] ?? 'Normal';
+    final Color dificultadColor = _getDificultadColor(dificultad);
+
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 15),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 10,
-        ),
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
-          child: Icon(icono, color: color),
-        ),
-        title: Text(
-          titulo,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(subtitulo),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.volume_up, color: Colors.indigo),
-              onPressed: () => _tts.speak(subtitulo),
+      clipBehavior: Clip.antiAlias, // Importante para que el badge no se salga
+      child: Stack(
+        children: [
+          // CONTENIDO PRINCIPAL
+          ListTile(
+            contentPadding: const EdgeInsets.only(
+              left: 20,
+              right: 15,
+              top: 15, // Aumentamos un poco el top por el badge
+              bottom: 10,
             ),
-            const SizedBox(width: 5),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            leading: CircleAvatar(
+              backgroundColor: color.withOpacity(0.1),
+              child: Icon(icono, color: color),
+            ),
+            title: Padding(
+              padding: const EdgeInsets.only(
+                top: 5,
+              ), // Espacio para no chocar con el badge
+              child: Text(
+                titulo,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            subtitle: Text(
+              subtitulo,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  puntos,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.volume_up, color: Colors.indigo),
+                  onPressed: () => _tts.speak(subtitulo),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: Colors.grey,
+                const SizedBox(width: 5),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      puntos,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: Colors.grey,
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-        onTap: () async {
-          final resultado = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DetalleDesafioScreen(desafio: desafio),
+            onTap: () async {
+              final resultado = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetalleDesafioScreen(desafio: desafio),
+                ),
+              );
+              if (resultado == true) _cargarDatos();
+            },
+          ),
+
+          // BADGE DE DIFICULTAD
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: dificultadColor,
+                borderRadius: const BorderRadius.only(
+                  bottomRight: Radius.circular(10),
+                ),
+              ),
+              child: Text(
+                dificultad.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
-          );
-          if (resultado == true) _cargarDatos();
-        },
+          ),
+        ],
       ),
     );
   }
 }
 
+// ESTO VA AL FINAL DEL ARCHIVO (Después de la última llave } de la pantalla)
 class _StatWidget extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+
   const _StatWidget({
     required this.label,
     required this.value,
@@ -329,16 +397,25 @@ class _StatWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           value,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: color,
+            color: color, // Aquí ya no debería salir rojo
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }

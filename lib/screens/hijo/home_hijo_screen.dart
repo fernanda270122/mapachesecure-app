@@ -47,23 +47,33 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         _puntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
 
         if (desafiosData is List) {
-          // 1. Filtramos para que no existan títulos repetidos
+          // --- PASO 1: FILTRAR POR ESTADO ACTIVO
+          // Primero nos quedamos solo con lo que el padre aprobó
+          var listaFiltrada = desafiosData
+              .where((d) => d['esta_activo'] == true)
+              .toList();
+
+          // --- PASO 2: FILTRAR REPETIDOS ---
+          // Sobre la lista ya aprobada, quitamos duplicados por título
           final nombresVistos = <String>{};
-          var listaLimpia = desafiosData
+          var listaLimpia = listaFiltrada
               .where((d) => nombresVistos.add(d['titulo'] ?? ''))
               .toList();
 
-          // 2. Mezclamos la lista limpia de forma aleatoria
+          // 3. Mezclamos
           listaLimpia.shuffle();
 
-          // 3. Tomamos solo los primeros 3 para el Home
+          // 4. Tomamos los 3 para las tarjetas del Home
           _desafios = listaLimpia.take(3).toList();
+
+          // NOTA: Eliminamos _pendientesCount para evitar errores
         } else {
           _desafios = [];
         }
         _cargando = false;
       });
     } catch (e) {
+      print("Error en Home: $e");
       setState(() {
         _nombre = nombre;
         _cargando = false;
@@ -94,6 +104,21 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         return Colors.teal;
       default:
         return Colors.blueAccent;
+    }
+  }
+
+  Color _getDificultadColor(String? dificultad) {
+    switch (dificultad?.toLowerCase()) {
+      case 'facil':
+      case 'fácil':
+        return Colors.green;
+      case 'medio':
+        return Colors.orange;
+      case 'dificil':
+      case 'difícil':
+        return Colors.red;
+      default:
+        return Colors.blueGrey;
     }
   }
 
@@ -434,8 +459,10 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     final String titulo = desafio['titulo'] ?? 'Desafío';
     final String descripcion = desafio['descripcion'] ?? 'Sin descripción';
     final String puntos = '+${desafio['puntos']} pts';
+    final String dificultad =
+        desafio['dificultad'] ?? 'fácil'; // Valor por defecto
 
-    // Normalizamos el tipo para el estilo (acoplando cognitivo/cognitiva)
+    // Normalizamos el tipo
     String tipoRaw = (desafio['tipo'] ?? 'general').toString().toLowerCase();
     if (tipoRaw == 'cognitivo') tipoRaw = 'cognitiva';
     if (tipoRaw == 'fisico') tipoRaw = 'fisica';
@@ -447,94 +474,140 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 15),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Theme(
-        // Quitamos las líneas divisorias que ExpansionTile pone por defecto
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          leading: CircleAvatar(
-            backgroundColor: color.withOpacity(0.1),
-            child: Icon(icono, color: color),
-          ),
-          title: Text(
-            titulo,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          subtitle: Text(
-            tipoRaw.toUpperCase(),
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              puntos,
-              style: TextStyle(color: color, fontWeight: FontWeight.bold),
-            ),
-          ),
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Divider(),
-                  Row(
+      clipBehavior:
+          Clip.antiAlias, // Mantiene el badge dentro del radio del Card
+      child: Stack(
+        children: [
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              leading: CircleAvatar(
+                backgroundColor: color.withOpacity(0.1),
+                child: Icon(icono, color: color),
+              ),
+              title: Padding(
+                padding: const EdgeInsets.only(
+                  top: 8,
+                ), // Bajamos un poco el título por el badge
+                child: Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              subtitle: Text(
+                tipoRaw.toUpperCase(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  puntos,
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                ),
+              ),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          descripcion,
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 14,
+                      const Divider(),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              descripcion,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.volume_up,
+                              color: Colors.indigo,
+                            ),
+                            onPressed: () => _tts.speak(descripcion),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final resultado = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetalleDesafioScreen(desafio: desafio),
+                              ),
+                            );
+                            if (resultado == true) _cargarDatos();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: color,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: const Text(
+                            '¡Ir a realizar el desafío!',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.volume_up, color: Colors.indigo),
-                        onPressed: () => _tts.speak(descripcion),
-                      ),
+                      const SizedBox(height: 10),
                     ],
                   ),
-                  const SizedBox(height: 15),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final resultado = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                DetalleDesafioScreen(desafio: desafio),
-                          ),
-                        );
-                        if (resultado == true) _cargarDatos();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      child: const Text(
-                        '¡Ir a realizar el desafío!',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
+                ),
+              ],
+            ),
+          ),
+
+          // ETIQUETA DE DIFICULTAD (BADGE)
+          Positioned(
+            top: 0,
+            left: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getDificultadColor(dificultad),
+                borderRadius: const BorderRadius.only(
+                  bottomRight: Radius.circular(12),
+                ),
+              ),
+              child: Text(
+                dificultad.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
