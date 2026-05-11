@@ -10,6 +10,7 @@ import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/mis_desafios_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
+import 'package:mapachesecure_app/screens/hijo/guia_hijo_screen.dart';
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -206,7 +207,13 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                 ),
               );
             }),
-            _buildDrawerOption(Icons.settings, 'Ajustes', Colors.grey, () {}),
+            _buildDrawerOption(Icons.help_outline, 'Guía de la app', Colors.purple, () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const GuiaHijoScreen()),
+              );
+            }),
             const Divider(),
             _buildDrawerOption(
               Icons.exit_to_app,

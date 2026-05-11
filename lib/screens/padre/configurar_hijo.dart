@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
-import 'package:table_calendar/table_calendar.dart';
+// import 'package:table_calendar/table_calendar.dart';
 
 const _appsPopulares = [
 {'nombre': 'TikTok', 'package': 'com.zhiliaoapp.musically', 'icono': Icons.music_video},
@@ -47,8 +47,8 @@ final Set<int> _diasSeleccionados = {};
 final _diasNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 // Calendario
-DateTime _focusedDay = DateTime.now();
-final Set<DateTime> _fechasSeleccionadas = {};
+// DateTime _focusedDay = DateTime.now();
+// final Set<DateTime> _fechasSeleccionadas = {};
 
 @override
 void initState() {
@@ -138,10 +138,10 @@ const SnackBar(content: Text('Error al eliminar bloqueo'), backgroundColor: Colo
 Future<void> _guardarBloqueo() async {
 final api = ApiService();
 try {
-if (_modoSeleccionado == 'inmediato') {
-await api.post('/bloqueos/${widget.hijo['id']}', {'tipo': 'inmediato'});
-
-} else if (_modoSeleccionado == 'horario') {
+// if (_modoSeleccionado == 'inmediato') {
+// await api.post('/bloqueos/${widget.hijo['id']}', {'tipo': 'inmediato'});
+// } else
+if (_modoSeleccionado == 'horario') {
 if (_diasSeleccionados.isEmpty) {
 ScaffoldMessenger.of(context).showSnackBar(
 const SnackBar(content: Text('Selecciona al menos un día'), backgroundColor: Colors.orange),
@@ -157,24 +157,24 @@ await api.post('/bloqueos/${widget.hijo['id']}', {
 'dias_semana': _diasSeleccionados.toList()..sort(),
 });
 
-} else if (_modoSeleccionado == 'calendario') {
-if (_fechasSeleccionadas.isEmpty) {
-ScaffoldMessenger.of(context).showSnackBar(
-const SnackBar(content: Text('Selecciona al menos una fecha'), backgroundColor: Colors.orange),
-);
-return;
-}
-final inicio = '${_horaInicio.toString().padLeft(2, '0')}:${_minutoInicio.toString().padLeft(2, '0')}';
-final fin = '${_horaFin.toString().padLeft(2, '0')}:${_minutoFin.toString().padLeft(2, '0')}';
-final fechas = _fechasSeleccionadas
-.map((d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}')
-.join(',');
-await api.post('/bloqueos/${widget.hijo['id']}', {
-'tipo': 'calendario',
-'hora_inicio': inicio,
-'hora_fin': fin,
-'fechas': fechas,
-});
+// } else if (_modoSeleccionado == 'calendario') {
+// if (_fechasSeleccionadas.isEmpty) {
+// ScaffoldMessenger.of(context).showSnackBar(
+// const SnackBar(content: Text('Selecciona al menos una fecha'), backgroundColor: Colors.orange),
+// );
+// return;
+// }
+// final inicio = '${_horaInicio.toString().padLeft(2, '0')}:${_minutoInicio.toString().padLeft(2, '0')}';
+// final fin = '${_horaFin.toString().padLeft(2, '0')}:${_minutoFin.toString().padLeft(2, '0')}';
+// final fechas = _fechasSeleccionadas
+// .map((d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}')
+// .join(',');
+// await api.post('/bloqueos/${widget.hijo['id']}', {
+// 'tipo': 'calendario',
+// 'hora_inicio': inicio,
+// 'hora_fin': fin,
+// 'fechas': fechas,
+// });
 }
 
 setState(() => _modoSeleccionado = null);
@@ -345,19 +345,19 @@ return Scaffold(
               // Botones de modo
               Row(
                 children: [
-                  _botonModo('inmediato', Icons.block, 'Inmediato'),
-                  const SizedBox(width: 8),
+                  // _botonModo('inmediato', Icons.block, 'Inmediato'),
+                  // const SizedBox(width: 8),
                   _botonModo('horario', Icons.schedule, 'Horario'),
-                  const SizedBox(width: 8),
-                  _botonModo('calendario', Icons.calendar_month, 'Calendario'),
+                  // const SizedBox(width: 8),
+                  // _botonModo('calendario', Icons.calendar_month, 'Calendario'),
                 ],
               ),
               const SizedBox(height: 16),
 
               // Formulario según modo
-              if (_modoSeleccionado == 'inmediato') _formInmediato(),
+              // if (_modoSeleccionado == 'inmediato') _formInmediato(),
               if (_modoSeleccionado == 'horario') _formHorario(),
-              if (_modoSeleccionado == 'calendario') _formCalendario(),
+              // if (_modoSeleccionado == 'calendario') _formCalendario(),
 
               const SizedBox(height: 30),
 
@@ -398,18 +398,20 @@ return Scaffold(
   Widget _tarjetaBloqueo(Map b) {                                                                                                                                                               String descripcion = '';
     IconData icono = Icons.block;
 
-    if (b['tipo'] == 'inmediato') {
-      descripcion = 'Bloqueo inmediato activo';
-      icono = Icons.block;
-    } else if (b['tipo'] == 'horario') {
+    // if (b['tipo'] == 'inmediato') {
+    //   descripcion = 'Bloqueo inmediato activo';
+    //   icono = Icons.block;
+    // } else
+    if (b['tipo'] == 'horario') {
       descripcion = '${b['hora_inicio']} - ${b['hora_fin']}';
       if (b['dias_semana'] != null) descripcion += '\nDías: ${b['dias_semana']}';
       icono = Icons.schedule;
-    } else if (b['tipo'] == 'calendario') {
-      descripcion = '${b['hora_inicio']} - ${b['hora_fin']}';
-      if (b['fechas'] != null) descripcion += '\nFechas: ${b['fechas']}';
-      icono = Icons.calendar_month;
     }
+    // else if (b['tipo'] == 'calendario') {
+    //   descripcion = '${b['hora_inicio']} - ${b['hora_fin']}';
+    //   if (b['fechas'] != null) descripcion += '\nFechas: ${b['fechas']}';
+    //   icono = Icons.calendar_month;
+    // }
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -462,39 +464,39 @@ return Scaffold(
     );
   }
 
-  // ── Formulario inmediato ───────────────────────────────────────────────────
+  // ── Formulario inmediato (comentado) ──────────────────────────────────────
 
-  Widget _formInmediato() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Activar bloqueo ahora mismo',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text('Todas las apps seleccionadas quedarán bloqueadas inmediatamente.',
-                style: TextStyle(color: Colors.grey, fontSize: 13)),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _guardarBloqueo,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Bloquear ahora'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _formInmediato() {
+  //   return Card(
+  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           const Text('Activar bloqueo ahora mismo',
+  //               style: TextStyle(fontWeight: FontWeight.bold)),
+  //           const SizedBox(height: 8),
+  //           const Text('Todas las apps seleccionadas quedarán bloqueadas inmediatamente.',
+  //               style: TextStyle(color: Colors.grey, fontSize: 13)),
+  //           const SizedBox(height: 16),
+  //           SizedBox(
+  //             width: double.infinity,
+  //             child: ElevatedButton(
+  //               onPressed: _guardarBloqueo,
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor: Colors.red,
+  //                 foregroundColor: Colors.white,
+  //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //               ),
+  //               child: const Text('Bloquear ahora'),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   // ── Formulario horario ─────────────────────────────────────────────────────
 
@@ -532,69 +534,69 @@ return Scaffold(
     );
   }
 
-  // ── Formulario calendario ──────────────────────────────────────────────────
+  // ── Formulario calendario (comentado) ─────────────────────────────────────
 
-  Widget _formCalendario() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Selecciona las fechas', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            TableCalendar(
-              firstDay: DateTime.now(),
-              lastDay: DateTime.now().add(const Duration(days: 365)),
-              focusedDay: _focusedDay,
-              selectedDayPredicate: (day) => _fechasSeleccionadas
-                  .any((f) => f.year == day.year && f.month == day.month && f.day == day.day),
-              onDaySelected: (selected, focused) {
-                setState(() {
-                  _focusedDay = focused;
-                  final existe = _fechasSeleccionadas
-                      .any((f) => f.year == selected.year && f.month == selected.month && f.day == selected.day);
-                  if (existe) {
-                    _fechasSeleccionadas.removeWhere(
-                        (f) => f.year == selected.year && f.month == selected.month && f.day == selected.day);
-                  } else {
-                    _fechasSeleccionadas.add(selected);
-                  }
-                });
-              },
-              calendarStyle: CalendarStyle(
-                selectedDecoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                todayDecoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.4),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
-            ),
-            const SizedBox(height: 16),
-            const Text('Selecciona el horario', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            _selectorHoras(),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _guardarBloqueo,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Guardar bloqueo'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _formCalendario() {
+  //   return Card(
+  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           const Text('Selecciona las fechas', style: TextStyle(fontWeight: FontWeight.bold)),
+  //           const SizedBox(height: 8),
+  //           TableCalendar(
+  //             firstDay: DateTime.now(),
+  //             lastDay: DateTime.now().add(const Duration(days: 365)),
+  //             focusedDay: _focusedDay,
+  //             selectedDayPredicate: (day) => _fechasSeleccionadas
+  //                 .any((f) => f.year == day.year && f.month == day.month && f.day == day.day),
+  //             onDaySelected: (selected, focused) {
+  //               setState(() {
+  //                 _focusedDay = focused;
+  //                 final existe = _fechasSeleccionadas
+  //                     .any((f) => f.year == selected.year && f.month == selected.month && f.day == selected.day);
+  //                 if (existe) {
+  //                   _fechasSeleccionadas.removeWhere(
+  //                       (f) => f.year == selected.year && f.month == selected.month && f.day == selected.day);
+  //                 } else {
+  //                   _fechasSeleccionadas.add(selected);
+  //                 }
+  //               });
+  //             },
+  //             calendarStyle: CalendarStyle(
+  //               selectedDecoration: BoxDecoration(
+  //                 color: AppColors.primary,
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               todayDecoration: BoxDecoration(
+  //                 color: AppColors.primary.withOpacity(0.4),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //             ),
+  //             headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+  //           ),
+  //           const SizedBox(height: 16),
+  //           const Text('Selecciona el horario', style: TextStyle(fontWeight: FontWeight.bold)),
+  //           const SizedBox(height: 8),
+  //           _selectorHoras(),
+  //           const SizedBox(height: 16),
+  //           SizedBox(
+  //             width: double.infinity,
+  //             child: ElevatedButton(
+  //               onPressed: _guardarBloqueo,
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor: AppColors.primary,
+  //                 foregroundColor: Colors.white,
+  //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //               ),
+  //               child: const Text('Guardar bloqueo'),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 }

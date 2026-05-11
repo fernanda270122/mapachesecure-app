@@ -8,6 +8,8 @@ import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
+import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -110,23 +112,45 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _verificarSesion() async {
-    final auth = AuthService();
-    await Future.delayed(const Duration(seconds: 3));
-    final loggedIn = await auth.isLoggedIn();
-    if (!mounted) return;
-    if (loggedIn) {
-      final rol = await auth.getRol();
+      final auth = AuthService();
+      await Future.delayed(const Duration(seconds: 3));
+      final loggedIn = await auth.isLoggedIn();
       if (!mounted) return;
-      if (rol == 'padre') {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePadreScreen()));
-      } else if(rol == 'hijo'){
-        // sesión persistente: hijo va directo al home, no al login
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeHijoScreen()));
+
+      if (loggedIn) {
+        final rol = await auth.getRol();
+        if (!mounted) return;
+
+        final prefs = await SharedPreferences.getInstance();
+        final onboardingVisto = prefs.getBool('onboarding_${rol}_visto') ?? false;
+
+        if (rol == 'padre') {
+          final destino = const HomePadreScreen();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => onboardingVisto
+                  ? destino
+                  : OnboardingScreen(rol: 'padre', destino: destino),
+            ),
+          );
+        } else if (rol == 'hijo') {
+          // sesión persistente: hijo va directo al home, no al login
+          final destino = const HomeHijoScreen();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => onboardingVisto
+                  ? destino
+                  : OnboardingScreen(rol: 'hijo', destino: destino),
+            ),
+          );
+        }
+      } else {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => const LoginScreen()));
       }
-    } else {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
     }
-  }
 
 @override                                                                                                                                                                                   Widget build(BuildContext context) {
     return Scaffold(                                                                                                                                                                              body: Stack(
