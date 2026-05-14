@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_description">MapacheSecure monitorea las apps abiertas para aplicar los bloqueos configurados por el padre.</string>
+</resources>

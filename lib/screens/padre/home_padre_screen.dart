@@ -25,6 +25,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   bool _cargando = true;
   int _totalDesafios = 0;
   int _totalPuntos = 0;
+  int _totalMinutos = 0;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
 
       int totalDesafios = 0;
       int totalPuntos = 0;
+      int totalMinutos = 0;
 
       for (final hijo in listaHijos) {
         final hijoId = hijo['id'];
@@ -54,6 +56,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         if (puntos is Map && puntos['total_puntos'] != null) {
           totalPuntos += (puntos['total_puntos'] as num).toInt();
         }
+
+        final estado = await api.get('/apps/estado/$hijoId');
+        if (estado is Map && estado['minutos_usados'] != null) {
+          totalMinutos += (estado['minutos_usados'] as num).toInt();
+        }
       }
 
       setState(() {
@@ -61,6 +68,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         _hijos = listaHijos;
         _totalDesafios = totalDesafios;
         _totalPuntos = totalPuntos;
+        _totalMinutos = totalMinutos;
         _cargando = false;
       });
     } catch (e) {
@@ -237,17 +245,6 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                     _buildResumenHoy(),
                     const SizedBox(height: 30),
                     const Text(
-                      '¿En qué gastaron el tiempo?',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    _buildCuadriculaCategorias(),
-                    const SizedBox(height: 35),
-                    const Text(
                       'Hijos conectados',
                       style: TextStyle(
                         fontSize: 18,
@@ -310,7 +307,9 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         children: [
           _buildDatoIndividual(
             'Tiempo',
-            '2h 45m',
+            _totalMinutos < 60
+                ? '${_totalMinutos}m'
+                : '${_totalMinutos ~/ 60}h ${_totalMinutos % 60}m',
             Icons.access_time,
             Colors.blue,
           ),
@@ -325,36 +324,6 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
             '$_totalPuntos',
             Icons.stars,
             Colors.orange,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCuadriculaCategorias() {
-    return Center(
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: [
-          _buildChipCategoria(
-            'Juegos',
-            Icons.videogame_asset,
-            Colors.orange,
-            '45m',
-          ),
-          _buildChipCategoria('Social', Icons.groups, Colors.purple, '30m'),
-          _buildChipCategoria(
-            'Estudio',
-            Icons.menu_book,
-            Colors.green,
-            '1h 10m',
-          ),
-          _buildChipCategoria(
-            'Videos',
-            Icons.play_circle_filled,
-            Colors.red,
-            '20m',
           ),
         ],
       ),
@@ -377,41 +346,6 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         ),
         Text(titulo, style: const TextStyle(color: Colors.grey, fontSize: 12)),
       ],
-    );
-  }
-
-  Widget _buildChipCategoria(
-    String nombre,
-    IconData icono,
-    Color color,
-    String duracion,
-  ) {
-    return Container(
-      width: 105,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icono, color: color, size: 24),
-          const SizedBox(height: 5),
-          Text(
-            nombre,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          Text(
-            duracion,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

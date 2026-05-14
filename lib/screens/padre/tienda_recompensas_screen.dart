@@ -92,6 +92,33 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
           _hijoSeleccionadoNombre = _hijos[0]['nombre'] ?? '';
         }
       });
+      if (_hijoSeleccionadoId != null) {
+        await _cargarRecompensasActivas(_hijoSeleccionadoId!);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _cargarRecompensasActivas(String hijoId) async {
+    try {
+      final data = await _api.get('/recompensas/$hijoId');
+      if (data is List && data.isNotEmpty) {
+        final titulos = data
+            .map((r) => r['titulo']?.toString() ?? '')
+            .toSet();
+        setState(() {
+          for (int i = 0; i < _recompensasSistema.length; i++) {
+            final r = _recompensasSistema[i];
+            final titulo = '${r['icono']} ${r['nombre']}';
+            _activas[i] = titulos.contains(titulo);
+          }
+          _confirmado = true;
+        });
+      } else {
+        setState(() {
+          _activas = List.generate(_recompensasSistema.length, (_) => false);
+          _confirmado = false;
+        });
+      }
     } catch (_) {}
   }
 
@@ -394,14 +421,15 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                                     ),
                                   );
                                 }).toList(),
-                                onChanged: _confirmado
-                                    ? null
-                                    : (val) {
+                                onChanged: (val) {
                                         setState(() {
                                           _hijoSeleccionadoId = val;
                                           _hijoSeleccionadoNombre =
                                               _hijos.firstWhere((h) => h['id'] == val)['nombre'] ?? '';
+                                          _activas = List.generate(_recompensasSistema.length, (_) => false);
+                                          _confirmado = false;
                                         });
+                                        _cargarRecompensasActivas(val!);
                                       },
                               ),
                             ),
