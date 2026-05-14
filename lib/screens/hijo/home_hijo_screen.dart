@@ -26,6 +26,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
   int _puntos = 0;
   List<dynamic> _desafios = [];
   bool _cargando = true;
+  Set<String> _pendientes = {};
 
   @override
   void initState() {
@@ -53,8 +54,17 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
       final api = ApiService();
       final puntosData = await api.get('/desafios/puntos/$hijoId');
       final desafiosData = await api.get('/desafios/');
+      final completadosData = await api.get('/desafios/completados/$hijoId');
 
       setState(() {
+        if (completadosData is List) {
+            _pendientes = completadosData
+            
+                .where((c) => c['validado'] == false)
+                .map<String>((c) => c['desafio_id'].toString())
+                .toSet();
+                print('pendientes: $_pendientes');
+          }
         _nombre = nombre;
         _puntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
 
@@ -72,13 +82,14 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
               .where((d) => nombresVistos.add(d['titulo'] ?? ''))
               .toList();
 
-          // 3. Mezclamos
-          listaLimpia.shuffle();
-
-          // 4. Tomamos los 3 para las tarjetas del Home
-          _desafios = listaLimpia.take(3).toList();
-
-          // NOTA: Eliminamos _pendientesCount para evitar errores
+          var pendientesList = listaLimpia
+              .where((d) => _pendientes.contains(d['id'].toString()))
+              .toList();
+          var disponibles = listaLimpia
+              .where((d) => !_pendientes.contains(d['id'].toString()))
+              .toList();
+          disponibles.shuffle();
+          _desafios = [...pendientesList, ...disponibles].take(3).toList();
         } else {
           _desafios = [];
         }
@@ -347,6 +358,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                                   return _buildChallengeCard(
                                     context, // Agregamos el context para navegar
                                     desafio, // Pasamos el mapa completo
+                                    _pendientes.contains(desafio['id'].toString()),
                                   );
                                 }).toList(),
                               ),
@@ -483,6 +495,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
   Widget _buildChallengeCard(
     BuildContext context,
     Map<String, dynamic> desafio,
+    bool esPendiente,
   ) {
     final String titulo = desafio['titulo'] ?? 'Desafío';
     final String descripcion = desafio['descripcion'] ?? 'Sin descripción';
@@ -580,29 +593,42 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                       const SizedBox(height: 15),
                       SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final resultado = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DetalleDesafioScreen(desafio: desafio),
+                        child: esPendiente
+                            ? ElevatedButton.icon(
+                                onPressed: null,
+                                icon: const Icon(Icons.hourglass_top),
+                                label: const Text('Pendiente de revisión'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange.shade200,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                              )
+                            : ElevatedButton(
+                                onPressed: () async {
+                                  final resultado = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          DetalleDesafioScreen(desafio: desafio),
+                                    ),
+                                  );
+                                  if (resultado == true) _cargarDatos();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: color,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                child: const Text(
+                                  '¡Ir a realizar el desafío!',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            );
-                            if (resultado == true) _cargarDatos();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: color,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          child: const Text(
-                            '¡Ir a realizar el desafío!',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 10),
                     ],
