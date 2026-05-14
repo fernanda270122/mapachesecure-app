@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-
+  video_player: ^2.9.2
   flutter_background_service: ^5.1.0
   flutter_local_notifications: ^21.0.0
 
@@ -79,9 +79,7 @@ flutter:
   assets:
      - assets/racculogo.png
      - assets/raccu.png
-     - assets/raccu_bebe.png
-     - assets/raccu_niño.png
-     - assets/raccu_niña.png
+     - assets/mascota/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

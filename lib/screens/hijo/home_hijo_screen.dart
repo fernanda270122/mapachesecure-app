@@ -12,6 +12,9 @@ import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/guia_hijo_screen.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:mapachesecure_app/models/pet_model.dart';
+import 'package:mapachesecure_app/screens/hijo/video_evolucion_screen.dart';
+
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -20,13 +23,16 @@ class HomeHijoScreen extends StatefulWidget {
   State<HomeHijoScreen> createState() => _HomeHijoScreenState();
 }
 
-class _HomeHijoScreenState extends State<HomeHijoScreen> {
+class _HomeHijoScreenState extends State<HomeHijoScreen> with SingleTickerProviderStateMixin {
   final FlutterTts _tts = FlutterTts();
   String _nombre = '';
   int _puntos = 0;
   List<dynamic> _desafios = [];
   bool _cargando = true;
   Set<String> _pendientes = {};
+  late AnimationController _floatController;
+  late Animation<double> _floatAnimation;
+  int _nivelMascotaVisto = -1;
 
   @override
   void initState() {
@@ -35,8 +41,44 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     _tts.setLanguage('es-MX');
     _activarGuardian();
     FlutterBackgroundService().startService();
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _floatAnimation = Tween<double>(begin: -8, end: 8).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
+    _cargarNivelVisto();
   }
+  @override
+    void dispose() {
+      _floatController.dispose();
+      super.dispose();
+    }
+  Future<void> _cargarNivelVisto() async {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() => _nivelMascotaVisto = prefs.getInt('nivel_mascota_visto') ?? -1);
+    }
 
+  Future<void> _verificarEvolucion(int puntos) async {
+    final nivel = _calcularNivel(puntos)['nivel'] as int;
+    if (nivel >= 1 && _nivelMascotaVisto < 1) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('nivel_mascota_visto', nivel);
+      setState(() => _nivelMascotaVisto = nivel);
+      if (mounted) {
+        await Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const VideoEvolucionScreen(),
+            transitionsBuilder: (_, anim, __, child) =>
+                FadeTransition(opacity: anim, child: child),
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
+        );
+      }
+    }
+  }
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
     var isRunning = await service.isRunning();
@@ -55,6 +97,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
       final puntosData = await api.get('/desafios/puntos/$hijoId');
       final desafiosData = await api.get('/desafios/');
       final completadosData = await api.get('/desafios/completados/$hijoId');
+      final nuevoPuntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
 
       setState(() {
         if (completadosData is List) {
@@ -66,7 +109,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                 print('pendientes: $_pendientes');
           }
         _nombre = nombre;
-        _puntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
+        _puntos = nuevoPuntos;
 
         if (desafiosData is List) {
           // --- PASO 1: FILTRAR POR ESTADO ACTIVO
@@ -95,6 +138,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
         }
         _cargando = false;
       });
+      await _verificarEvolucion(nuevoPuntos);
     } catch (e) {
       print("Error en Home: $e");
 
@@ -108,7 +152,29 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
       }
     }
   }
-
+Map<String, dynamic> _calcularNivel(int puntos) {
+  const List<int> puntosNivel = [
+    0, 1000, 1250, 1500, 1750, 2000,
+    2300, 2600, 2900, 3200, 3500,
+    3850, 4200, 4550, 4900, 5250,
+    5600, 5950, 6300, 6650, 7000,
+  ];
+  int nivel = 0;
+  for (int i = 1; i < puntosNivel.length; i++) {
+    if (puntos >= puntosNivel[i]) nivel = i;
+    else break;
+  }
+  int puntosActual = puntosNivel[nivel];
+  int puntosNext = nivel < 20 ? puntosNivel[nivel + 1] : 7000;
+  double progreso = nivel < 20
+      ? (puntos - puntosActual) / (puntosNext - puntosActual)
+      : 1.0;
+  return {
+    'nivel': nivel,
+    'progreso': progreso.clamp(0.0, 1.0),
+    'puntosNext': puntosNext,
+  };
+}
   IconData _getIcono(String? tipo) {
     switch (tipo?.toLowerCase()) {
       case 'cognitivo':
@@ -188,7 +254,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                     ),
                   ),
                   Text(
-                    'Nivel 5 - Explorador Mapache',
+                    'Nivel ${_calcularNivel(_puntos)['nivel']}',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 14,
@@ -307,8 +373,8 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                                     color: Colors.orange.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(15),
                                   ),
-                                  child: const Text(
-                                    'Nivel 5 - Explorador Mapache',
+                                  child: Text(
+                                    'Nivel ${_calcularNivel(_puntos)['nivel']}',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.orange,
@@ -330,7 +396,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                           ],
                         ),
                         const SizedBox(height: 15),
-                        _buildPointsCard(),
+                        _buildMascotaCard(),
                         const SizedBox(height: 20),
                         const Text(
                           'Desafíos disponibles:',
@@ -422,14 +488,12 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     );
   }
 
-  Widget _buildPointsCard() {
-    // Definimos una meta de puntos para el nivel actual (ejemplo: 2000 pts)
-    const int metaPuntos = 2000;
-
-    // Calculamos el porcentaje real (valor entre 0.0 y 1.0 para el indicador)
-    double porcentajeDinamico = _puntos / metaPuntos;
-    if (porcentajeDinamico > 1.0)
-      porcentajeDinamico = 1.0; // Evita que se pase del 100%
+  Widget _buildMascotaCard() {
+    final nivelInfo = _calcularNivel(_puntos);
+    final int nivel = nivelInfo['nivel'];
+    final double progreso = nivelInfo['progreso'];
+    final int puntosNext = nivelInfo['puntosNext'];
+    final pet = PetModel(puntos: _puntos);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -442,48 +506,51 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
       ),
       child: Column(
         children: [
-          const Text(
-            'MapachePoints',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.blueGrey,
-              fontWeight: FontWeight.bold,
+          AnimatedBuilder(
+            animation: _floatAnimation,
+            builder: (context, child) => Transform.translate(
+              offset: Offset(0, _floatAnimation.value),
+              child: Image.asset(
+                pet.imagePath,
+                key: ValueKey(pet.imagePath),
+                height: 130,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          const Text(
+            'RaccuPoints',
+            style: TextStyle(fontSize: 16, color: Colors.blueGrey, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 5),
           Text(
-            '$_puntos pts', // Muestra los puntos reales del back
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.greenAccent,
-            ),
+            '$_puntos pts',
+            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.greenAccent),
           ),
           const SizedBox(height: 15),
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Progreso nivel:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              'Nivel $nivel — faltan ${puntosNext - _puntos} pts para el siguiente',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-              value: porcentajeDinamico, // AHORA ES DINÁMICO
+              value: progreso,
               minHeight: 15,
               backgroundColor: const Color(0xFFE0E0E0),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Colors.greenAccent,
-              ),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
             ),
           ),
           const SizedBox(height: 5),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              '${(porcentajeDinamico * 100).toInt()}%', // Muestra el % real
+              '${(progreso * 100).toInt()}%',
               style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
             ),
           ),
