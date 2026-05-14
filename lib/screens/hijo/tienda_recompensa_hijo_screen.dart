@@ -18,6 +18,7 @@ class _TiendaRecompensasHijoScreenState
   List<dynamic> _recompensas = [];
   int _misPuntos = 0;
   bool _cargando = true;
+  String _hijoId = '';
 
   @override
   void initState() {
@@ -28,11 +29,10 @@ class _TiendaRecompensasHijoScreenState
   Future<void> _cargarDatos() async {
     final prefs = await SharedPreferences.getInstance();
     final hijoId = prefs.getString('user_id') ?? '';
+    _hijoId = hijoId;
 
     try {
-      // 1. Cargamos el catálogo (aquí deberías filtrar las activas por el padre en el back)
-      final data = await _api.get('/recompensas/catalogo');
-      // 2. Cargamos los puntos actuales del hijo
+      final data = await _api.get('/recompensas/$hijoId');
       final puntosData = await _api.get('/desafios/puntos/$hijoId');
 
       setState(() {
@@ -47,8 +47,7 @@ class _TiendaRecompensasHijoScreenState
 
   Future<void> _canjearRecompensa(Map<String, dynamic> recompensa) async {
     final puntosCosto =
-        recompensa['puntos_sugeridos'] ?? recompensa['puntos'] ?? 0;
-
+        recompensa['costo_puntos'] ?? 0;
     if (_misPuntos < puntosCosto) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -64,7 +63,7 @@ class _TiendaRecompensasHijoScreenState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('¿Canjear ${recompensa['nombre']}?'),
+        title: Text('¿Canjear ${recompensa['titulo']}?'),
         content: Text('Se descontarán $puntosCosto puntos de tu cuenta.'),
         actions: [
           TextButton(
@@ -78,8 +77,8 @@ class _TiendaRecompensasHijoScreenState
               try {
                 // Endpoint para solicitar el canje
                 await _api.post('/recompensas/canjear', {
-                  'recompensa_id': recompensa['id'] ?? recompensa['nombre'],
-                  'costo': puntosCosto,
+                  'hijo_id': _hijoId,
+                  'recompensa_id': recompensa['id'],
                 });
 
                 if (mounted) {
@@ -195,7 +194,7 @@ class _TiendaRecompensasHijoScreenState
   }
 
   Widget _buildTarjetaPremio(dynamic r) {
-    final int costo = r['puntos_sugeridos'] ?? r['puntos'] ?? 0;
+    final int costo = r['costo_puntos'] ?? 0;
     final bool puedeComprar = _misPuntos >= costo;
 
     return Card(
@@ -203,9 +202,12 @@ class _TiendaRecompensasHijoScreenState
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Text(r['icono'] ?? '🎁', style: const TextStyle(fontSize: 32)),
+        leading: Text(
+          r['titulo']?.toString().split(' ').first ?? '🎁',
+          style: const TextStyle(fontSize: 32),
+        ),
         title: Text(
-          r['nombre'] ?? '',
+          r['titulo']?.toString().split(' ').skip(1).join(' ') ?? '',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(

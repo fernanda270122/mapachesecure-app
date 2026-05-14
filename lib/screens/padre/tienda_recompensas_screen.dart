@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _recompensasSistema = [
   {
@@ -68,13 +69,30 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
   List<dynamic> _comunidad = [];
   bool _cargando = true;
   bool _confirmado = false;
+  List<dynamic> _hijos = [];
+  String? _hijoSeleccionadoId;
+  String _hijoSeleccionadoNombre = '';
 
   @override
   void initState() {
     super.initState();
-    // Inicializamos la lista aquí
     _activas = List.generate(_recompensasSistema.length, (index) => false);
+    _cargarHijos();
     _cargarComunidad();
+  }
+  Future<void> _cargarHijos() async {
+    final prefs = await SharedPreferences.getInstance();
+    final padreId = prefs.getString('user_id') ?? '';
+    try {
+      final data = await _api.get('/usuarios/$padreId/hijos');
+      setState(() {
+        _hijos = data is List ? data : [];
+        if (_hijos.isNotEmpty) {
+          _hijoSeleccionadoId = _hijos[0]['id'];
+          _hijoSeleccionadoNombre = _hijos[0]['nombre'] ?? '';
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> _cargarComunidad() async {
@@ -194,19 +212,31 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                   ),
                   onPressed: () async {
                     if (nombreCtrl.text.isEmpty) return;
+                    if (_hijoSeleccionadoId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Selecciona un hijo primero')),
+                      );
+                      return;
+                    }
+                    final prefs = await SharedPreferences.getInstance();
+                    final padreId = prefs.getString('user_id') ?? '';
                     try {
-                      await _api.post('/recompensas/catalogo', {
-                        'nombre': nombreCtrl.text,
-                        'descripcion': descCtrl.text,
-                        'puntos_sugeridos': int.tryParse(puntosCtrl.text) ?? 50,
-                        'icono': icono,
+                      await _api.post('/recompensas/', {
+                        'padre_id': padreId,
+                        'hijo_id': _hijoSeleccionadoId,
+                        'titulo': '$icono ${nombreCtrl.text}',
+                        'costo_puntos': int.tryParse(puntosCtrl.text) ?? 50,
                       });
                       Navigator.pop(context);
-                      _cargarComunidad();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('¡Recompensa personalizada agregada! 🎁')),
+                        );
+                      }
                     } catch (e) {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e')),
+                      );
                     }
                   },
                   child: const Text(
@@ -223,6 +253,12 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
   }
 
   void _confirmarSeleccion() {
+    if (_hijoSeleccionadoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero selecciona a qué hijo asignar las recompensas')),
+      );
+      return;
+    }
     final activadas = _activas.where((a) => a).length;
     if (activadas == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -234,30 +270,56 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('¿Confirmar recompensas?'),
-        content: const Text(
-          '¿Estás segura de que estas son las recompensas que quieres ofrecer? No podrás cambiarlas hasta que tu hijo canjee una.',
-        ),
+        content: Text('¿Asignar $activadas recompensas a $_hijoSeleccionadoNombre?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
-            ),
-            onPressed: () {
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary),
+            onPressed: () async {
               Navigator.pop(context);
-              setState(() => _confirmado = true);
+              await _guardarRecompensas();
             },
-            child: const Text(
-              'Confirmar',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _guardarRecompensas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final padreId = prefs.getString('user_id') ?? '';
+    setState(() => _cargando = true);
+    try {
+      for (int i = 0; i < _recompensasSistema.length; i++) {
+        if (_activas[i]) {
+          final r = _recompensasSistema[i];
+          await _api.post('/recompensas/', {
+            'padre_id': padreId,
+            'hijo_id': _hijoSeleccionadoId,
+            'titulo': '${r['icono']} ${r['nombre']}',
+            'costo_puntos': r['puntos'],
+          });
+        }
+      }
+      setState(() => _confirmado = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('¡Recompensas asignadas a $_hijoSeleccionadoNombre! 🎁')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al guardar: $e')),
+        );
+      }
+    } finally {
+      setState(() => _cargando = false);
+    }
   }
 
   @override
@@ -301,6 +363,53 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    if (_hijos.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.child_care, color: Colors.white),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Asignar a:',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: DropdownButton<String>(
+                                value: _hijoSeleccionadoId,
+                                dropdownColor: AppColors.primary,
+                                isExpanded: true,
+                                underline: const SizedBox(),
+                                items: _hijos.map<DropdownMenuItem<String>>((h) {
+                                  return DropdownMenuItem<String>(
+                                    value: h['id'],
+                                    child: Text(
+                                      h['nombre'] ?? 'Sin nombre',
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: _confirmado
+                                    ? null
+                                    : (val) {
+                                        setState(() {
+                                          _hijoSeleccionadoId = val;
+                                          _hijoSeleccionadoNombre =
+                                              _hijos.firstWhere((h) => h['id'] == val)['nombre'] ?? '';
+                                        });
+                                      },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     const Text(
                       'Del sistema',
                       style: TextStyle(
