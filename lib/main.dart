@@ -10,12 +10,18 @@ import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:mapachesecure_app/screens/hijo/app_bloqueada_screen.dart';
+import 'package:mapachesecure_app/services/guardian_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await initializeGuardian();
+
   runApp(const MyApp());
 }
 
@@ -33,11 +39,24 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _escucharDeepLinks();
+
+    // En tu main.dart
+    // Prueba quitando la validación de rol solo un momento
+    FlutterBackgroundService().on('mostrarBloqueo').listen((event) {
+      print("📢 BLOQUEO DETECTADO");
+      if (event != null) {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+          '/pantalla-bloqueo',
+          (route) => false,
+          arguments: event['app'],
+        );
+      }
+    });
   }
 
-  void _escucharDeepLinks() async {                                                                                                                                                               
+  void _escucharDeepLinks() async {
     final uri = await _appLinks.getInitialLink();
-    if (uri != null) {                                                                                                                                                                            
+    if (uri != null) {
       _procesarLink(uri);
     }
     _appLinks.uriLinkStream.listen((uri) {
@@ -67,38 +86,54 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'MapacheSecure',
-      theme: ThemeData(       
-      iconTheme: const IconThemeData(color: Colors.white),                                                                                                                                                                      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(                                                                                                                                                            seedColor: AppColors.accent,
-        primary: AppColors.accent,
-        secondary: AppColors.secondary,
-        surface: AppColors.background,
-      ),
-      scaffoldBackgroundColor: AppColors.background,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        elevation: 0,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
+
+      routes: {
+        '/home-hijo': (context) => const HomeHijoScreen(),
+        '/pantalla-bloqueo': (context) {
+          // Esto extrae el nombre que enviamos arriba en 'arguments'
+          final String nombre =
+              ModalRoute.of(context)?.settings.arguments as String? ?? "App";
+          return AppBloqueadaScreen(nombreAppIntentada: nombre);
+        },
+      },
+
+      theme: ThemeData(
+        iconTheme: const IconThemeData(color: Colors.white),
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.accent,
+          primary: AppColors.accent,
+          secondary: AppColors.secondary,
+          surface: AppColors.background,
+        ),
+        scaffoldBackgroundColor: AppColors.background,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accent,
+            foregroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
+            ),
+          ),
+        ),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: AppColors.textDark),
+          bodyLarge: TextStyle(color: AppColors.textDark),
+          titleMedium: TextStyle(color: AppColors.textDark),
         ),
       ),
-      textTheme: const TextTheme(
-        bodyMedium: TextStyle(color: AppColors.textDark),
-        bodyLarge: TextStyle(color: AppColors.textDark),
-        titleMedium: TextStyle(color: AppColors.textDark),
-      ),
-    ),
       home: const SplashScreen(),
     );
   }
 }
+
 class SplashScreen extends StatefulWidget {
-    const SplashScreen({super.key});
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -112,56 +147,66 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _verificarSesion() async {
-      final auth = AuthService();
-      await Future.delayed(const Duration(seconds: 3));
-      final loggedIn = await auth.isLoggedIn();
+    final auth = AuthService();
+    await Future.delayed(const Duration(seconds: 3));
+    final loggedIn = await auth.isLoggedIn();
+    if (!mounted) return;
+
+    if (loggedIn) {
+      final rol = await auth.getRol();
       if (!mounted) return;
 
-      if (loggedIn) {
-        final rol = await auth.getRol();
-        if (!mounted) return;
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingVisto = prefs.getBool('onboarding_${rol}_visto') ?? false;
 
-        final prefs = await SharedPreferences.getInstance();
-        final onboardingVisto = prefs.getBool('onboarding_${rol}_visto') ?? false;
-
-        if (rol == 'padre') {
-          final destino = const HomePadreScreen();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => onboardingVisto
-                  ? destino
-                  : OnboardingScreen(rol: 'padre', destino: destino),
-            ),
-          );
-        } else if (rol == 'hijo') {
-          // sesión persistente: hijo va directo al home, no al login
-          final destino = const HomeHijoScreen();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => onboardingVisto
-                  ? destino
-                  : OnboardingScreen(rol: 'hijo', destino: destino),
-            ),
-          );
-        }
-      } else {
+      if (rol == 'padre') {
+        final destino = const HomePadreScreen();
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+          context,
+          MaterialPageRoute(
+            builder: (_) => onboardingVisto
+                ? destino
+                : OnboardingScreen(rol: 'padre', destino: destino),
+          ),
+        );
+      } else if (rol == 'hijo') {
+        // despertamos al guardián cuando entre el niño
+        final service = FlutterBackgroundService();
+        if (!(await service.isRunning())) {
+          await service.startService();
+        }
+        // sesión persistente: hijo va directo al home, no al login
+        final destino = const HomeHijoScreen();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => onboardingVisto
+                ? destino
+                : OnboardingScreen(rol: 'hijo', destino: destino),
+          ),
+        );
       }
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
+  }
 
-@override                                                                                                                                                                                   Widget build(BuildContext context) {
-    return Scaffold(                                                                                                                                                                              body: Stack(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
         fit: StackFit.expand,
         children: [
           Opacity(
             opacity: 0.6,
-            child: Image.asset('assets/raccu.png', 
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
+            child: Image.asset(
+              'assets/raccu.png',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
           ),
           const ColoredBox(color: Color(0x881A237E)),

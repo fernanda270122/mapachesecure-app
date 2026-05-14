@@ -1,3 +1,4 @@
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
@@ -34,6 +35,11 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    final service = FlutterBackgroundService();
+    var isRunning = await service.isRunning();
+    if (isRunning) {
+      service.invoke("stopService"); 
+    }
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
