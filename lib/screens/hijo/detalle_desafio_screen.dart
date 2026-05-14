@@ -4,6 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetalleDesafioScreen extends StatefulWidget {
   final Map<String, dynamic> desafio;
@@ -58,6 +61,25 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
     }
   }
 
+  Future<String?> _subirFoto() async {
+    if (_evidencia == null) return null;
+    final bytes = await _evidencia!.readAsBytes();
+    final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    const supabaseUrl = 'https://xmsiydjwqvuzyykaidgj.supabase.co';
+    const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtc2l5ZGp3cXZ1enl5a2FpZGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTY5NzIsImV4cCI6MjA5MTUzMjk3Mn0.rJxJfePDHTVXXj653Hy6Ue43qBIMQJXaK3kC9PMYz5Q';
+    final response = await http.post(
+      Uri.parse('$supabaseUrl/storage/v1/object/evidencias/$filename'),
+      headers: {
+        'Authorization': 'Bearer $anonKey',
+        'Content-Type': 'image/jpeg',
+      },
+      body: bytes,
+    );
+    if (response.statusCode == 200) {
+      return '$supabaseUrl/storage/v1/object/public/evidencias/$filename';
+    }
+    throw Exception('Error al subir la foto: ${response.body}');
+  }
   // Envío al backend
   Future<void> _enviarEvidencia() async {
     if (_evidencia == null) {
@@ -72,10 +94,14 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
     setState(() => _enviando = true);
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final hijoId = prefs.getString('user_id') ?? '';
+      final fotoUrl = await _subirFoto();
       final api = ApiService();
-      await api.post('/desafios/completar/', {
+      await api.post('/desafios/completar', {
         'desafio_id': widget.desafio['id'],
-        'hijo_id': widget.desafio['hijo_id'],
+        'hijo_id': hijoId,
+        if (fotoUrl != null) 'foto_url': fotoUrl,
       });
 
       if (mounted) {
@@ -83,7 +109,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Colors.green,
-            content: Text('¡Desafío enviado al jefe! 🦝'),
+            content: Text('¡Desafío enviado al jefe! 🦝' ),
           ),
         );
       }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RevisarEvidenciasScreen extends StatefulWidget {
   const RevisarEvidenciasScreen({super.key});
@@ -15,6 +16,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
   final ApiService _api = ApiService();
   List<dynamic> _evidencias = [];
   bool _cargando = true;
+  String _padreId = '';
 
   @override
   void initState() {
@@ -23,24 +25,27 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
   }
 
   Future<void> _fetchEvidencias() async {
+    final prefs = await SharedPreferences.getInstance();
+    _padreId = prefs.getString('user_id') ?? '';
     try {
-      final res = await _api.get('/desafios/pendientes-aprobacion');
+      final res = await _api.get('/desafios/pendientes/$_padreId');
+      print('respuesta backend: $res');
       setState(() {
         _evidencias = res is List ? res : [];
         _cargando = false;
       });
     } catch (e) {
       setState(() => _cargando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     }
   }
 
-  Future<void> _procesarEvidencia(int desafioId, bool aprobado) async {
+  Future<void> _procesarEvidencia(String desafioId, bool aprobado) async {
     try {
-      await _api.post('/desafios/revisar', {
-        'desafio_id': desafioId,
-        'aprobado': aprobado,
-      });
-      _fetchEvidencias(); // Refrescar lista
+      await _api.put('/desafios/validar/$desafioId?aprobado=$aprobado', {});
+      _fetchEvidencias();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
