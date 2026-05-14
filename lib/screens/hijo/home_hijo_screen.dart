@@ -11,6 +11,7 @@ import 'package:mapachesecure_app/screens/hijo/mis_desafios_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/guia_hijo_screen.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -31,6 +32,16 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
     super.initState();
     _cargarDatos();
     _tts.setLanguage('es-MX');
+    _activarGuardian();
+    FlutterBackgroundService().startService();
+  }
+
+  Future<void> _activarGuardian() async {
+    final service = FlutterBackgroundService();
+    var isRunning = await service.isRunning();
+    if (!isRunning) {
+      service.startService();
+    }
   }
 
   Future<void> _cargarDatos() async {
@@ -75,10 +86,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
       });
     } catch (e) {
       print("Error en Home: $e");
-      setState(() {
-        _nombre = nombre;
-        _cargando = false;
-      });
+
+      // 🛡️ Validación de seguridad obligatoria
+      if (mounted) {
+        setState(() {
+          _nombre =
+              nombre; // Asegúrate de que 'nombre' esté definido en este scope
+          _cargando = false;
+        });
+      }
     }
   }
 
@@ -207,13 +223,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> {
                 ),
               );
             }),
-            _buildDrawerOption(Icons.help_outline, 'Guía de la app', Colors.purple, () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const GuiaHijoScreen()),
-              );
-            }),
+            _buildDrawerOption(
+              Icons.help_outline,
+              'Guía de la app',
+              Colors.purple,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GuiaHijoScreen()),
+                );
+              },
+            ),
             const Divider(),
             _buildDrawerOption(
               Icons.exit_to_app,
