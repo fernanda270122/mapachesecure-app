@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:mapachesecure_app/screens/hijo/app_bloqueada_screen.dart';
 import 'package:mapachesecure_app/services/guardian_service.dart';
+import 'package:mapachesecure_app/services/notification_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -21,6 +22,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await initializeGuardian();
+  await NotificationService().init();
 
   runApp(const MyApp());
 }

@@ -3,6 +3,7 @@ import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/screens/auth/registro_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
+import 'package:mapachesecure_app/services/notification_service.dart';
 import 'recuperar_password.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
@@ -40,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Extrae el rol del perfil para decidir a qué pantalla navegar
       final rol = respuesta['perfil']['rol'];
+      final nombre = respuesta['perfil']['nombre'] ?? '';
       final usuarioId = respuesta['user_id'].toString();
       final token = respuesta['access_token'];
 
@@ -50,6 +52,12 @@ class _LoginScreenState extends State<LoginScreen> {
       if (token != null) {
         await prefs.setString('auth_token', token.toString());
       }
+
+      // Registra el token FCM ahora que ya hay sesión activa
+      await NotificationService().registrarToken();
+
+      // Notificación local de confirmación de inicio de sesión
+      await NotificationService().mostrarNotificacionLogin(nombre, rol);
 
       // Dependiendo tu rol te lleva a tu home correspondiente
       if (rol == 'padre') {

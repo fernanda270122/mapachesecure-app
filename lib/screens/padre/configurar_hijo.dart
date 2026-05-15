@@ -86,10 +86,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   final _diasNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   final Set<String> _appsSeleccionadasParaHorario = {};
 
-  // Calendario
-  // DateTime _focusedDay = DateTime.now();
-  // final Set<DateTime> _fechasSeleccionadas = {};
-
   bool _estaBloqueadaPorHorario(Map bloqueo, String packageActual) {
     // Solo procesamos si es tipo horario y tiene apps asignadas
     if (bloqueo['tipo'] != 'horario' || bloqueo['package_names'] == null)
@@ -501,20 +497,12 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                   // Botones de modo
                   Row(
                     children: [
-                      // _botonModo('inmediato', Icons.block, 'Inmediato'),
-                      // const SizedBox(width: 8),
                       _botonModo('horario', Icons.schedule, 'Horario'),
-                      // const SizedBox(width: 8),
-                      // _botonModo('calendario', Icons.calendar_month, 'Calendario'),
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  // Formulario según modo
-                  // if (_modoSeleccionado == 'inmediato') _formInmediato(),
                   if (_modoSeleccionado == 'horario') _formHorario(),
 
-                  // if (_modoSeleccionado == 'calendario') _formCalendario(),
                   const SizedBox(height: 30),
 
                   // ── Apps a bloquear ───────────────────────────────────────
@@ -825,42 +813,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  // ── Formulario inmediato (comentado) ──────────────────────────────────────
-
-  // Widget _formInmediato() {
-  //   return Card(
-  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(16),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           const Text('Activar bloqueo ahora mismo',
-  //               style: TextStyle(fontWeight: FontWeight.bold)),
-  //           const SizedBox(height: 8),
-  //           const Text('Todas las apps seleccionadas quedarán bloqueadas inmediatamente.',
-  //               style: TextStyle(color: Colors.grey, fontSize: 13)),
-  //           const SizedBox(height: 16),
-  //           SizedBox(
-  //             width: double.infinity,
-  //             child: ElevatedButton(
-  //               onPressed: _guardarBloqueo,
-  //               style: ElevatedButton.styleFrom(
-  //                 backgroundColor: Colors.red,
-  //                 foregroundColor: Colors.white,
-  //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  //               ),
-  //               child: const Text('Bloquear ahora'),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  // ── Formulario horario ─────────────────────────────────────────────────────
-
   Widget _formHorario() {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -902,70 +854,4 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       ),
     );
   }
-
-  // ── Formulario calendario (comentado) ─────────────────────────────────────
-
-  // Widget _formCalendario() {
-  //   return Card(
-  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(16),
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           const Text('Selecciona las fechas', style: TextStyle(fontWeight: FontWeight.bold)),
-  //           const SizedBox(height: 8),
-  //           TableCalendar(
-  //             firstDay: DateTime.now(),
-  //             lastDay: DateTime.now().add(const Duration(days: 365)),
-  //             focusedDay: _focusedDay,
-  //             selectedDayPredicate: (day) => _fechasSeleccionadas
-  //                 .any((f) => f.year == day.year && f.month == day.month && f.day == day.day),
-  //             onDaySelected: (selected, focused) {
-  //               setState(() {
-  //                 _focusedDay = focused;
-  //                 final existe = _fechasSeleccionadas
-  //                     .any((f) => f.year == selected.year && f.month == selected.month && f.day == selected.day);
-  //                 if (existe) {
-  //                   _fechasSeleccionadas.removeWhere(
-  //                       (f) => f.year == selected.year && f.month == selected.month && f.day == selected.day);
-  //                 } else {
-  //                   _fechasSeleccionadas.add(selected);
-  //                 }
-  //               });
-  //             },
-  //             calendarStyle: CalendarStyle(
-  //               selectedDecoration: BoxDecoration(
-  //                 color: AppColors.primary,
-  //                 shape: BoxShape.circle,
-  //               ),
-  //               todayDecoration: BoxDecoration(
-  //                 color: AppColors.primary.withOpacity(0.4),
-  //                 shape: BoxShape.circle,
-  //               ),
-  //             ),
-  //             headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
-  //           ),
-  //           const SizedBox(height: 16),
-  //           const Text('Selecciona el horario', style: TextStyle(fontWeight: FontWeight.bold)),
-  //           const SizedBox(height: 8),
-  //           _selectorHoras(),
-  //           const SizedBox(height: 16),
-  //           SizedBox(
-  //             width: double.infinity,
-  //             child: ElevatedButton(
-  //               onPressed: _guardarBloqueo,
-  //               style: ElevatedButton.styleFrom(
-  //                 backgroundColor: AppColors.primary,
-  //                 foregroundColor: Colors.white,
-  //                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-  //               ),
-  //               child: const Text('Guardar bloqueo'),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 }
