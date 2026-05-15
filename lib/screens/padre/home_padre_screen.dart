@@ -181,13 +181,6 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 ),
               );
             }),
-
-            _buildDrawerItem(
-              context,
-              Icons.insert_chart_outlined,
-              'Resumen de la semana',
-              () {},
-            ),
             _buildDrawerItem(
               context,
               Icons.lightbulb_outline,
