@@ -469,7 +469,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -489,7 +489,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -511,7 +511,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -570,7 +570,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                           ),
                         ),
                         value: estaCheckeada,
-                        activeColor: const Color(0xFF1A237E),
+                        activeColor: Colors.white,
 
                         // DESHABILITAMOS el switch si hay un bloqueo programado en curso
                         // Esto evita que se intente desactivar manualmente un horario vigente.

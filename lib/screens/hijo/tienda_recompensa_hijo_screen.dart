@@ -35,8 +35,15 @@ class _TiendaRecompensasHijoScreenState
       final data = await _api.get('/recompensas/$hijoId');
       final puntosData = await _api.get('/desafios/puntos/$hijoId');
 
+      final lista = data is List ? data : [];
+      final vistos = <String>{};
+      final unicos = lista.where((r) {
+        final titulo = r['titulo']?.toString() ?? '';
+        return vistos.add(titulo);
+      }).toList();
+
       setState(() {
-        _recompensas = data is List ? data : [];
+        _recompensas = unicos;
         _misPuntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
         _cargando = false;
       });
