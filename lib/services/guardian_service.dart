@@ -79,6 +79,57 @@ void onStart(ServiceInstance service) async {
 
   final String miPropiaApp = 'com.mapachesecure.mapachesecure_app';
 
+  // --- NOTIFICACIONES DE HORARIO ---
+  final FlutterLocalNotificationsPlugin notifHorario =
+      FlutterLocalNotificationsPlugin();
+
+  await notifHorario.initialize(
+    settings: const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    ),
+  );
+
+  const AndroidNotificationChannel horarioChannel = AndroidNotificationChannel(
+    'horario_channel',
+    'Notificaciones de Bloqueo',
+    description: 'Avisa cuando inicia o termina un bloqueo programado',
+    importance: Importance.high,
+  );
+
+  await notifHorario
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(horarioChannel);
+
+  // Conjunto de claves de reglas activas en el último chequeo
+  Set<String> reglasActivasPrevias = {};
+
+  String _claveRegla(ReglaBloqueo r) => '${r.inicio}_${r.fin}_${r.dias.join('-')}';
+
+  Set<String> _reglasActivasAhora(List<ReglaBloqueo> reglas, bool Function(ReglaBloqueo) estaActiva) {
+    return reglas.where(estaActiva).map(_claveRegla).toSet();
+  }
+
+  Future<void> _notificarCambioHorario(bool iniciando, ReglaBloqueo regla) async {
+    await notifHorario.show(
+      id: iniciando ? 300 : 301,
+      title: iniciando ? '⏰ Bloqueo de horario iniciado' : '✅ Bloqueo de horario terminado',
+      body: iniciando
+          ? 'Las apps están restringidas hasta las ${regla.fin}'
+          : 'Las apps están disponibles nuevamente (desde las ${regla.fin})',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'horario_channel',
+          'Notificaciones de Bloqueo',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+      ),
+    );
+  }
+
   // --- MEMORIA DEL SERVICIO ---
   List<String> appsEnListaNegra = []; // Bloqueos instantáneos
   List<ReglaBloqueo> reglasProgramadas = []; // Bloqueos por horario
@@ -151,10 +202,30 @@ void onStart(ServiceInstance service) async {
 
   // --- INICIO DEL SERVICIO ---
   await actualizarReglasDesdeAPI();
+  // Guardamos el estado inicial sin notificar (la app acaba de arrancar)
+  reglasActivasPrevias = _reglasActivasAhora(reglasProgramadas, estaEnHorarioProhibido);
 
-  // Sincronización de reglas cada minuto
-  Timer.periodic(const Duration(minutes: 1), (timer) {
-    actualizarReglasDesdeAPI();
+  // Sincronización de reglas cada minuto + detección de inicio/fin de bloqueo
+  Timer.periodic(const Duration(minutes: 1), (timer) async {
+    await actualizarReglasDesdeAPI();
+
+    final reglasActuales = _reglasActivasAhora(reglasProgramadas, estaEnHorarioProhibido);
+
+    for (final regla in reglasProgramadas) {
+      final clave = _claveRegla(regla);
+      final eraActiva = reglasActivasPrevias.contains(clave);
+      final esActiva = reglasActuales.contains(clave);
+
+      if (!eraActiva && esActiva) {
+        // La regla acaba de activarse
+        await _notificarCambioHorario(true, regla);
+      } else if (eraActiva && !esActiva) {
+        // La regla acaba de desactivarse
+        await _notificarCambioHorario(false, regla);
+      }
+    }
+
+    reglasActivasPrevias = reglasActuales;
   });
 
   // Bucle de vigilancia cada 2 segundos (puedes bajarlo a 1 si prefieres)
