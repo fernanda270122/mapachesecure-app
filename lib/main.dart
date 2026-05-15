@@ -40,15 +40,26 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _escucharDeepLinks();
 
-    // En tu main.dart
-    // Prueba quitando la validación de rol solo un momento
-    FlutterBackgroundService().on('mostrarBloqueo').listen((event) {
-      print("📢 BLOQUEO DETECTADO");
-      if (event != null) {
+    FlutterBackgroundService().on('mostrarBloqueo').listen((event) async {
+      final auth = AuthService();
+      final prefs = await SharedPreferences.getInstance();
+
+      final String? userId = prefs.getString('user_id');
+      final String? rol = await auth.getRol();
+
+      // SOLO bloqueamos si el usuario existe y es hijo
+      if (userId != null &&
+          userId.isNotEmpty &&
+          rol == 'hijo' &&
+          event != null) {
         navigatorKey.currentState?.pushNamedAndRemoveUntil(
           '/pantalla-bloqueo',
           (route) => false,
           arguments: event['app'],
+        );
+      } else {
+        print(
+          "🚫 Bloqueo descartado por seguridad (Sesión no válida para hijo)",
         );
       }
     });
@@ -148,8 +159,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _verificarSesion() async {
     final auth = AuthService();
+    final service = FlutterBackgroundService();
+
     await Future.delayed(const Duration(seconds: 3));
     final loggedIn = await auth.isLoggedIn();
+
     if (!mounted) return;
 
     if (loggedIn) {
@@ -160,6 +174,11 @@ class _SplashScreenState extends State<SplashScreen> {
       final onboardingVisto = prefs.getBool('onboarding_${rol}_visto') ?? false;
 
       if (rol == 'padre') {
+        // SEGURIDAD: Si entra el padre, matamos al Guardián inmediatamente
+        if (await service.isRunning()) {
+          service.invoke("stopService");
+        }
+
         final destino = const HomePadreScreen();
         Navigator.pushReplacement(
           context,
@@ -170,12 +189,11 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         );
       } else if (rol == 'hijo') {
-        // despertamos al guardián cuando entre el niño
-        final service = FlutterBackgroundService();
+        // SOLO aquí permitimos que el Guardián viva
         if (!(await service.isRunning())) {
           await service.startService();
         }
-        // sesión persistente: hijo va directo al home, no al login
+
         final destino = const HomeHijoScreen();
         Navigator.pushReplacement(
           context,
@@ -187,6 +205,11 @@ class _SplashScreenState extends State<SplashScreen> {
         );
       }
     } else {
+      // SEGURIDAD: Si no hay nadie logueado (Login Screen), el Guardián DEBE morir
+      if (await service.isRunning()) {
+        service.invoke("stopService");
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),

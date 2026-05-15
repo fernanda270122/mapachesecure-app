@@ -45,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // ── GUARDAMOS LOS DATOS PARA EL GUARDIÁN EN SEGUNDO PLANO ──
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_email', _emailController.text);
 
       if (token != null) {
         await prefs.setString('auth_token', token.toString());
@@ -73,6 +74,138 @@ class _LoginScreenState extends State<LoginScreen> {
         _cargando = false;
       });
     }
+  }
+
+  void intentarCerrarSesion(BuildContext context) {
+    final emailController = TextEditingController();
+    final passController = TextEditingController();
+    bool validando = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.background,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: Colors.orangeAccent),
+              SizedBox(width: 10),
+              Text(
+                "Autorización Requerida",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Para desactivar el Guardián, un adulto debe ingresar sus credenciales de acceso.",
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              // Campo de Correo
+              TextField(
+                controller: emailController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "Correo del Adulto",
+                  labelStyle: TextStyle(color: AppColors.accent),
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email_outlined, color: Colors.white54),
+                ),
+              ),
+              const SizedBox(height: 15),
+              // Campo de Contraseña
+              TextField(
+                controller: passController,
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "Contraseña",
+                  labelStyle: TextStyle(color: AppColors.accent),
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline, color: Colors.white54),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                "CANCELAR",
+                style: TextStyle(color: Colors.white60),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+              ),
+              onPressed: validando
+                  ? null
+                  : () async {
+                      setState(() => validando = true);
+
+                      try {
+                        final authService = AuthService();
+
+                        // 1. Validamos las credenciales directamente con tu servicio
+                        final respuesta = await authService.login(
+                          emailController.text.trim(),
+                          passController.text,
+                        );
+
+                        // 2. Verificamos que quien autoriza sea realmente un 'padre'
+                        if (respuesta['perfil']['rol'] == 'padre') {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.clear(); // Limpiamos rastro del hijo
+
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        } else {
+                          throw Exception(
+                            "Solo un adulto puede cerrar esta sesión",
+                          );
+                        }
+                      } catch (e) {
+                        setState(() => validando = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Credenciales inválidas o permiso denegado.",
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+              child: validando
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text("DESACTIVAR GUARDIÁN"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

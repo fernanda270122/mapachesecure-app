@@ -15,7 +15,6 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:mapachesecure_app/models/pet_model.dart';
 import 'package:mapachesecure_app/screens/hijo/video_evolucion_screen.dart';
 
-
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
 
@@ -23,7 +22,8 @@ class HomeHijoScreen extends StatefulWidget {
   State<HomeHijoScreen> createState() => _HomeHijoScreenState();
 }
 
-class _HomeHijoScreenState extends State<HomeHijoScreen> with SingleTickerProviderStateMixin {
+class _HomeHijoScreenState extends State<HomeHijoScreen>
+    with SingleTickerProviderStateMixin {
   final FlutterTts _tts = FlutterTts();
   String _nombre = '';
   int _puntos = 0;
@@ -50,15 +50,19 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> with SingleTickerProvid
     );
     _cargarNivelVisto();
   }
+
   @override
-    void dispose() {
-      _floatController.dispose();
-      super.dispose();
-    }
+  void dispose() {
+    _floatController.dispose();
+    super.dispose();
+  }
+
   Future<void> _cargarNivelVisto() async {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() => _nivelMascotaVisto = prefs.getInt('nivel_mascota_visto') ?? -1);
-    }
+    final prefs = await SharedPreferences.getInstance();
+    setState(
+      () => _nivelMascotaVisto = prefs.getInt('nivel_mascota_visto') ?? -1,
+    );
+  }
 
   Future<void> _verificarEvolucion(int puntos) async {
     final nivel = _calcularNivel(puntos)['nivel'] as int;
@@ -79,6 +83,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> with SingleTickerProvid
       }
     }
   }
+
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
     var isRunning = await service.isRunning();
@@ -97,17 +102,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> with SingleTickerProvid
       final puntosData = await api.get('/desafios/puntos/$hijoId');
       final desafiosData = await api.get('/desafios/');
       final completadosData = await api.get('/desafios/completados/$hijoId');
-      final nuevoPuntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
+      final nuevoPuntos = puntosData is Map
+          ? (puntosData['total_puntos'] ?? 0)
+          : 0;
 
       setState(() {
         if (completadosData is List) {
-            _pendientes = completadosData
-            
-                .where((c) => c['validado'] == false)
-                .map<String>((c) => c['desafio_id'].toString())
-                .toSet();
-                print('pendientes: $_pendientes');
-          }
+          _pendientes = completadosData
+              .where((c) => c['validado'] == false)
+              .map<String>((c) => c['desafio_id'].toString())
+              .toSet();
+          print('pendientes: $_pendientes');
+        }
         _nombre = nombre;
         _puntos = nuevoPuntos;
 
@@ -152,29 +158,203 @@ class _HomeHijoScreenState extends State<HomeHijoScreen> with SingleTickerProvid
       }
     }
   }
-Map<String, dynamic> _calcularNivel(int puntos) {
-  const List<int> puntosNivel = [
-    0, 1000, 1250, 1500, 1750, 2000,
-    2300, 2600, 2900, 3200, 3500,
-    3850, 4200, 4550, 4900, 5250,
-    5600, 5950, 6300, 6650, 7000,
-  ];
-  int nivel = 0;
-  for (int i = 1; i < puntosNivel.length; i++) {
-    if (puntos >= puntosNivel[i]) nivel = i;
-    else break;
+
+  // 🛡️ ESCUDO DE SEGURIDAD PARA CIERRE DE SESIÓN
+  void _intentarCerrarSesion(BuildContext context) {
+    final emailController = TextEditingController();
+    final passController = TextEditingController();
+    bool validando = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // El niño no puede tocar fuera para cerrar
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.background,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_outline, color: AppColors.accent),
+              SizedBox(width: 10),
+              Text(
+                "Validación de Adulto",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ],
+          ),
+          // ... dentro de tu showDialog
+          content: SingleChildScrollView(
+            // 👈 ESTO EVITA EL OVERFLOW
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Para cerrar sesión y desactivar el Guardián, un adulto debe ingresar sus datos.",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailController,
+                  style: const TextStyle(color: Colors.white),
+                  keyboardType:
+                      TextInputType.emailAddress, // Mejora la UX del teclado
+                  decoration: const InputDecoration(
+                    labelText: "Correo del Adulto",
+                    labelStyle: TextStyle(color: AppColors.accent),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.accent),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: Colors.white54,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: passController,
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: "Contraseña",
+                    labelStyle: TextStyle(color: AppColors.accent),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white24),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.accent),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: Colors.white54,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                "CANCELAR",
+                style: TextStyle(color: Colors.white60),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+              ),
+              onPressed: validando
+                  ? null
+                  : () async {
+                      setState(() => validando = true);
+                      try {
+                        final authService = AuthService();
+                        final respuesta = await authService.login(
+                          emailController.text.trim(),
+                          passController.text,
+                        );
+                        if (respuesta['perfil']['rol'] == 'padre') {
+                          // 🛡️ PASO 1: ORDENAR AL GUARDIÁN QUE SE DETENGA
+                          final service = FlutterBackgroundService();
+                          service.invoke("stopService");
+
+                          // 🛡️ PASO 2: LIMPIAR DATOS
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.remove('user_id');
+                          await prefs.clear();
+
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const LoginScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        } else {
+                          throw Exception("No autorizado");
+                        }
+                      } catch (e) {
+                        setState(() => validando = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Datos incorrectos o acceso denegado.",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+              child: validando
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text("DESACTIVAR Y SALIR"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
-  int puntosActual = puntosNivel[nivel];
-  int puntosNext = nivel < 20 ? puntosNivel[nivel + 1] : 7000;
-  double progreso = nivel < 20
-      ? (puntos - puntosActual) / (puntosNext - puntosActual)
-      : 1.0;
-  return {
-    'nivel': nivel,
-    'progreso': progreso.clamp(0.0, 1.0),
-    'puntosNext': puntosNext,
-  };
-}
+
+  Map<String, dynamic> _calcularNivel(int puntos) {
+    const List<int> puntosNivel = [
+      0,
+      1000,
+      1250,
+      1500,
+      1750,
+      2000,
+      2300,
+      2600,
+      2900,
+      3200,
+      3500,
+      3850,
+      4200,
+      4550,
+      4900,
+      5250,
+      5600,
+      5950,
+      6300,
+      6650,
+      7000,
+    ];
+    int nivel = 0;
+    for (int i = 1; i < puntosNivel.length; i++) {
+      if (puntos >= puntosNivel[i])
+        nivel = i;
+      else
+        break;
+    }
+    int puntosActual = puntosNivel[nivel];
+    int puntosNext = nivel < 20 ? puntosNivel[nivel + 1] : 7000;
+    double progreso = nivel < 20
+        ? (puntos - puntosActual) / (puntosNext - puntosActual)
+        : 1.0;
+    return {
+      'nivel': nivel,
+      'progreso': progreso.clamp(0.0, 1.0),
+      'puntosNext': puntosNext,
+    };
+  }
+
   IconData _getIcono(String? tipo) {
     switch (tipo?.toLowerCase()) {
       case 'cognitivo':
@@ -317,15 +497,9 @@ Map<String, dynamic> _calcularNivel(int puntos) {
               Icons.exit_to_app,
               'Cerrar Sesión',
               Colors.red,
-              () async {
-                final auth = AuthService();
-                await auth.logout();
-                if (!mounted) return;
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
+              () {
+                // llamamos al escudo
+                _intentarCerrarSesion(context);
               },
             ),
           ],
@@ -424,7 +598,9 @@ Map<String, dynamic> _calcularNivel(int puntos) {
                                   return _buildChallengeCard(
                                     context, // Agregamos el context para navegar
                                     desafio, // Pasamos el mapa completo
-                                    _pendientes.contains(desafio['id'].toString()),
+                                    _pendientes.contains(
+                                      desafio['id'].toString(),
+                                    ),
                                   );
                                 }).toList(),
                               ),
@@ -521,12 +697,20 @@ Map<String, dynamic> _calcularNivel(int puntos) {
           const SizedBox(height: 8),
           const Text(
             'RaccuPoints',
-            style: TextStyle(fontSize: 16, color: Colors.blueGrey, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.blueGrey,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 5),
           Text(
             '$_puntos pts',
-            style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.greenAccent),
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: Colors.greenAccent,
+            ),
           ),
           const SizedBox(height: 15),
           Align(
@@ -543,7 +727,9 @@ Map<String, dynamic> _calcularNivel(int puntos) {
               value: progreso,
               minHeight: 15,
               backgroundColor: const Color(0xFFE0E0E0),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Colors.greenAccent,
+              ),
             ),
           ),
           const SizedBox(height: 5),
@@ -679,7 +865,9 @@ Map<String, dynamic> _calcularNivel(int puntos) {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          DetalleDesafioScreen(desafio: desafio),
+                                          DetalleDesafioScreen(
+                                            desafio: desafio,
+                                          ),
                                     ),
                                   );
                                   if (resultado == true) _cargarDatos();

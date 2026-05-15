@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -158,6 +159,21 @@ void onStart(ServiceInstance service) async {
 
   // Bucle de vigilancia cada 2 segundos (puedes bajarlo a 1 si prefieres)
   Timer.periodic(const Duration(milliseconds: 500), (timer) async {
+    final prefs = await SharedPreferences.getInstance();
+    final auth = AuthService(); // Usamos tu servicio existente
+
+    // 🛡️ VALIDACIÓN MAESTRA
+    final String? userId = prefs.getString('user_id');
+    final String? rol = await auth
+        .getRol(); // Obtenemos el rol desde tu lógica de Auth
+
+    // Si no hay ID o el rol NO es hijo, el servicio se detiene físicamente
+    if (userId == null || userId.isEmpty || rol != 'hijo') {
+      print("🛑 Guardian: Deteniendo servicio. Usuario: $userId, Rol: $rol");
+      timer.cancel();
+      service.stopSelf();
+      return;
+    }
     DateTime endDate = DateTime.now();
     DateTime startDate = endDate.subtract(const Duration(minutes: 1));
 

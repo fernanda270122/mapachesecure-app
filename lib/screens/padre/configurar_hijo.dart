@@ -615,43 +615,169 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  // ── Tarjeta de bloqueo activo ──────────────────────────────────────────────
   Widget _tarjetaBloqueo(Map b) {
-    String descripcion = '';
-    IconData icono = Icons.block;
+    // 1. Inicialización de variables de soporte
+    String diasTexto = "No definidos";
+    List<String> listaLimpia = [];
+    IconData icono = Icons.schedule;
 
-    // if (b['tipo'] == 'inmediato') {
-    //   descripcion = 'Bloqueo inmediato activo';
-    //   icono = Icons.block;
-    // } else
-    if (b['tipo'] == 'horario') {
-      descripcion = '${b['hora_inicio']} - ${b['hora_fin']}';
-      if (b['dias_semana'] != null)
-        descripcion += '\nDías: ${b['dias_semana']}';
-      icono = Icons.schedule;
+    // 2. Lógica para procesar Días de la semana
+    if (b['dias_semana'] != null) {
+      List<String> nombresDias = [
+        "",
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes",
+        "Sábado",
+        "Domingo",
+      ];
+      try {
+        var rawDias = b['dias_semana'];
+        if (rawDias is List) {
+          diasTexto = rawDias
+              .map((id) => nombresDias[int.parse(id.toString())])
+              .join(", ");
+        } else {
+          String limpio = rawDias
+              .toString()
+              .replaceAll('[', '')
+              .replaceAll(']', '')
+              .trim();
+          if (limpio.isNotEmpty) {
+            diasTexto = limpio
+                .split(',')
+                .map((id) => nombresDias[int.parse(id.trim())])
+                .join(", ");
+          }
+        }
+      } catch (e) {
+        diasTexto = b['dias_semana'].toString();
+      }
     }
-    // else if (b['tipo'] == 'calendario') {
-    //   descripcion = '${b['hora_inicio']} - ${b['hora_fin']}';
-    //   if (b['fechas'] != null) descripcion += '\nFechas: ${b['fechas']}';
-    //   icono = Icons.calendar_month;
-    // }
 
+    // 3. Lógica para procesar nombres de Apps (package_names)
+    if (b['package_names'] != null &&
+        b['package_names'].toString().trim().isNotEmpty) {
+      try {
+        String rawApps = b['package_names'].toString();
+        listaLimpia = rawApps.split(RegExp(r',\s*')).map((p) {
+          if (p.contains('.')) {
+            var segmentos = p.split('.');
+            // Extrae el nombre principal (ej: de com.whatsapp toma whatsapp)
+            String ident = segmentos.length >= 2
+                ? segmentos[segmentos.length - 2]
+                : segmentos.last;
+            return ident[0].toUpperCase() + ident.substring(1);
+          }
+          return p.trim().toUpperCase();
+        }).toList();
+      } catch (e) {
+        print("Error en formateo de apps: $e");
+      }
+    }
+
+    // 4. Construcción de la Interfaz (UI)
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.red.shade50,
-          child: Icon(icono, color: Colors.red),
-        ),
-        title: Text(
-          b['tipo'].toString().toUpperCase(),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(descripcion),
-        trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
-          onPressed: () => _eliminarBloqueo(b['id']),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado: Título y Botón Eliminar
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.red.shade50,
+                  child: Icon(icono, color: Colors.red, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "BLOQUEO POR HORARIO",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () => _eliminarBloqueo(b['id']),
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+
+            // Información de Tiempo
+            Text(
+              "⏰ ${b['hora_inicio']} - ${b['hora_fin']}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+
+            // Información de Días
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  size: 14,
+                  color: Colors.grey.shade600,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    "Días: $diasTexto",
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                ),
+              ],
+            ),
+
+            // Sección de Apps con Chips (Solo se muestra si hay apps)
+            if (listaLimpia.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                "APPS RESTRINGIDAS:",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: listaLimpia.map((nombreApp) {
+                  return Chip(
+                    label: Text(
+                      nombreApp,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.deepPurple,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    backgroundColor: Colors.deepPurple.shade50,
+                    side: BorderSide(color: Colors.deepPurple.shade100),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
         ),
       ),
     );
