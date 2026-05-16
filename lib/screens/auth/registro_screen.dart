@@ -18,6 +18,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmarPasswordController = TextEditingController();
   final TextEditingController _fechaController = TextEditingController();
 
   // Variables para saber si algo falló o si todavía estamos esperando al servidor
@@ -45,59 +46,27 @@ class _RegistroScreenState extends State<RegistroScreen> {
 
   // la funcion del registro
   Future<void> _registro() async {
-    
+    if (_passwordController.text != _confirmarPasswordController.text) {
+      setState(() => _error = 'Las contraseñas no coinciden.');
+      return;
+    }
+
     if (_fechaSeleccionada == null) {
       setState(() => _error = 'Por favor, ingresa tu fecha de nacimiento.');
       return;
     }
 
-    setState(() {
-      _cargando = true;
-      _error = null;
-    });
-
-    try {
-      // Primero lo mandamos a la pantalla de verificación para asegurar que todo sea real
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const VerificarIdentidadScreen(),
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerificarIdentidadScreen(
+            nombre: _nombreController.text,
+            email: _emailController.text,
+            password: _passwordController.text,
           ),
-        );
-      }
-    } catch (e) {
-      // Si algo sale mal con el cambio de pantalla, aquí lo atrapamos
-    }
-
-    try {
-      // Llamo a mi servicio de autenticación y le paso todos los datos que juntamos
-      final authService = AuthService();
-      await authService.registro(
-        _emailController.text,
-        _passwordController.text,
-        _nombreController.text,
-        _fechaSeleccionada!
-            .toIso8601String(), // La fecha va en formato de base de datos
+        ),
       );
-
-      // Si todo salió bien, lo mando directo al Login para que estrene su cuenta
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
-    } catch (e) {
-      // Si el servidor se pone pesado o hay un error, le mostramos este mensaje
-      setState(() {
-        _error = 'Error al crear la cuenta. Intenta de nuevo.';
-      });
-    } finally {
-      // Pase lo que pase, dejamos de mostrar el circulito de carga
-      setState(() {
-        _cargando = false;
-      });
     }
   }
 
@@ -149,6 +118,13 @@ class _RegistroScreenState extends State<RegistroScreen> {
                 Icons.lock_outline,
                 obscure: true,
                 controller: _passwordController,
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                'Confirmar Contraseña',
+                Icons.lock_outline,
+                obscure: true,
+                controller: _confirmarPasswordController,
               ),
               const SizedBox(height: 20),
               TextField(
