@@ -132,13 +132,13 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               'Agregar Hijo',
               () async {
                 Navigator.pop(context);
-                final resultado = await Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const AgregarHijoScreen(),
                   ),
                 );
-                if (resultado == true) _cargarDatos();
+                if (mounted) _cargarDatos();
               },
             ),
 
