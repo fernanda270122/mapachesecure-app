@@ -14,6 +14,8 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:mapachesecure_app/screens/hijo/app_bloqueada_screen.dart';
 import 'package:mapachesecure_app/services/guardian_service.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -24,7 +26,12 @@ void main() async {
   await initializeGuardian();
   await NotificationService().init();
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => TemaProvider()..cargar(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -98,7 +105,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      title: 'MapacheSecure',
+      title: 'Raccu',
 
       routes: {
         '/home-hijo': (context) => const HomeHijoScreen(),

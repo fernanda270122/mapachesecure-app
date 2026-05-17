@@ -22,7 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'icono': Icons.shield,
       'color': Color(0xFF1A237E),
-      'titulo': '¡Bienvenido a MapacheSecure!',
+      'titulo': '¡Bienvenido a Raccu!',
       'descripcion': 'Protege el tiempo digital de tus hijos de forma inteligente y positiva.',
     },
     {
@@ -47,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'icono': Icons.star,
       'color': Colors.green,
       'titulo': '¡Todo listo!',
-      'descripcion': 'Ya puedes empezar a usar MapacheSecure. ¡Tu familia te lo agradecerá!',
+      'descripcion': 'Ya puedes empezar a usar Raccu. ¡Tu familia te lo agradecerá!',
     },
   ];
 
@@ -55,7 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     {
       'icono': Icons.waving_hand,
       'color': Color(0xFF1A237E),
-      'titulo': '¡Hola! Bienvenido a MapacheSecure',
+      'titulo': '¡Hola! Bienvenido a Raccu',
       'descripcion': 'Tu app para organizar tu tiempo con el celular de forma divertida.',
     },
     {

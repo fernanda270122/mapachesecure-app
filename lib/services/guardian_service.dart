@@ -40,7 +40,7 @@ Future<void> initializeGuardian() async {
 
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'mapache_channel',
-    'Guardián MapacheSecure',
+    'Guardián Raccu',
     description: 'Vigilando aplicaciones en segundo plano',
     importance: Importance.low,
   );
@@ -60,7 +60,7 @@ Future<void> initializeGuardian() async {
       autoStart: false,
       isForegroundMode: true,
       notificationChannelId: 'mapache_channel',
-      initialNotificationTitle: 'MapacheSecure Activo',
+      initialNotificationTitle: 'Raccu Activo',
       initialNotificationContent: 'Protegiendo tu dispositivo',
       foregroundServiceNotificationId: 888,
     ),

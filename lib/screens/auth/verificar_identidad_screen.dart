@@ -126,7 +126,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
       builder: (context) => AlertDialog(
         title: const Text('¿Por qué verificamos tu rostro?'),
         content: const Text(
-          'Utilizamos un análisis facial rápido para confirmar que eres mayor de edad y mantener un entorno seguro en MapacheSecure. No compartiremos tu foto.',
+          'Utilizamos un análisis facial rápido para confirmar que eres mayor de edad y mantener un entorno seguro en Raccu. No compartiremos tu foto.',
         ),
         actions: [
           TextButton(

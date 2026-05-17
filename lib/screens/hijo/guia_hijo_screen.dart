@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';                                                                                                                                                       
-import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
 
 class GuiaHijoScreen extends StatelessWidget {
   const GuiaHijoScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: tema.background,
       appBar: AppBar(
         title: const Text('Guía de la app',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.primary,
+        backgroundColor: tema.primary,
         foregroundColor: Colors.white,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _seccion(
+          _seccion(context,
             icono: Icons.waving_hand,
-            titulo: '¡Bienvenido a MapacheSecure!',
+            titulo: '¡Bienvenido a Raccu!',
             pasos: [
               'Esta app te ayuda a organizar tu tiempo con el celular.',
               'Completa desafíos, gana puntos y haz crecer a tu mapache Raccu.',
             ],
           ),
-          _seccion(
+          _seccion(context,
             icono: Icons.task_alt,
             titulo: '¿Cómo funcionan los desafíos?',
             pasos: [
@@ -35,7 +37,7 @@ class GuiaHijoScreen extends StatelessWidget {
               'Cuando tu papá o mamá apruebe la foto, ¡ganas puntos!',
             ],
           ),
-          _seccion(
+          _seccion(context,
             icono: Icons.star,
             titulo: '¿Para qué sirven los puntos?',
             pasos: [
@@ -44,7 +46,7 @@ class GuiaHijoScreen extends StatelessWidget {
               'Las recompensas las elige tu papá o mamá especialmente para ti.',
             ],
           ),
-          _seccion(
+          _seccion(context,
             icono: Icons.pets,
             titulo: 'Tu mascota Raccu',
             pasos: [
@@ -54,7 +56,7 @@ class GuiaHijoScreen extends StatelessWidget {
               '¡Cuídalo completando tus desafíos!',
             ],
           ),
-          _seccion(
+          _seccion(context,
             icono: Icons.block,
             titulo: '¿Por qué están bloqueadas mis apps?',
             pasos: [
@@ -63,7 +65,7 @@ class GuiaHijoScreen extends StatelessWidget {
               'El bloqueo es para ayudarte a organizar mejor tu tiempo.',
             ],
           ),
-          _seccion(
+          _seccion(context,
             icono: Icons.lightbulb_outline,
             titulo: 'Consejos',
             pasos: [
@@ -77,11 +79,12 @@ class GuiaHijoScreen extends StatelessWidget {
     );
   }
 
-  Widget _seccion({
+  Widget _seccion(BuildContext context, {
     required IconData icono,
     required String titulo,
     required List<String> pasos,
   }) {
+    final primary = context.watch<TemaProvider>().colores.primary;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 16),
@@ -93,16 +96,16 @@ class GuiaHijoScreen extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
-                  child: Icon(icono, color: AppColors.primary),
+                  backgroundColor: primary.withOpacity(0.1),
+                  child: Icon(icono, color: primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(titulo,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A237E))),
+                          color: primary)),
                 ),
               ],
             ),
@@ -114,7 +117,7 @@ class GuiaHijoScreen extends StatelessWidget {
                     children: [
                       Text('${e.key + 1}. ',
                           style: TextStyle(
-                              color: AppColors.primary,
+                              color: primary,
                               fontWeight: FontWeight.bold)),
                       Expanded(
                           child: Text(e.value,

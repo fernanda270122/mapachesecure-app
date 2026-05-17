@@ -43,7 +43,7 @@ class NotificationService {
     const AndroidNotificationChannel loginChannel = AndroidNotificationChannel(
       _loginChannelId,
       _loginChannelName,
-      description: 'Aviso cuando inicias sesión en MapacheSecure',
+      description: 'Aviso cuando inicias sesión en Raccu',
       importance: Importance.high,
     );
 
@@ -61,12 +61,12 @@ class NotificationService {
     await _localNotifications.show(
       id: 100,
       title: 'Sesión iniciada correctamente',
-      body: 'Bienvenido, $nombre ($rolTexto) — MapacheSecure',
+      body: 'Bienvenido, $nombre ($rolTexto) — Raccu',
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _loginChannelId,
           _loginChannelName,
-          channelDescription: 'Aviso cuando inicias sesión en MapacheSecure',
+          channelDescription: 'Aviso cuando inicias sesión en Raccu',
           importance: Importance.high,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
@@ -86,7 +86,7 @@ class NotificationService {
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'mapache_channel',
-          'Guardián MapacheSecure',
+          'Guardián Raccu',
           importance: Importance.high,
           priority: Priority.high,
         ),
