@@ -115,6 +115,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       });
 
       if (!mounted) return;
+      setState(() => _cargando = false);
 
       if (respuesta['mensaje'] != null) {
         _mostrarQR(context, _nombreCtrl.text.trim());
@@ -127,14 +128,15 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _cargando = false);
+      if (mounted) setState(() => _cargando = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
