@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
 
 class TiendaRecompensasHijoScreen extends StatefulWidget {
   const TiendaRecompensasHijoScreen({super.key});
@@ -18,6 +19,7 @@ class _TiendaRecompensasHijoScreenState
   List<dynamic> _recompensas = [];
   int _misPuntos = 0;
   bool _cargando = true;
+  bool _tienePendiente = false;
   String _hijoId = '';
 
   @override
@@ -34,6 +36,7 @@ class _TiendaRecompensasHijoScreenState
     try {
       final data = await _api.get('/recompensas/$hijoId');
       final puntosData = await _api.get('/desafios/puntos/$hijoId');
+      final pendienteData = await _api.get('/canjes/tiene-pendiente/$hijoId');
 
       final lista = data is List ? data : [];
       final vistos = <String>{};
@@ -45,6 +48,7 @@ class _TiendaRecompensasHijoScreenState
       setState(() {
         _recompensas = unicos;
         _misPuntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
+        _tienePendiente = pendienteData is Map ? (pendienteData['tiene_pendiente'] ?? false) : false;
         _cargando = false;
       });
     } catch (e) {
@@ -140,15 +144,15 @@ class _TiendaRecompensasHijoScreenState
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: tema.background,
       appBar: AppBar(
         title: const Text('Tienda de Premios'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: tema.primary,
         foregroundColor: Colors.white,
       ),
-      body: AppBackground(
-        child: _cargando
+      body: _cargando
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
@@ -165,7 +169,6 @@ class _TiendaRecompensasHijoScreenState
                   ),
                 ],
               ),
-      ),
     );
   }
 
@@ -226,16 +229,22 @@ class _TiendaRecompensasHijoScreenState
         ),
         trailing: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: puedeComprar ? Colors.green : Colors.grey.shade300,
+            backgroundColor: (_tienePendiente || !puedeComprar)
+                ? Colors.grey.shade300
+                : Colors.green,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          onPressed: puedeComprar ? () => _canjearRecompensa(r) : null,
+          onPressed: (!_tienePendiente && puedeComprar)
+              ? () => _canjearRecompensa(r)
+              : null,
           child: Text(
-            'CANJEAR',
+            _tienePendiente ? 'EN ESPERA' : 'CANJEAR',
             style: TextStyle(
-              color: puedeComprar ? Colors.white : Colors.grey.shade600,
+              color: (_tienePendiente || !puedeComprar)
+                  ? Colors.grey.shade600
+                  : Colors.white,
             ),
           ),
         ),
