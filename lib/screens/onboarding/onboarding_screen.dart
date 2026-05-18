@@ -92,7 +92,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _terminar() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_${widget.rol}_visto', true);
+    final userId = prefs.getString('user_id') ?? '';
+    await prefs.setBool('onboarding_${userId}_${widget.rol}_visto', true);
     if (!mounted) return;
     Navigator.pushReplacement(
       context,

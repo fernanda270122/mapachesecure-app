@@ -180,7 +180,8 @@ class _SplashScreenState extends State<SplashScreen> {
       if (!mounted) return;
 
       final prefs = await SharedPreferences.getInstance();
-      final onboardingVisto = prefs.getBool('onboarding_${rol}_visto') ?? false;
+      final userId = prefs.getString('user_id') ?? '';
+      final onboardingVisto = prefs.getBool('onboarding_${userId}_${rol}_visto') ?? false;
 
       if (rol == 'padre') {
         // SEGURIDAD: Si entra el padre, matamos al Guardián inmediatamente
