@@ -103,7 +103,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     try {
       final api = ApiService();
       final puntosData = await api.get('/desafios/puntos/$hijoId');
-      final desafiosData = await api.get('/desafios/');
+      final desafiosData = await api.get('/desafios/hijo/$hijoId');
       final completadosData = await api.get('/desafios/completados/$hijoId');
       final nuevoPuntos = puntosData is Map
           ? (puntosData['total_puntos'] ?? 0)
