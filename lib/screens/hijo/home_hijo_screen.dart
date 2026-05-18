@@ -14,6 +14,9 @@ import 'package:mapachesecure_app/screens/hijo/guia_hijo_screen.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:mapachesecure_app/models/pet_model.dart';
 import 'package:mapachesecure_app/screens/hijo/video_evolucion_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
+import 'package:mapachesecure_app/screens/hijo/colores_screen.dart';
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -398,8 +401,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: tema.background,
       drawer: Drawer(
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(topRight: Radius.circular(30)),
@@ -408,9 +412,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.accent, AppColors.primary],
+                  colors: [tema.accent, tema.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -492,6 +496,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                 );
               },
             ),
+            _buildDrawerOption(
+                Icons.palette_outlined,
+                'Colores',
+                Colors.teal,
+                () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ColoresScreen()),
+                  );
+                },
+              ),
             const Divider(),
             _buildDrawerOption(
               Icons.exit_to_app,
@@ -506,12 +522,11 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         ),
       ),
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: tema.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AppBackground(
-        child: _cargando
+      body: _cargando
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh:
@@ -530,11 +545,11 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '¡Hola, $_nombre!',
-                                  style: const TextStyle(
+                                  '¡Hola, ${_nombre.split(' ').first}!',
+                                  style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: tema.onBackground,
                                   ),
                                 ),
                                 const SizedBox(height: 5),
@@ -572,24 +587,24 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                         const SizedBox(height: 15),
                         _buildMascotaCard(),
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Desafíos disponibles:',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: tema.onBackground,
                           ),
                         ),
                         const SizedBox(height: 15),
 
                         // Generación dinámica de desafíos desde el Backend
                         _desafios.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 20),
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
                                 child: Center(
                                   child: Text(
                                     "No hay desafíos disponibles",
-                                    style: TextStyle(color: Colors.white70),
+                                    style: TextStyle(color: tema.onBackground.withOpacity(0.6)),
                                   ),
                                 ),
                               )
@@ -644,7 +659,6 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                   ),
                 ),
               ),
-      ),
     );
   }
 
