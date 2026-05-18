@@ -6,6 +6,8 @@ import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
+import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -73,12 +75,21 @@ Future<void> _registro() async {
     await prefs.setString('user_email', _emailController.text);
 
     if (mounted) {
-      Navigator.pushReplacement(
+      await Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const VerificarIdentidadScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const VerificarIdentidadScreen()),
       );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const OnboardingScreen(
+              rol: 'padre',
+              destino: HomePadreScreen(),
+            ),
+          ),
+        );
+      }
     }
   } catch (e) {
     setState(() => _error = 'Error al registrarse: ${e.toString()}');
