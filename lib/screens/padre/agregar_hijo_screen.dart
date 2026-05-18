@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 class AgregarHijoScreen extends StatefulWidget {
   const AgregarHijoScreen({super.key});
@@ -59,16 +58,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(8),
-              child: QrImageView(
-                data: _apkUrl,
-                version: QrVersions.auto,
-                size: 200,
-                backgroundColor: Colors.white,
-              ),
-            ),
+            Image.asset('assets/raccu_qr.png', width: 200, height: 200),
             const SizedBox(height: 12),
             TextButton.icon(
               icon: const Icon(Icons.copy, size: 16),
