@@ -50,18 +50,22 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
 
       for (final hijo in listaHijos) {
         final hijoId = hijo['id'];
+
         final completados = await api.get('/desafios/completados/$hijoId');
-        if (completados is List) totalDesafios += completados.length;
+        final numDesafios = completados is List ? completados.length : 0;
+        totalDesafios += numDesafios;
 
         final puntos = await api.get('/desafios/puntos/$hijoId');
-        if (puntos is Map && puntos['total_puntos'] != null) {
-          totalPuntos += (puntos['total_puntos'] as num).toInt();
-        }
+        final numPuntos = puntos is Map ? ((puntos['total_puntos'] as num?)?.toInt() ?? 0) : 0;
+        totalPuntos += numPuntos;
 
         final estado = await api.get('/apps/estado/$hijoId');
-        if (estado is Map && estado['minutos_usados'] != null) {
-          totalMinutos += (estado['minutos_usados'] as num).toInt();
-        }
+        final numMinutos = estado is Map ? ((estado['minutos_usados'] as num?)?.toInt() ?? 0) : 0;
+        totalMinutos += numMinutos;
+
+        hijo['stat_desafios'] = numDesafios;
+        hijo['stat_puntos'] = numPuntos;
+        hijo['stat_minutos'] = numMinutos;
       }
 
       setState(() {
@@ -284,12 +288,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                                             ConfigurarHijoScreen(hijo: hijo),
                                       ),
                                     ),
-                                    child: _buildTarjetaHijo(
-                                      hijo['nombre'] ?? 'Sin nombre',
-                                      'Toca para configurar',
-                                      Icons.smartphone,
-                                      Colors.green,
-                                    ),
+                                    child: _buildTarjetaHijo(hijo),
                                   ),
                                 )
                                 .toList(),
@@ -359,27 +358,62 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
     );
   }
 
-  Widget _buildTarjetaHijo(
-    String nombre,
-    String detalle,
-    IconData icono,
-    Color colorEstado,
-  ) {
+  Widget _buildTarjetaHijo(Map<dynamic, dynamic> hijo) {
+    final minutos = hijo['stat_minutos'] ?? 0;
+    final desafios = hijo['stat_desafios'] ?? 0;
+    final puntos = hijo['stat_puntos'] ?? 0;
+    final tiempoStr = minutos < 60
+        ? '${minutos}m'
+        : '${minutos ~/ 60}h ${minutos % 60}m';
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.indigo.shade50,
-          child: Icon(icono, color: AppColors.primary),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.indigo.shade50,
+              child: const Icon(Icons.child_care, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hijo['nombre'] ?? 'Sin nombre',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _buildStatChip(Icons.access_time, tiempoStr, Colors.blue),
+                      const SizedBox(width: 8),
+                      _buildStatChip(Icons.task_alt, '$desafios', Colors.green),
+                      const SizedBox(width: 8),
+                      _buildStatChip(Icons.stars, '$puntos pts', Colors.orange),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.primary),
+          ],
         ),
-        title: Text(
-          nombre,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(detalle),
-        trailing: Icon(Icons.circle, color: colorEstado, size: 12),
       ),
+    );
+  }
+
+  Widget _buildStatChip(IconData icono, String valor, Color color) {
+    return Row(
+      children: [
+        Icon(icono, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(valor, style: TextStyle(fontSize: 12, color: color)),
+      ],
     );
   }
 
