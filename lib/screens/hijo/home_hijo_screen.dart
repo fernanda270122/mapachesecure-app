@@ -317,27 +317,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   Map<String, dynamic> _calcularNivel(int puntos) {
     const List<int> puntosNivel = [
-      0,
-      1000,
-      1250,
-      1500,
-      1750,
-      2000,
-      2300,
-      2600,
-      2900,
-      3200,
-      3500,
-      3850,
-      4200,
-      4550,
-      4900,
-      5250,
-      5600,
-      5950,
-      6300,
-      6650,
-      7000,
+      0, 500, 1100, 1900, 2900, 4100, 5500,
     ];
     int nivel = 0;
     for (int i = 1; i < puntosNivel.length; i++) {
@@ -347,8 +327,8 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         break;
     }
     int puntosActual = puntosNivel[nivel];
-    int puntosNext = nivel < 20 ? puntosNivel[nivel + 1] : 7000;
-    double progreso = nivel < 20
+    int puntosNext = nivel < 6 ? puntosNivel[nivel + 1] : 5500;
+    double progreso = nivel < 6
         ? (puntos - puntosActual) / (puntosNext - puntosActual)
         : 1.0;
     return {
