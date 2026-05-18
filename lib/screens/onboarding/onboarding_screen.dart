@@ -44,6 +44,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'descripcion': 'Motiva a tus hijos con desafíos cognitivos, físicos y del hogar para ganar puntos.',
     },
     {
+      'icono': Icons.install_mobile,
+      'color': Colors.teal,
+      'titulo': 'Instala la app en el celular de tu hijo',
+      'descripcion': 'Al registrar a tu hijo aparecerá un código QR. Que lo escanee con su cámara, descargue el archivo e instale la app. Si Android lo pide, activa "Instalar apps de fuentes desconocidas" en Ajustes.',
+    },
+    {
       'icono': Icons.star,
       'color': Colors.green,
       'titulo': '¡Todo listo!',

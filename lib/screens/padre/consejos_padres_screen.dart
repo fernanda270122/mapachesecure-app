@@ -18,6 +18,19 @@ const ConsejosPadresScreen({super.key});
         padding: const EdgeInsets.all(20),
         children: [
           _seccion(
+            icono: Icons.install_mobile,
+            titulo: '¿Cómo instalar la app en el celular de tu hijo?',
+            pasos: [
+              'Registra a tu hijo desde el botón "Agregar hijo" en la pantalla principal.',
+              'Al completar el registro aparecerá un código QR en pantalla.',
+              'Dale el celular a tu hijo y pídele que abra la cámara y apunte al QR.',
+              'Se abrirá el link de descarga — toca "Descargar".',
+              'Una vez descargado, abre el archivo desde las notificaciones o la carpeta Descargas.',
+              'Si Android pide permiso, ve a Ajustes → Aplicaciones → Instalar apps de fuentes desconocidas y actívalo.',
+              'Instala la app, ingresa con el correo y contraseña que creaste para tu hijo.',
+            ],
+          ),
+          _seccion(
             icono: Icons.child_care,
             titulo: '¿Cómo agregar a tu hijo?',
             pasos: [
