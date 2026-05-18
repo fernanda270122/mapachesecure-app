@@ -35,23 +35,51 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
   Future<void> _cargarDesafios() async {
     setState(() => _cargando = true);
     try {
-      final todos = await _api.get('/desafios/hijo/$_hijoId');
-      final lista = todos is List ? todos : [];
+      final cognitiva = await _api.get('/desafios/tipo/cognitiva');
+      final fisica = await _api.get('/desafios/tipo/fisica');
+      final hogar = await _api.get('/desafios/tipo/hogar');
+
+      // De cada tipo: mantener los del sistema (hijo_id null) y los de este hijo.
+      // Si el hijo ya tiene copia de un desafío del sistema, mostrar su copia (no el global).
+      List<dynamic> filtrar(List<dynamic> todos) {
+        final hijoEspecificos = todos
+            .where((d) => d['hijo_id']?.toString() == _hijoId)
+            .toList();
+        final titulosHijo = hijoEspecificos.map((d) => d['titulo']).toSet();
+        final sistema = todos
+            .where((d) => d['hijo_id'] == null && !titulosHijo.contains(d['titulo']))
+            .toList();
+        return [...hijoEspecificos, ...sistema];
+      }
+
       setState(() {
-        _desafiosCognitiva = lista.where((d) => d['tipo'] == 'cognitiva').toList();
-        _desafiosFisica = lista.where((d) => d['tipo'] == 'fisica').toList();
-        _desafiosHogar = lista.where((d) => d['tipo'] == 'hogar').toList();
+        _desafiosCognitiva = filtrar(cognitiva is List ? cognitiva : []);
+        _desafiosFisica = filtrar(fisica is List ? fisica : []);
+        _desafiosHogar = filtrar(hogar is List ? hogar : []);
       });
     } catch (_) {}
     setState(() => _cargando = false);
   }
 
-  Future<void> _actualizarEstadoMision(dynamic id, bool nuevoEstado) async {
+  Future<void> _actualizarEstadoMision(Map<dynamic, dynamic> desafio, bool nuevoEstado) async {
     try {
-      await _api.post('/desafios/actualizar_estado', {
-        'id': id,
-        'esta_activo': nuevoEstado,
-      });
+      final challengeHijoId = desafio['hijo_id']?.toString();
+      if (challengeHijoId == _hijoId) {
+        await _api.post('/desafios/actualizar_estado', {
+          'id': desafio['id'],
+          'esta_activo': nuevoEstado,
+        });
+      } else {
+        await _api.post('/ia/asignar', {
+          'titulo': desafio['titulo'],
+          'descripcion': desafio['descripcion'],
+          'puntos': desafio['puntos'],
+          'tipo': desafio['tipo'],
+          'dificultad': desafio['dificultad'] ?? 'facil',
+          'hijo_id': _hijoId,
+          'esta_activo': nuevoEstado,
+        });
+      }
       _cargarDesafios();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -249,30 +277,13 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
                   fontWeight: FontWeight.bold,
                   color: Colors.white)),
         ),
-        ...desafios.map((d) => _buildChallengeCard(
-              id: d['id'],
-              titulo: d['titulo'] ?? '',
-              descripcion: d['descripcion'] ?? '',
-              puntos: d['puntos']?.toString() ?? '0',
-              dificultad: d['dificultad'] ?? 'facil',
-              color: color,
-              icono: icono,
-              estaActivo: d['esta_activo'] ?? false,
-            )),
+        ...desafios.map((d) => _buildChallengeCard(d, color, icono)),
       ],
     );
   }
 
-  Widget _buildChallengeCard({
-    required dynamic id,
-    required String titulo,
-    required String descripcion,
-    required String puntos,
-    required String dificultad,
-    required Color color,
-    required IconData icono,
-    required bool estaActivo,
-  }) {
+  Widget _buildChallengeCard(Map<dynamic, dynamic> d, Color color, IconData icono) {
+    final estaActivo = d['esta_activo'] ?? false;
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
@@ -283,17 +294,17 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
               estaActivo ? color.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
           child: Icon(icono, color: estaActivo ? color : Colors.grey),
         ),
-        title: Text(titulo,
+        title: Text(d['titulo'] ?? '',
             style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
                 color: estaActivo ? Colors.black87 : Colors.grey[600])),
-        subtitle: Text('$puntos pts • $dificultad',
+        subtitle: Text('${d['puntos'] ?? 0} pts • ${d['dificultad'] ?? 'facil'}',
             style: TextStyle(fontSize: 12, color: color)),
         trailing: Switch(
           value: estaActivo,
           activeColor: color,
-          onChanged: (val) => _actualizarEstadoMision(id, val),
+          onChanged: (val) => _actualizarEstadoMision(d, val),
         ),
         children: [
           Padding(
@@ -301,7 +312,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(descripcion,
+                Text(d['descripcion'] ?? '',
                     style: const TextStyle(fontSize: 13, color: Colors.black87)),
                 const SizedBox(height: 10),
                 Row(
@@ -309,7 +320,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.volume_up, color: Colors.indigo),
-                      onPressed: () => _tts.speak(descripcion),
+                      onPressed: () => _tts.speak(d['descripcion'] ?? ''),
                     ),
                   ],
                 ),
