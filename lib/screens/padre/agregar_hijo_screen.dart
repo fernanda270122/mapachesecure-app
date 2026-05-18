@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class AgregarHijoScreen extends StatefulWidget {
   const AgregarHijoScreen({super.key});
@@ -40,6 +42,55 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
     super.dispose();
   }
 
+  static const _apkUrl = 'https://drive.google.com/uc?export=download&id=165E8JxUPEHuUICXvlcBvoFHlkjMreR8c';
+
+  void _mostrarQR(BuildContext context, String nombreHijo) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('¡$nombreHijo está listo! 🦝'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Que escanee este código QR con su celular para descargar la app:',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            QrImageView(
+              data: _apkUrl,
+              version: QrVersions.auto,
+              size: 200,
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              icon: const Icon(Icons.copy, size: 16),
+              label: const Text('Copiar link'),
+              onPressed: () {
+                Clipboard.setData(const ClipboardData(text: _apkUrl));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Link copiado')),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+            },
+            child: const Text('Listo', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _agregarHijo() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -61,13 +112,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       if (!mounted) return;
 
       if (respuesta['mensaje'] != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Hijo agregado exitosamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context, true);
+        _mostrarQR(context, _nombreCtrl.text.trim());
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
