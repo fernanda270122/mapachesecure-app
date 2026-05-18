@@ -59,10 +59,15 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            QrImageView(
-              data: _apkUrl,
-              version: QrVersions.auto,
-              size: 200,
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(8),
+              child: QrImageView(
+                data: _apkUrl,
+                version: QrVersions.auto,
+                size: 200,
+                backgroundColor: Colors.white,
+              ),
             ),
             const SizedBox(height: 12),
             TextButton.icon(
