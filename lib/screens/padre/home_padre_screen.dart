@@ -28,10 +28,19 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   int _totalPuntos = 0;
   int _totalMinutos = 0;
 
+  final PageController _carruselController = PageController();
+  int _carruselPagina = 0;
+
   @override
   void initState() {
     super.initState();
     _cargarDatos();
+  }
+
+  @override
+  void dispose() {
+    _carruselController.dispose();
+    super.dispose();
   }
 
   Future<void> _cargarDatos() async {
@@ -247,17 +256,8 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Actividad de hoy',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    _buildResumenHoy(),
-                    const SizedBox(height: 30),
+                    _buildCarrusel(),
+                      const SizedBox(height: 30),
                     const Text(
                       'Hijos conectados',
                       style: TextStyle(
@@ -427,6 +427,68 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
       leading: Icon(icon, color: AppColors.primary),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       onTap: onTap,
+    );
+  }
+  Widget _buildCarrusel() {
+    final slides = [
+      {'color': const Color(0xFF7C4DFF), 'icono': Icons.shield},
+      {'color': const Color(0xFF00897B), 'icono': Icons.child_care},
+      {'color': const Color(0xFF1565C0), 'icono': Icons.stars},
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: _carruselController,
+            itemCount: slides.length,
+            onPageChanged: (i) => setState(() => _carruselPagina = i),
+            itemBuilder: (context, i) {
+              final slide = slides[i];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: slide['color'] as Color,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(slide['icono'] as IconData, color: Colors.white, size: 40),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'RaccuApp',
+                      style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                    const Text(
+                      'by CAVY',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            slides.length,
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _carruselPagina == i ? 16 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _carruselPagina == i ? Colors.white : Colors.white38,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
