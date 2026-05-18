@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';
 
 class MisDesafiosScreen extends StatefulWidget {
@@ -114,27 +115,27 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: tema.background,
       appBar: AppBar(
         title: const Text(
           'Mis desafíos',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: tema.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AppBackground(
-        child: _cargando
+      body: _cargando
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
                 onRefresh: _cargarDatos,
                 child: Column(
                   children: [
                     _buildProgresoHeader(),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -142,7 +143,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: tema.onBackground,
                           ),
                         ),
                       ),
@@ -229,7 +230,6 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                   ],
                 ),
               ),
-      ),
     );
   }
 

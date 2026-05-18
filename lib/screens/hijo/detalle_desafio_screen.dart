@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -139,8 +140,10 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: tema.primary,
         title: Text(widget.desafio['titulo'] ?? 'Resolver Desafío'),
         centerTitle: true,
       ),
@@ -233,12 +236,12 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                         // BOTÓN DE ALTAVOZ
                         Container(
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: tema.primary.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.volume_up_rounded),
-                            color: AppColors.primary,
+                            color: tema.primary,
                             iconSize: 28,
                             onPressed: _hablarInstrucciones,
                             tooltip: 'Escuchar la misión',
@@ -262,7 +265,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
+                    color: tema.primary.withOpacity(0.3),
                     width: 2,
                   ),
                 ),
@@ -273,7 +276,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                           Icon(
                             Icons.camera_alt_rounded,
                             size: 55,
-                            color: AppColors.primary.withOpacity(0.6),
+                            color: tema.primary.withOpacity(0.6),
                           ),
                           const SizedBox(height: 10),
                           const Text('Toca para sacar la foto de evidencia'),

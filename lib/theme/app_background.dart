@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';                                                                                                                                                     
-import 'app_colors.dart'; 
+import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 class AppBackground extends StatelessWidget {
-final Widget child;
+  final Widget child;
 
-const AppBackground({super.key, required this.child});
+  const AppBackground({super.key, required this.child});
 
-@override
+  @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
@@ -16,5 +16,4 @@ const AppBackground({super.key, required this.child});
       ],
     );
   }
-  
 }

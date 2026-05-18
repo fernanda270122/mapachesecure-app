@@ -1,43 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_provider.dart';
 
 class MiActividadScreen extends StatelessWidget {
   const MiActividadScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: tema.background,
       appBar: AppBar(
         title: const Text('Mi Actividad'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: tema.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AppBackground(child: SingleChildScrollView(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '¿Cómo vas hoy?',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: tema.onBackground,
               ),
             ),
             const SizedBox(height: 20),
 
             // Tarjeta de Tiempo Total
-            _buildTotalTimeCard(),
+            _buildTotalTimeCard(tema.accent),
 
             const SizedBox(height: 30),
 
-            const Text(
+            Text(
               'Tiempo por Aplicación',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: tema.onBackground),
             ),
             const SizedBox(height: 15),
 
@@ -92,11 +94,11 @@ class MiActividadScreen extends StatelessWidget {
             ),
           ],
         ),
-      )),
+      ),
     );
   }
 
-  Widget _buildTotalTimeCard() {
+  Widget _buildTotalTimeCard(Color accentColor) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -116,12 +118,12 @@ class MiActividadScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             '2h 10m',
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.bold,
-              color: AppColors.accent,
+              color: accentColor,
             ),
           ),
           const Text('de 3h permitidas', style: TextStyle(color: Colors.grey)),

@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.mapachesecure.mapachesecure_app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -50,3 +50,11 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
+
+subprojects {
+      afterEvaluate {
+          extensions.findByType<com.android.build.gradle.LibraryExtension>()?.apply {
+              compileSdk = 36
+          }
+      }
+  }

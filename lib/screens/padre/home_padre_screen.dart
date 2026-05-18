@@ -11,6 +11,7 @@ import 'package:mapachesecure_app/screens/padre/tienda_recompensas_screen.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
+import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -181,6 +182,22 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 ),
               );
             }),
+
+            _buildDrawerItem(
+              context,
+              Icons.card_giftcard,
+              'Canjes Pendientes',
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CanjesPendientesScreen(),
+                  ),
+                );
+              },
+            ),
+
             _buildDrawerItem(
               context,
               Icons.lightbulb_outline,

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mapachesecure_app/screens/auth/verificar_identidad_sreen.dart';
+import 'package:mapachesecure_app/screens/auth/verificar_identidad_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegistroScreen extends StatefulWidget {
   const RegistroScreen({super.key});
@@ -45,30 +46,46 @@ class _RegistroScreenState extends State<RegistroScreen> {
   }
 
   // la funcion del registro
-  Future<void> _registro() async {
-    if (_passwordController.text != _confirmarPasswordController.text) {
-      setState(() => _error = 'Las contraseñas no coinciden.');
-      return;
-    }
+Future<void> _registro() async {
+  if (_passwordController.text != _confirmarPasswordController.text) {
+    setState(() => _error = 'Las contraseñas no coinciden.');
+    return;
+  }
+  if (_fechaSeleccionada == null) {
+    setState(() => _error = 'Por favor, ingresa tu fecha de nacimiento.');
+    return;
+  }
 
-    if (_fechaSeleccionada == null) {
-      setState(() => _error = 'Por favor, ingresa tu fecha de nacimiento.');
-      return;
-    }
+  setState(() => _cargando = true);
+
+  try {
+    final auth = AuthService();
+    await auth.registro(
+      _emailController.text,
+      _passwordController.text,
+      _nombreController.text,
+      'padre',
+    );
+    await auth.login(_emailController.text, _passwordController.text);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_nombre', _nombreController.text);
+    await prefs.setString('user_email', _emailController.text);
 
     if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => VerificarIdentidadScreen(
-            nombre: _nombreController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-          ),
+          builder: (context) => const VerificarIdentidadScreen(),
         ),
       );
     }
+  } catch (e) {
+    setState(() => _error = 'Error al registrarse: ${e.toString()}');
+  } finally {
+    setState(() => _cargando = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {

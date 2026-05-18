@@ -41,7 +41,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
     super.dispose();
   }
 
-  static const _apkUrl = 'https://drive.google.com/uc?export=download&id=165E8JxUPEHuUICXvlcBvoFHlkjMreR8c';
+  static const _apkUrl = 'https://drive.google.com/uc?export=download&confirm=t&id=165E8JxUPEHuUICXvlcBvoFHlkjMreR8c';
 
   void _mostrarQR(BuildContext context, String nombreHijo) {
     showDialog(
