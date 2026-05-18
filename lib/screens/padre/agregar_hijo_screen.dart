@@ -49,7 +49,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('¡$nombreHijo está listo! 🦝'),
+        title: Text('¡$nombreHijo está ${_sexo == "femenino" ? "lista" : "listo"}! 🦝'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

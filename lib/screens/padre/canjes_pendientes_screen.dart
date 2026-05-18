@@ -45,6 +45,9 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
     _cargarCanjes();
   }
 
+  String _genero(Map c) =>
+      c['usuarios']?['sexo'] == 'femenino' ? 'Hija' : 'Hijo';
+      
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +64,7 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
                       margin: const EdgeInsets.all(8),
                       child: ListTile(
                         title: Text(c['recompensas']?['titulo'] ?? 'Sin título'),
-                        subtitle: Text('Hijo: ${c['usuarios']?['nombre'] ?? ''}'),
+                        subtitle: Text('${_genero(c)}: ${c['usuarios']?['nombre'] ?? ''}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

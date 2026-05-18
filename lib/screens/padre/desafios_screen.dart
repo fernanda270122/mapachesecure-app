@@ -63,7 +63,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
                     padding: const EdgeInsets.all(20),
                     children: [
                       const Text(
-                        'Selecciona un hijo para ver sus desafíos',
+                        'Selecciona un hijo/a para ver sus desafíos',
                         style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                       const SizedBox(height: 16),
