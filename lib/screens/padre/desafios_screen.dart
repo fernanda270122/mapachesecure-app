@@ -24,8 +24,6 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
   List<dynamic> _desafiosHogar = [];
   List<dynamic> _desafiosIA = [];
   List<dynamic> _hijos = [];
-  String? _hijoSeleccionadoId;
-  String _hijoSeleccionadoNombre = '';
 
   @override
   void initState() {
@@ -38,6 +36,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
   Future<void> _cargarTodo() async {
     setState(() => _cargando = true);
     await Future.wait([
+      _cargarDesafiosSistema(),
       _cargarHijos(),
       _cargarDesafiosIA(),
     ]);
@@ -52,7 +51,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         'esta_activo': nuevoEstado,
       });
       // Refrescamos la lista para que el Switch y los colores cambien
-      if (_hijoSeleccionadoId != null) _cargarDesafiosSistema(_hijoSeleccionadoId!);
+      _cargarDesafiosSistema();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -67,25 +66,19 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
       final hijos = await _api.get('/usuarios/$padreId/hijos');
       setState(() {
         _hijos = hijos is List ? hijos : [];
-        if (_hijos.isNotEmpty) {
-          _hijoSeleccionadoId = _hijos[0]['id'];
-          _hijoSeleccionadoNombre = _hijos[0]['nombre'] ?? '';
-        }
       });
-      if (_hijoSeleccionadoId != null) {
-        await _cargarDesafiosSistema(_hijoSeleccionadoId!);
-      }
     } catch (_) {}
   }
 
-  Future<void> _cargarDesafiosSistema(String hijoId) async {
+  Future<void> _cargarDesafiosSistema() async {
     try {
-      final todos = await _api.get('/desafios/hijo/$hijoId');
-      final lista = todos is List ? todos : [];
+      final cognitiva = await _api.get('/desafios/tipo/cognitiva');
+      final fisica = await _api.get('/desafios/tipo/fisica');
+      final hogar = await _api.get('/desafios/tipo/hogar');
       setState(() {
-        _desafiosCognitiva = lista.where((d) => d['tipo'] == 'cognitiva').toList();
-        _desafiosFisica = lista.where((d) => d['tipo'] == 'fisica').toList();
-        _desafiosHogar = lista.where((d) => d['tipo'] == 'hogar').toList();
+        _desafiosCognitiva = cognitiva is List ? cognitiva : [];
+        _desafiosFisica = fisica is List ? fisica : [];
+        _desafiosHogar = hogar is List ? hogar : [];
       });
     } catch (_) {}
   }
@@ -242,7 +235,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
         };
         await _api.post('/ia/asignar', datos);
       }
-      if (_hijoSeleccionadoId != null) _cargarDesafiosSistema(_hijoSeleccionadoId!); // Actualizar lista tras asignar
+      _cargarDesafiosSistema(); // Actualizar lista tras asignar
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('¡Misiones enviadas al panel de control! 🦝'),
@@ -278,45 +271,6 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
             : ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  if (_hijos.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.child_care, color: Colors.white),
-                          const SizedBox(width: 10),
-                          const Text('Ver desafíos de:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: DropdownButton<String>(
-                              value: _hijoSeleccionadoId,
-                              dropdownColor: AppColors.primary,
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              items: _hijos.map<DropdownMenuItem<String>>((h) {
-                                return DropdownMenuItem<String>(
-                                  value: h['id'],
-                                  child: Text(h['nombre'] ?? 'Sin nombre', style: const TextStyle(color: Colors.white)),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                setState(() {
-                                  _hijoSeleccionadoId = val;
-                                  _hijoSeleccionadoNombre = _hijos.firstWhere((h) => h['id'] == val)['nombre'] ?? '';
-                                });
-                                _cargarDesafiosSistema(val!);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
                   _buildSeccion(
                     'Cognitiva',
                     _desafiosCognitiva,
