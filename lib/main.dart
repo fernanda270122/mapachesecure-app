@@ -13,7 +13,6 @@ import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
-import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:mapachesecure_app/screens/hijo/app_bloqueada_screen.dart';
@@ -189,60 +188,24 @@ class _SplashScreenState extends State<SplashScreen> {
       final rol = await auth.getRol();
       if (!mounted) return;
 
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('user_id') ?? '';
-
-      // Migración: usuarios que ya tenían cuenta antes del onboarding
-      final migrationDone = prefs.getBool('migration_onboarding_v1') ?? false;
-      if (!migrationDone) {
-        await prefs.setBool('onboarding_${userId}_${rol}_visto', true);
-        await prefs.setBool('migration_onboarding_v1', true);
-      }
-
-      final onboardingVisto =
-          prefs.getBool('onboarding_${userId}_${rol}_visto') ?? false;
 
       if (rol == 'padre') {
-        // SEGURIDAD: Si entra el padre, matamos al Guardián inmediatamente
         if (await service.isRunning()) {
           service.invoke("stopService");
         }
-
-        final destino = const HomePadreScreen();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => onboardingVisto
-                ? destino
-                : OnboardingScreen(rol: 'padre', destino: destino),
-          ),
+          MaterialPageRoute(builder: (_) => const HomePadreScreen()),
         );
       } else if (rol == 'hijo') {
-        // SOLO aquí permitimos que el Guardián viva
         if (!(await service.isRunning())) {
           await service.startService();
         }
-
-        final destino = const HomeHijoScreen();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => onboardingVisto
-                ? destino
-                : OnboardingScreen(rol: 'hijo', destino: destino),
-          ),
+          MaterialPageRoute(builder: (_) => const HomeHijoScreen()),
         );
       }
-    } else {
-      // SEGURIDAD: Si no hay nadie logueado (Login Screen), el Guardián DEBE morir
-      if (await service.isRunning()) {
-        service.invoke("stopService");
-      }
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
     }
   }
 

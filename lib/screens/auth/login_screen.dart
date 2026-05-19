@@ -8,7 +8,6 @@ import 'recuperar_password.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -65,18 +64,13 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('hijo_id', usuarioId);
       }
 
-      final onboardingVisto = prefs.getBool('onboarding_${usuarioId}_${rol}_visto') ?? false;
       final destino = rol == 'padre'
           ? const HomePadreScreen()
           : const HomeHijoScreen();
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => onboardingVisto
-              ? destino
-              : OnboardingScreen(rol: rol, destino: destino),
-        ),
+        MaterialPageRoute(builder: (_) => destino),
       );
     } catch (e) {
       setState(() {

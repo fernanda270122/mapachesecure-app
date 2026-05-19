@@ -33,6 +33,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   int _totalDesafios = 0;
   int _totalPuntos = 0;
   int _totalMinutos = 0;
+  Map<String, Map<String, int>> _statsPorHijo = {};
   Timer? _carruselTimer;
 
   final PageController _carruselController = PageController();
@@ -73,21 +74,36 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
       int totalDesafios = 0;
       int totalPuntos = 0;
       int totalMinutos = 0;
+      final Map<String, Map<String, int>> statsPorHijo = {};
 
       for (final hijo in listaHijos) {
-        final hijoId = hijo['id'];
+        final hijoId = hijo['id'].toString();
+        int desafiosHijo = 0;
+        int puntosHijo = 0;
+        int minutosHijo = 0;
+
         final completados = await api.get('/desafios/completados/$hijoId');
-        if (completados is List) totalDesafios += completados.length;
+        if (completados is List) desafiosHijo = completados.length;
 
         final puntos = await api.get('/desafios/puntos/$hijoId');
         if (puntos is Map && puntos['total_puntos'] != null) {
-          totalPuntos += (puntos['total_puntos'] as num).toInt();
+          puntosHijo = (puntos['total_puntos'] as num).toInt();
         }
 
         final estado = await api.get('/apps/estado/$hijoId');
         if (estado is Map && estado['minutos_usados'] != null) {
-          totalMinutos += (estado['minutos_usados'] as num).toInt();
+          minutosHijo = (estado['minutos_usados'] as num).toInt();
         }
+
+        statsPorHijo[hijoId] = {
+          'desafios': desafiosHijo,
+          'puntos': puntosHijo,
+          'minutos': minutosHijo,
+        };
+
+        totalDesafios += desafiosHijo;
+        totalPuntos += puntosHijo;
+        totalMinutos += minutosHijo;
       }
 
       setState(() {
@@ -96,6 +112,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         _totalDesafios = totalDesafios;
         _totalPuntos = totalPuntos;
         _totalMinutos = totalMinutos;
+        _statsPorHijo = statsPorHijo;
         _cargando = false;
       });
     } catch (e) {
@@ -316,19 +333,19 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                       _buildCarrusel(),
                       const SizedBox(height: 25),
 
-                      const Text(
-                        'Actividad de hoy',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                      if (_hijos.length <= 1) ...[
+                        const Text(
+                          'Actividad de hoy',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 15),
-
-                      // Renderizamos las métricas generales del día antes de los hijos
-                      _buildResumenHoy(),
-                      const SizedBox(height: 30),
+                        const SizedBox(height: 15),
+                        _buildResumenHoy(),
+                        const SizedBox(height: 30),
+                      ],
 
                       const Text(
                         'Hijos conectados',
@@ -350,26 +367,32 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                               ),
                             )
                           : Column(
-                              children: _hijos
-                                  .map(
-                                    (hijo) => GestureDetector(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ConfigurarHijoScreen(hijo: hijo),
-                                        ),
-                                      ),
-                                      child: _buildTarjetaHijo(
-                                        hijo['nombre'] ?? 'Sin nombre',
-                                        'Toca para configurar',
-                                        Icons.smartphone,
-                                        Colors.green,
-                                        temaPadre.primary,
-                                      ),
+                              children: _hijos.map((hijo) {
+                                final hijoId = hijo['id'].toString();
+                                final stats = _statsPorHijo[hijoId];
+                                return GestureDetector(
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ConfigurarHijoScreen(hijo: hijo),
                                     ),
-                                  )
-                                  .toList(),
+                                  ),
+                                  child: _hijos.length == 1
+                                      ? _buildTarjetaHijo(
+                                          hijo['nombre'] ?? 'Sin nombre',
+                                          'Toca para configurar',
+                                          Icons.smartphone,
+                                          Colors.green,
+                                          temaPadre.primary,
+                                        )
+                                      : _buildTarjetaHijoConStats(
+                                          hijo['nombre'] ?? 'Sin nombre',
+                                          stats,
+                                          temaPadre.primary,
+                                        ),
+                                );
+                              }).toList(),
                             ),
                     ],
                   ),
@@ -458,6 +481,76 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         subtitle: Text(detalle),
         trailing: Icon(Icons.circle, color: colorEstado, size: 12),
       ),
+    );
+  }
+
+  Widget _buildTarjetaHijoConStats(
+    String nombre,
+    Map<String, int>? stats,
+    Color colorIcono,
+  ) {
+    final minutos = stats?['minutos'] ?? 0;
+    final tiempoStr = minutos < 60
+        ? '${minutos}m'
+        : '${minutos ~/ 60}h ${minutos % 60}m';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: colorIcono.withOpacity(0.1),
+              child: Icon(Icons.smartphone, color: colorIcono),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nombre,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildStatChip(Icons.access_time, tiempoStr, Colors.blue),
+                      const SizedBox(width: 8),
+                      _buildStatChip(Icons.task_alt, '${stats?['desafios'] ?? 0}', Colors.green),
+                      const SizedBox(width: 8),
+                      _buildStatChip(Icons.stars, '${stats?['puntos'] ?? 0}', Colors.orange),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.circle, color: Colors.green, size: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatChip(IconData icono, String valor, Color color) {
+    return Row(
+      children: [
+        Icon(icono, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          valor,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 
