@@ -42,6 +42,7 @@ dependencies:
   firebase_messaging: ^16.2.0
   flutter_tts: ^4.0.2
   app_links: ^6.3.2
+  url_launcher: ^6.3.0
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -81,6 +82,7 @@ flutter:
      - assets/raccu.png
      - assets/raccu_qr.png
      - assets/mascota/
+     - assets/avatares/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

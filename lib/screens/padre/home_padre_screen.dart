@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
@@ -31,11 +33,31 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   int _totalDesafios = 0;
   int _totalPuntos = 0;
   int _totalMinutos = 0;
+  Timer? _carruselTimer;
+
+  final PageController _carruselController = PageController();
+  int _carruselPagina = 0;
 
   @override
   void initState() {
     super.initState();
     _cargarDatos();
+    _carruselTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!_carruselController.hasClients) return;
+      final siguiente = (_carruselPagina + 1) % 3;
+      _carruselController.animateToPage(
+        siguiente,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _carruselController.dispose();
+    _carruselTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _cargarDatos() async {
@@ -448,6 +470,77 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
       leading: Icon(icon, color: colorIcono),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       onTap: onTap,
+    );
+  }
+
+  Widget _buildCarrusel() {
+    final slides = [
+      {'color': const Color(0xFF7C4DFF), 'icono': Icons.shield},
+      {'color': const Color(0xFF00897B), 'icono': Icons.child_care},
+      {'color': const Color(0xFF1565C0), 'icono': Icons.stars},
+    ];
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 160,
+          child: PageView.builder(
+            controller: _carruselController,
+            itemCount: slides.length,
+            onPageChanged: (i) => setState(() => _carruselPagina = i),
+            itemBuilder: (context, i) {
+              final slide = slides[i];
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: slide['color'] as Color,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      slide['icono'] as IconData,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'RaccuApp',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'by CAVY',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            slides.length,
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _carruselPagina == i ? 16 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _carruselPagina == i ? Colors.white : Colors.white38,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

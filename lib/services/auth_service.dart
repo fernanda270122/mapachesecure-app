@@ -41,7 +41,12 @@ class AuthService {
       service.invoke("stopService"); 
     }
     final prefs = await SharedPreferences.getInstance();
+    final allKeys = prefs.getKeys().where((k) => k.startsWith('onboarding_')).toList();
+    final saved = {for (var k in allKeys) k: prefs.getBool(k)};
     await prefs.clear();
+    for (final entry in saved.entries) {
+      if (entry.value != null) await prefs.setBool(entry.key, entry.value!);
+    }
   }
 
   Future<String?> getRol() async {

@@ -17,6 +17,7 @@ import 'package:mapachesecure_app/screens/hijo/video_evolucion_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/colores_screen.dart';
+import 'package:mapachesecure_app/screens/hijo/avatar_screen.dart';
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -29,6 +30,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     with SingleTickerProviderStateMixin {
   final FlutterTts _tts = FlutterTts();
   String _nombre = '';
+  String? _avatarPath;
   int _puntos = 0;
   List<dynamic> _desafios = [];
   bool _cargando = true;
@@ -99,6 +101,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     final prefs = await SharedPreferences.getInstance();
     final nombre = prefs.getString('nombre') ?? 'Explorador';
     final hijoId = prefs.getString('user_id') ?? '';
+    final avatar = prefs.getString('avatar_hijo');
 
     try {
       final api = ApiService();
@@ -118,6 +121,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           print('pendientes: $_pendientes');
         }
         _nombre = nombre;
+        _avatarPath = avatar;
         _puntos = nuevoPuntos;
 
         if (desafiosData is List) {
@@ -317,27 +321,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   Map<String, dynamic> _calcularNivel(int puntos) {
     const List<int> puntosNivel = [
-      0,
-      1000,
-      1250,
-      1500,
-      1750,
-      2000,
-      2300,
-      2600,
-      2900,
-      3200,
-      3500,
-      3850,
-      4200,
-      4550,
-      4900,
-      5250,
-      5600,
-      5950,
-      6300,
-      6650,
-      7000,
+      0, 500, 1100, 1900, 2900, 4100, 5500,
     ];
     int nivel = 0;
     for (int i = 1; i < puntosNivel.length; i++) {
@@ -347,8 +331,8 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         break;
     }
     int puntosActual = puntosNivel[nivel];
-    int puntosNext = nivel < 20 ? puntosNivel[nivel + 1] : 7000;
-    double progreso = nivel < 20
+    int puntosNext = nivel < 6 ? puntosNivel[nivel + 1] : 5500;
+    double progreso = nivel < 6
         ? (puntos - puntosActual) / (puntosNext - puntosActual)
         : 1.0;
     return {
@@ -423,10 +407,13 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.star, color: Colors.orange, size: 35),
+                    backgroundImage: _avatarPath != null ? AssetImage(_avatarPath!) : null,
+                    child: _avatarPath == null
+                        ? const Icon(Icons.star, color: Colors.orange, size: 35)
+                        : null,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -508,6 +495,19 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                   );
                 },
               ),
+            _buildDrawerOption(
+              Icons.account_circle,
+              'Mi Avatar',
+              Colors.deepPurple,
+              () async {
+                Navigator.pop(context);
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AvatarScreen()),
+                );
+                if (result != null) setState(() => _avatarPath = result);
+              },
+            ),
             const Divider(),
             _buildDrawerOption(
               Icons.exit_to_app,
@@ -573,13 +573,21 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                                 ),
                               ],
                             ),
-                            const CircleAvatar(
-                              radius: 35,
-                              backgroundColor: Colors.greenAccent,
-                              child: Icon(
-                                Icons.face,
-                                size: 40,
-                                color: Colors.white,
+                            GestureDetector(
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const AvatarScreen()),
+                                );
+                                if (result != null) setState(() => _avatarPath = result);
+                              },
+                              child: CircleAvatar(
+                                radius: 35,
+                                backgroundColor: tema.accent,
+                                backgroundImage: _avatarPath != null ? AssetImage(_avatarPath!) : null,
+                                child: _avatarPath == null
+                                    ? const Icon(Icons.face, size: 40, color: Colors.white)
+                                    : null,
                               ),
                             ),
                           ],

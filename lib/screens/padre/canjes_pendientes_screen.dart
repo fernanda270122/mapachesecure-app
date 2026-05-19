@@ -49,6 +49,9 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
     _cargarCanjes();
   }
 
+  String _genero(Map c) =>
+      c['usuarios']?['sexo'] == 'femenino' ? 'Hija' : 'Hijo';
+      
   @override
   Widget build(BuildContext context) {
     // Escucha el tema exclusivo del padre
