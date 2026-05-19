@@ -12,6 +12,7 @@ import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
 import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
+import 'dart:async';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -27,6 +28,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   int _totalDesafios = 0;
   int _totalPuntos = 0;
   int _totalMinutos = 0;
+  Timer? _carruselTimer;
 
   final PageController _carruselController = PageController();
   int _carruselPagina = 0;
@@ -35,11 +37,21 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
+    _carruselTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!_carruselController.hasClients) return;
+      final siguiente = (_carruselPagina + 1) % 3;
+      _carruselController.animateToPage(
+        siguiente,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   @override
   void dispose() {
     _carruselController.dispose();
+    _carruselTimer?.cancel();
     super.dispose();
   }
 
