@@ -16,9 +16,6 @@ import 'package:mapachesecure_app/services/guardian_service.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:url_launcher/url_launcher.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -168,41 +165,11 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _verificarSesion();
   }
-Future<void> _verificarActualizacion() async {
-    const versionActual = '1.0';
-    try {
-      final uri = Uri.parse('https://mapachesecure-backend.onrender.com/version');
-      final response = await http.get(uri).timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final versionLatest = data['version'];
-        final url = data['url'];
-        if (versionLatest != versionActual && mounted) {
-          await showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => AlertDialog(
-              title: const Text('Actualización disponible'),
-              content: const Text('Hay una nueva versión de la app. Debes actualizarla para continuar.'),
-              actions: [
-                ElevatedButton(
-                  onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
-                  child: const Text('Descargar'),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    } catch (_) {}
-  }
-
   Future<void> _verificarSesion() async {
     final auth = AuthService();
     final service = FlutterBackgroundService();
 
     await Future.delayed(const Duration(seconds: 3));
-    await _verificarActualizacion();
     final loggedIn = await auth.isLoggedIn();
 
     if (!mounted) return;
