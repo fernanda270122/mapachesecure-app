@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../services/api_service.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
+import 'package:provider/provider.dart'; // <-- AÑADIDO
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/api_service.dart';
 
 const _recompensasSistema = [
   {
@@ -80,6 +80,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
     _cargarHijos();
     _cargarComunidad();
   }
+
   Future<void> _cargarHijos() async {
     final prefs = await SharedPreferences.getInstance();
     final padreId = prefs.getString('user_id') ?? '';
@@ -102,9 +103,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
     try {
       final data = await _api.get('/recompensas/$hijoId');
       if (data is List && data.isNotEmpty) {
-        final titulos = data
-            .map((r) => r['titulo']?.toString() ?? '')
-            .toSet();
+        final titulos = data.map((r) => r['titulo']?.toString() ?? '').toSet();
         setState(() {
           for (int i = 0; i < _recompensasSistema.length; i++) {
             final r = _recompensasSistema[i];
@@ -147,7 +146,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
     }
   }
 
-  void _mostrarFormulario() {
+  void _mostrarFormulario(Color colorTema, Color colorFondo) {
     final nombreCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final puntosCtrl = TextEditingController(text: '50');
@@ -159,7 +158,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Padding(
@@ -180,49 +179,66 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
               const SizedBox(height: 16),
               TextField(
                 controller: nombreCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nombre',
-                  border: OutlineInputBorder(),
+                  labelStyle: const TextStyle(color: Colors.black54),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: colorTema, width: 2),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: descCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Descripción',
-                  border: OutlineInputBorder(),
+                  labelStyle: const TextStyle(color: Colors.black54),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: colorTema, width: 2),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: puntosCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Puntos sugeridos',
-                  border: OutlineInputBorder(),
+                  labelStyle: const TextStyle(color: Colors.black54),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: colorTema, width: 2),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Ícono:'),
+              const Text(
+                'Ícono:',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: iconos
                     .map(
                       (e) => GestureDetector(
                         onTap: () => setModalState(() => icono = e),
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             border: Border.all(
                               color: icono == e
-                                  ? AppColors.background
-                                  : Colors.grey,
+                                  ? colorTema
+                                  : Colors.grey.shade300,
+                              width: icono == e ? 2 : 1,
                             ),
                             borderRadius: BorderRadius.circular(8),
                             color: icono == e
-                                ? AppColors.secondary.withOpacity(0.1)
-                                : null,
+                                ? colorTema.withOpacity(0.1)
+                                : Colors.white,
                           ),
                           child: Text(e, style: const TextStyle(fontSize: 24)),
                         ),
@@ -230,18 +246,19 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                     )
                     .toList(),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
+                height: 48,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: colorTema),
                   onPressed: () async {
                     if (nombreCtrl.text.isEmpty) return;
                     if (_hijoSeleccionadoId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Selecciona un hijo primero')),
+                        const SnackBar(
+                          content: Text('Selecciona un hijo primero'),
+                        ),
                       );
                       return;
                     }
@@ -254,21 +271,28 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                         'titulo': '$icono ${nombreCtrl.text}',
                         'costo_puntos': int.tryParse(puntosCtrl.text) ?? 50,
                       });
+                      if (!context.mounted) return;
                       Navigator.pop(context);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('¡Recompensa personalizada agregada! 🎁')),
-                        );
-                      }
-                    } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e')),
+                        const SnackBar(
+                          content: Text(
+                            '¡Recompensa personalizada agregada! 🎁',
+                          ),
+                        ),
                       );
+                    } catch (e) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('Error: $e')));
                     }
                   },
                   child: const Text(
                     'Agregar',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -279,10 +303,14 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
     );
   }
 
-  void _confirmarSeleccion() {
+  void _confirmarSeleccion(Color colorBoton) {
     if (_hijoSeleccionadoId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Primero selecciona a qué hijo asignar las recompensas')),
+        const SnackBar(
+          content: Text(
+            'Primero selecciona a qué hijo asignar las recompensas',
+          ),
+        ),
       );
       return;
     }
@@ -296,20 +324,26 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text('¿Confirmar recompensas?'),
-        content: Text('¿Asignar $activadas recompensas a $_hijoSeleccionadoNombre?'),
+        content: Text(
+          '¿Asignar $activadas recompensas a $_hijoSeleccionadoNombre?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary),
+            style: ElevatedButton.styleFrom(backgroundColor: colorBoton),
             onPressed: () async {
               Navigator.pop(context);
               await _guardarRecompensas();
             },
-            child: const Text('Confirmar', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Confirmar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -335,14 +369,18 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
       setState(() => _confirmado = true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('¡Recompensas asignadas a $_hijoSeleccionadoNombre! 🎁')),
+          SnackBar(
+            content: Text(
+              '¡Recompensas asignadas a $_hijoSeleccionadoNombre! 🎁',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al guardar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
       }
     } finally {
       setState(() => _cargando = false);
@@ -351,38 +389,66 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha el tema exclusivo del padre
+    final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: temaPadre.background,
       appBar: AppBar(
         title: const Text(
           'Tienda de Recompensas',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
       ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!_confirmado)
             FloatingActionButton.extended(
-              onPressed: _confirmarSeleccion,
-              backgroundColor: AppColors.secondary,
+              heroTag: 'btnConfirmar',
+              onPressed: () => _confirmarSeleccion(temaPadre.primary),
+              backgroundColor: temaPadre.primary, // <-- ADAPTADO DINÁMICAMENTE
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(
                 'Confirmar',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           const SizedBox(height: 10),
           FloatingActionButton(
-            onPressed: _confirmado ? null : _mostrarFormulario,
-            backgroundColor: AppColors.textDark,
+            heroTag: 'btnAgregar',
+            onPressed: _confirmado
+                ? null
+                : () => _mostrarFormulario(
+                    temaPadre.primary,
+                    temaPadre.background,
+                  ),
+            backgroundColor: _confirmado
+                ? Colors.grey.shade400
+                : Colors.black87, // <-- TONO SOBRIO NEUTRO
             child: const Icon(Icons.add, color: Colors.white),
           ),
         ],
       ),
-      body: AppBackground(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
+              temaPadre.background,
+            ],
+          ),
+        ),
         child: _cargando
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
@@ -392,64 +458,93 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                   children: [
                     if (_hijos.isNotEmpty) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.black.withOpacity(
+                            0.06,
+                          ), // Tono neutro oscuro sutil
                           borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.black.withOpacity(0.08),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.child_care, color: Colors.white),
+                            Icon(
+                              Icons.child_care,
+                              color: temaPadre.primary,
+                            ), // Ícono de tu paleta
                             const SizedBox(width: 10),
                             const Text(
                               'Asignar a:',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 14),
                             Expanded(
                               child: DropdownButton<String>(
                                 value: _hijoSeleccionadoId,
-                                dropdownColor: AppColors.primary,
+                                dropdownColor: Colors.white, // Menú limpio
                                 isExpanded: true,
                                 underline: const SizedBox(),
-                                items: _hijos.map<DropdownMenuItem<String>>((h) {
+                                items: _hijos.map<DropdownMenuItem<String>>((
+                                  h,
+                                ) {
                                   return DropdownMenuItem<String>(
                                     value: h['id'],
                                     child: Text(
                                       h['nombre'] ?? 'Sin nombre',
-                                      style: const TextStyle(color: Colors.white),
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   );
                                 }).toList(),
                                 onChanged: (val) {
-                                        setState(() {
-                                          _hijoSeleccionadoId = val;
-                                          _hijoSeleccionadoNombre =
-                                              _hijos.firstWhere((h) => h['id'] == val)['nombre'] ?? '';
-                                          _activas = List.generate(_recompensasSistema.length, (_) => false);
-                                          _confirmado = false;
-                                        });
-                                        _cargarRecompensasActivas(val!);
-                                      },
+                                  setState(() {
+                                    _hijoSeleccionadoId = val;
+                                    _hijoSeleccionadoNombre =
+                                        _hijos.firstWhere(
+                                          (h) => h['id'] == val,
+                                        )['nombre'] ??
+                                        '';
+                                    _activas = List.generate(
+                                      _recompensasSistema.length,
+                                      (_) => false,
+                                    );
+                                    _confirmado = false;
+                                  });
+                                  _cargarRecompensasActivas(val!);
+                                },
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                     ],
                     const Text(
                       'Del sistema',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.white,
+                        color: Colors.black87, // <-- CAMBIADO A OSCURO
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Activa las recompensas que quieres ofrecer a tu hijo',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 13,
+                      ), // <-- CAMBIADO A OSCURO
                     ),
                     const SizedBox(height: 12),
                     ...List.generate(_recompensasSistema.length, (i) {
@@ -457,6 +552,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                       final color = r['color'] as Color;
                       final activa = _activas[i];
                       return Card(
+                        elevation: 1,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -483,7 +579,8 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                             ),
                           ),
                           value: activa,
-                          activeColor: AppColors.background,
+                          activeColor: temaPadre
+                              .primary, // <-- TU COLOR PRIMARIO DINÁMICO
                           onChanged: _confirmado
                               ? null
                               : (val) {
@@ -503,13 +600,13 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                         ),
                       );
                     }),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     const Text(
                       'Recomendadas por la comunidad',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.white,
+                        color: Colors.black87, // <-- CAMBIADO A OSCURO
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -517,11 +614,17 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Text(
-                          'Aún no hay recompensas de la comunidad. ¡Sé la primera en agregar una!',
-                          style: TextStyle(color: Colors.grey),
+                          'Aún no hay recompensas de la comunidad. ¡Sé el primero en agregar una!',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ..._comunidad.map((r) => _tarjetaComunidad(r)),
+                    ..._comunidad.map(
+                      (r) => _tarjetaComunidad(r, temaPadre.primary),
+                    ), // <-- SE LE PASA TU COLOR
                   ],
                 ),
               ),
@@ -529,32 +632,43 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
     );
   }
 
-  Widget _tarjetaComunidad(dynamic r) {
+  Widget _tarjetaComunidad(dynamic r, Color colorTema) {
     return Card(
+      elevation: 1,
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: Text(r['icono'] ?? '🎁', style: const TextStyle(fontSize: 28)),
         title: Text(
           r['nombre'] ?? '',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (r['descripcion'] != null && r['descripcion'].isNotEmpty)
-              Text(r['descripcion']),
-            Text(
-              '${r['puntos_sugeridos']} MapachePoints',
-              style: const TextStyle(
-                color: Color(0xFF1A237E),
-                fontWeight: FontWeight.w600,
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (r['descripcion'] != null &&
+                  r['descripcion'].toString().isNotEmpty) ...[
+                Text(
+                  r['descripcion'],
+                  style: const TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 2),
+              ],
+              Text(
+                '${r['puntos_sugeridos']} MapachePoints',
+                style: TextStyle(
+                  color: colorTema, // <-- ADAPTADO AL COLOR DE TU TEMA NEUTRO
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red),
+          icon: const Icon(Icons.delete_outline, color: Colors.red),
           onPressed: () => _eliminar(r['id']),
         ),
       ),

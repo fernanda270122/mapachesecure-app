@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
+import 'package:mapachesecure_app/screens/padre/colores_padre_screen.dart';
 import 'package:mapachesecure_app/screens/padre/revisar_evidencias_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
@@ -12,6 +15,7 @@ import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
 import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
+import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -50,22 +54,18 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
 
       for (final hijo in listaHijos) {
         final hijoId = hijo['id'];
-
         final completados = await api.get('/desafios/completados/$hijoId');
-        final numDesafios = completados is List ? completados.length : 0;
-        totalDesafios += numDesafios;
+        if (completados is List) totalDesafios += completados.length;
 
         final puntos = await api.get('/desafios/puntos/$hijoId');
-        final numPuntos = puntos is Map ? ((puntos['total_puntos'] as num?)?.toInt() ?? 0) : 0;
-        totalPuntos += numPuntos;
+        if (puntos is Map && puntos['total_puntos'] != null) {
+          totalPuntos += (puntos['total_puntos'] as num).toInt();
+        }
 
         final estado = await api.get('/apps/estado/$hijoId');
-        final numMinutos = estado is Map ? ((estado['minutos_usados'] as num?)?.toInt() ?? 0) : 0;
-        totalMinutos += numMinutos;
-
-        hijo['stat_desafios'] = numDesafios;
-        hijo['stat_puntos'] = numPuntos;
-        hijo['stat_minutos'] = numMinutos;
+        if (estado is Map && estado['minutos_usados'] != null) {
+          totalMinutos += (estado['minutos_usados'] as num).toInt();
+        }
       }
 
       setState(() {
@@ -87,24 +87,27 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha de forma reactiva tus colores exclusivos de Padre
+    final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: temaPadre.background,
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(color: AppColors.primary),
+              decoration: BoxDecoration(color: temaPadre.primary),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.white,
                     child: Icon(
                       Icons.person,
-                      color: AppColors.primary,
+                      color: temaPadre.primary,
                       size: 35,
                     ),
                   ),
@@ -128,13 +131,14 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               context,
               Icons.home,
               'Inicio / Panel de control',
+              temaPadre.primary,
               () => Navigator.pop(context),
             ),
-
             _buildDrawerItem(
               context,
               Icons.person_add,
               'Agregar Hijo',
+              temaPadre.primary,
               () async {
                 Navigator.pop(context);
                 await Navigator.push(
@@ -146,11 +150,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 if (mounted) _cargarDatos();
               },
             ),
-
             _buildDrawerItem(
               context,
               Icons.assignment_turned_in,
               'Gestionar Desafíos',
+              temaPadre.primary,
               () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -161,11 +165,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
-
             _buildDrawerItem(
               context,
-              Icons.fact_check_outlined, 
+              Icons.fact_check_outlined,
               'Revisar Evidencias',
+              temaPadre.primary,
               () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -176,21 +180,26 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
-
-            _buildDrawerItem(context, Icons.stars, 'Tienda de Recompensas', () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TiendaRecompensasScreen(),
-                ),
-              );
-            }),
-
+            _buildDrawerItem(
+              context,
+              Icons.stars,
+              'Tienda de Recompensas',
+              temaPadre.primary,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TiendaRecompensasScreen(),
+                  ),
+                );
+              },
+            ),
             _buildDrawerItem(
               context,
               Icons.card_giftcard,
               'Canjes Pendientes',
+              temaPadre.primary,
               () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -201,30 +210,54 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
-
             _buildDrawerItem(
               context,
               Icons.lightbulb_outline,
               'Consejos para Padres',
+              temaPadre.primary,
               () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ConsejosPadresScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const ConsejosPadresScreen(),
+                  ),
                 );
               },
             ),
+
+            // Botón para entrar a tu pantalla de colores
+            _buildDrawerItem(
+              context,
+              Icons.palette_outlined,
+              'Cambiar Color del Panel',
+              temaPadre.primary,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ColoresPadreScreen()),
+                );
+              },
+            ),
+
             const Divider(),
-            _buildDrawerItem(context, Icons.exit_to_app, 'Cerrar Sesión', () async {
-              final auth = AuthService();
-              await auth.logout();
-              if (!context.mounted) return;
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (route) => false,
-              );
-            }),
+            _buildDrawerItem(
+              context,
+              Icons.exit_to_app,
+              'Cerrar Sesión',
+              temaPadre.primary,
+              () async {
+                final auth = AuthService();
+                await auth.logout();
+                if (!context.mounted) return;
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -233,70 +266,91 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
           'Panel de Control',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: AppBackground(child: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _cargarDatos,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Actividad de hoy',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
+              temaPadre.background,
+            ],
+          ),
+        ),
+        child: _cargando
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _cargarDatos,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Actividad de hoy',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors
+                              .black87, // Texto oscuro para que resalte en fondos claros
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 15),
-                    _buildResumenHoy(),
-                    const SizedBox(height: 30),
-                    const Text(
-                      'Hijos conectados',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
+                      const SizedBox(height: 15),
+                      _buildResumenHoy(),
+                      const SizedBox(height: 30),
+                      const Text(
+                        'Hijos conectados',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors
+                              .black87, // Texto oscuro para que resalte en fondos claros
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 15),
-                    _hijos.isEmpty
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20),
-                              child: Text(
-                                'No tienes hijos registrados aún',
-                                style: TextStyle(color: Colors.grey),
+                      const SizedBox(height: 15),
+                      _hijos.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Text(
+                                  'No tienes hijos registrados aún',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                               ),
-                            ),
-                          )
-                        : Column(
-                            children: _hijos
-                                .map(
-                                  (hijo) => GestureDetector(
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ConfigurarHijoScreen(hijo: hijo),
+                            )
+                          : Column(
+                              children: _hijos
+                                  .map(
+                                    (hijo) => GestureDetector(
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ConfigurarHijoScreen(hijo: hijo),
+                                        ),
+                                      ),
+                                      child: _buildTarjetaHijo(
+                                        hijo['nombre'] ?? 'Sin nombre',
+                                        'Toca para configurar',
+                                        Icons.smartphone,
+                                        Colors.green,
+                                        temaPadre.primary,
                                       ),
                                     ),
-                                    child: _buildTarjetaHijo(hijo),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                  ],
+                                  )
+                                  .toList(),
+                            ),
+                    ],
+                  ),
                 ),
               ),
-            ),
       ),
     );
   }
@@ -358,62 +412,28 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
     );
   }
 
-  Widget _buildTarjetaHijo(Map<dynamic, dynamic> hijo) {
-    final minutos = hijo['stat_minutos'] ?? 0;
-    final desafios = hijo['stat_desafios'] ?? 0;
-    final puntos = hijo['stat_puntos'] ?? 0;
-    final tiempoStr = minutos < 60
-        ? '${minutos}m'
-        : '${minutos ~/ 60}h ${minutos % 60}m';
-
+  Widget _buildTarjetaHijo(
+    String nombre,
+    String detalle,
+    IconData icono,
+    Color colorEstado,
+    Color colorIcono,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: Colors.indigo.shade50,
-              child: const Icon(Icons.child_care, color: AppColors.primary),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    hijo['nombre'] ?? 'Sin nombre',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _buildStatChip(Icons.access_time, tiempoStr, Colors.blue),
-                      const SizedBox(width: 8),
-                      _buildStatChip(Icons.task_alt, '$desafios', Colors.green),
-                      const SizedBox(width: 8),
-                      _buildStatChip(Icons.stars, '$puntos pts', Colors.orange),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: AppColors.primary),
-          ],
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: colorIcono.withOpacity(0.1),
+          child: Icon(icono, color: colorIcono),
         ),
+        title: Text(
+          nombre,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(detalle),
+        trailing: Icon(Icons.circle, color: colorEstado, size: 12),
       ),
-    );
-  }
-
-  Widget _buildStatChip(IconData icono, String valor, Color color) {
-    return Row(
-      children: [
-        Icon(icono, size: 13, color: color),
-        const SizedBox(width: 3),
-        Text(valor, style: TextStyle(fontSize: 12, color: color)),
-      ],
     );
   }
 
@@ -421,10 +441,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
     BuildContext context,
     IconData icon,
     String title,
+    Color colorIcono,
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
+      leading: Icon(icon, color: colorIcono),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
       onTap: onTap,
     );

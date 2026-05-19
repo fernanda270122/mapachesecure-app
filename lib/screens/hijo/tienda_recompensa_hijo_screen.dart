@@ -48,7 +48,9 @@ class _TiendaRecompensasHijoScreenState
       setState(() {
         _recompensas = unicos;
         _misPuntos = puntosData is Map ? (puntosData['total_puntos'] ?? 0) : 0;
-        _tienePendiente = pendienteData is Map ? (pendienteData['tiene_pendiente'] ?? false) : false;
+        _tienePendiente = pendienteData is Map
+            ? (pendienteData['tiene_pendiente'] ?? false)
+            : false;
         _cargando = false;
       });
     } catch (e) {
@@ -57,8 +59,7 @@ class _TiendaRecompensasHijoScreenState
   }
 
   Future<void> _canjearRecompensa(Map<String, dynamic> recompensa) async {
-    final puntosCosto =
-        recompensa['costo_puntos'] ?? 0;
+    final puntosCosto = recompensa['costo_puntos'] ?? 0;
     if (_misPuntos < puntosCosto) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -153,22 +154,22 @@ class _TiendaRecompensasHijoScreenState
         foregroundColor: Colors.white,
       ),
       body: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  _buildHeaderPuntos(),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _recompensas.length,
-                      itemBuilder: (context, index) {
-                        final r = _recompensas[index];
-                        return _buildTarjetaPremio(r);
-                      },
-                    ),
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildHeaderPuntos(),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _recompensas.length,
+                    itemBuilder: (context, index) {
+                      final r = _recompensas[index];
+                      return _buildTarjetaPremio(r);
+                    },
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
     );
   }
 

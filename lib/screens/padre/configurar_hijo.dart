@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // <-- AÑADIDO
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
 import 'package:mapachesecure_app/services/api_service.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
-// import 'package:table_calendar/table_calendar.dart';
 
 const _appsPopulares = [
   {
@@ -68,12 +68,12 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   // Apps bloqueadas
   List<dynamic> _appsBlockeadas = [];
   bool _cargando = true;
-
   // Bloqueos programados
   List<dynamic> _bloqueos = [];
 
   // Modo seleccionado para agregar bloqueo
-  String? _modoSeleccionado; // 'inmediato', 'horario', 'calendario'
+  String? _modoSeleccionado;
+  // 'inmediato', 'horario', 'calendario'
 
   // Horario
   int _horaInicio = 20;
@@ -87,10 +87,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   final Set<String> _appsSeleccionadasParaHorario = {};
 
   bool _estaBloqueadaPorHorario(Map bloqueo, String packageActual) {
-    // Solo procesamos si es tipo horario y tiene apps asignadas
-    if (bloqueo['tipo'] != 'horario' || bloqueo['package_names'] == null)
+    if (bloqueo['tipo'] != 'horario' || bloqueo['package_names'] == null) {
       return false;
-
+    }
     final ahora = DateTime.now();
     final int horaActualMin = ahora.hour * 60 + ahora.minute;
 
@@ -101,17 +100,11 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
 
     final int inicioMin = aMinutos(bloqueo['hora_inicio']);
     final int finMin = aMinutos(bloqueo['hora_fin']);
-
-    // Validamos el día (Lunes=1 en Dart, pero en tu lista suele ser 0-6)
     final List<dynamic> dias = jsonDecode(bloqueo['dias_semana']);
     if (!dias.contains(ahora.weekday)) return false;
 
-    // Verificamos rango de hora
     bool enHorario = horaActualMin >= inicioMin && horaActualMin <= finMin;
-
-    // Verificamos si la app específica está en este bloqueo
     List<String> appsEnRegla = (bloqueo['package_names'] as String).split(',');
-
     return enHorario && appsEnRegla.contains(packageActual);
   }
 
@@ -124,13 +117,10 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     });
   }
 
-  // ── Carga inicial ──────────────────────────────────────────────────────────
-
   Future<void> _cargarDatos() async {
     await Future.wait([_cargarApps(), _cargarBloqueos()]);
   }
 
-  // ── Apps bloqueadas ────────────────────────────────────────────────────────
   Future<void> _cargarApps() async {
     try {
       final api = ApiService();
@@ -181,15 +171,13 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     }
   }
 
-  // ── Bloqueos programados ───────────────────────────────────────────────────
-
   Future<void> _cargarBloqueos() async {
     try {
       final api = ApiService();
       final data = await api.get('/bloqueos/${widget.hijo['id']}');
       setState(() => _bloqueos = data is List ? data : []);
     } catch (e) {
-      // Si falla, se deja lista vacía
+      // Vacío si falla
     }
   }
 
@@ -213,7 +201,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     final api = ApiService();
     try {
       if (_modoSeleccionado == 'horario') {
-        // 1. Validaciones de negocio
         if (_diasSeleccionados.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -224,7 +211,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           return;
         }
 
-        // 🛡️ VERIFICACIÓN CRÍTICA: Asegurar que hay apps para este horario
         if (_appsSeleccionadasParaHorario.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -235,31 +221,25 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           return;
         }
 
-        // 2. Preparación de datos
         final inicio =
             '${_horaInicio.toString().padLeft(2, '0')}:${_minutoInicio.toString().padLeft(2, '0')}';
         final fin =
             '${_horaFin.toString().padLeft(2, '0')}:${_minutoFin.toString().padLeft(2, '0')}';
-
-        // 🎯 Conversión para Opción B: Unir paquetes con comas
         final String packageNames = _appsSeleccionadasParaHorario.join(',');
 
-        // 3. Envío al Backend en Render
         await api.post('/bloqueos/${widget.hijo['id']}', {
           'tipo': 'horario',
           'hora_inicio': inicio,
           'hora_fin': fin,
           'dias_semana': _diasSeleccionados.toList()..sort(),
-          'package_names': packageNames, // <--- Este es el campo clave
+          'package_names': packageNames,
         });
       }
 
-      // 4. Limpieza total de estado tras el éxito
       setState(() {
         _modoSeleccionado = null;
         _appsSeleccionadasParaHorario.clear();
       });
-
       await _cargarBloqueos();
 
       if (!mounted) return;
@@ -280,9 +260,12 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     }
   }
 
-  // ── Widgets auxiliares ─────────────────────────────────────────────────────
-  // Scroll tipo tambor para seleccionar hora o minuto
-  Widget _scrollPicker(int valor, int maxValor, ValueChanged<int> onChanged) {
+  Widget _scrollPicker(
+    int valor,
+    int maxValor,
+    Color colorPrimario,
+    ValueChanged<int> onChanged,
+  ) {
     final controller = FixedExtentScrollController(initialItem: valor);
     return SizedBox(
       height: 120,
@@ -303,8 +286,8 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: index == valor
-                    ? AppColors.primary
-                    : Colors.grey.shade400,
+                    ? colorPrimario
+                    : Colors.grey.shade400, // <-- REFRESCADO DINÁMICAMENTE
               ),
             ),
           ),
@@ -313,8 +296,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  // Selector de hora inicio y fin con scroll
-  Widget _selectorHoras() {
+  Widget _selectorHoras(Color colorPrimario) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -336,6 +318,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     _scrollPicker(
                       _horaInicio,
                       24,
+                      colorPrimario,
                       (v) => setState(() => _horaInicio = v),
                     ),
                     const Padding(
@@ -351,6 +334,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     _scrollPicker(
                       _minutoInicio,
                       60,
+                      colorPrimario,
                       (v) => setState(() => _minutoInicio = v),
                     ),
                   ],
@@ -373,6 +357,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     _scrollPicker(
                       _horaFin,
                       24,
+                      colorPrimario,
                       (v) => setState(() => _horaFin = v),
                     ),
                     const Padding(
@@ -388,6 +373,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     _scrollPicker(
                       _minutoFin,
                       60,
+                      colorPrimario,
                       (v) => setState(() => _minutoFin = v),
                     ),
                   ],
@@ -397,7 +383,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        // Mensaje si el bloqueo es menor a 2 horas
         Builder(
           builder: (context) {
             final inicioMin = _horaInicio * 60 + _minutoInicio;
@@ -416,8 +401,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  // Selector de días de la semana
-  Widget _selectorDias() {
+  Widget _selectorDias(Color colorPrimario) {
     return Wrap(
       spacing: 8,
       children: List.generate(7, (i) {
@@ -433,10 +417,19 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
               _diasSeleccionados.remove(dia);
             }
           }),
-          selectedColor: AppColors.primary.withOpacity(0.2),
-          checkmarkColor: AppColors.primary,
+          selectedColor: colorPrimario.withOpacity(
+            0.2,
+          ), // <-- ADAPTADO DINÁMICAMENTE
+          checkmarkColor: colorPrimario,
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: seleccionado ? colorPrimario : Colors.grey.shade300,
+            ),
+          ),
           labelStyle: TextStyle(
-            color: seleccionado ? AppColors.primary : Colors.grey,
+            color: seleccionado ? colorPrimario : Colors.grey,
             fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
           ),
         );
@@ -444,20 +437,33 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  // ── UI principal ───────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: temaPadre.background,
       appBar: AppBar(
         title: Text(
           'Configurar a ${widget.hijo['nombre']}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
       ),
-      body: AppBackground(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
+              temaPadre.background,
+            ],
+          ),
+        ),
         child: _cargando
             ? const Center(child: CircularProgressIndicator())
             : ListView(
@@ -469,17 +475,19 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 10),
                   if (_bloqueos.isEmpty)
                     const Text(
                       'No hay bloqueos configurados',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(color: Colors.black54, fontSize: 13),
                     )
                   else
-                    ..._bloqueos.map((b) => _tarjetaBloqueo(b)),
+                    ..._bloqueos.map(
+                      (b) => _tarjetaBloqueo(b, temaPadre.primary),
+                    ),
 
                   const SizedBox(height: 24),
 
@@ -489,19 +497,24 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // Botones de modo
                   Row(
                     children: [
-                      _botonModo('horario', Icons.schedule, 'Horario'),
+                      _botonModo(
+                        'horario',
+                        Icons.schedule,
+                        'Horario',
+                        temaPadre.primary,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  if (_modoSeleccionado == 'horario') _formHorario(),
+                  if (_modoSeleccionado == 'horario')
+                    _formHorario(temaPadre.primary),
 
                   const SizedBox(height: 30),
 
@@ -511,43 +524,35 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
                     'Activa las apps que quieres bloquear durante el bloqueo',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
 
                   ..._appsPopulares.map((app) {
                     final String package = app['package'] as String;
-
-                    // 1. Verificamos si la app está bloqueada manualmente (inmediato)
                     bool bloqueadaInstante = _estaBloqueada(package);
-
-                    // 2. Verificamos si hay algún horario activo AHORA mismo para esta app
-                    // Esto usa la lista _bloqueos que ya tienes cargada en el estado
                     bool bloqueadaPorHorario = _bloqueos.any(
                       (b) => _estaBloqueadaPorHorario(b, package),
                     );
 
-                    // LÓGICA DE SELECCIÓN DINÁMICA:
-                    // Si estamos configurando un nuevo horario, mostramos lo que hay en la lista temporal.
-                    // Si no, mostramos si la app está bloqueada por cualquiera de los dos métodos (Instante o Programado).
                     final bool estaCheckeada = _modoSeleccionado == 'horario'
                         ? _appsSeleccionadasParaHorario.contains(package)
                         : (bloqueadaInstante || bloqueadaPorHorario);
 
                     return Card(
+                      elevation: 1,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       margin: const EdgeInsets.only(bottom: 8),
                       child: SwitchListTile(
                         secondary: CircleAvatar(
-                          // Cambia el color si está marcada en cualquiera de los modos
                           backgroundColor: estaCheckeada
                               ? Colors.red.shade50
                               : Colors.grey.shade100,
@@ -561,7 +566,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                          // Feedback visual sobre el tipo de bloqueo activo
                           bloqueadaPorHorario
                               ? 'Bloqueo Programado Activo'
                               : (estaCheckeada ? 'Bloqueada' : 'Permitida'),
@@ -570,10 +574,8 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                           ),
                         ),
                         value: estaCheckeada,
-                        activeColor: Colors.white,
-
-                        // DESHABILITAMOS el switch si hay un bloqueo programado en curso
-                        // Esto evita que se intente desactivar manualmente un horario vigente.
+                        activeColor: temaPadre
+                            .primary, // <-- ADAPTADO AL BOTÓN PRINCIPAL DEL PADRE
                         onChanged: bloqueadaPorHorario
                             ? null
                             : (val) {
@@ -590,7 +592,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                                     }
                                   });
                                 } else {
-                                  // Si no estamos editando horario, ejecutamos el bloqueo inmediato
                                   _toggleApp(app, val);
                                 }
                               },
@@ -603,13 +604,11 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  Widget _tarjetaBloqueo(Map b) {
-    // 1. Inicialización de variables de soporte
+  Widget _tarjetaBloqueo(Map b, Color colorPrimario) {
     String diasTexto = "No definidos";
     List<String> listaLimpia = [];
     IconData icono = Icons.schedule;
 
-    // 2. Lógica para procesar Días de la semana
     if (b['dias_semana'] != null) {
       List<String> nombresDias = [
         "",
@@ -645,7 +644,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       }
     }
 
-    // 3. Lógica para procesar nombres de Apps (package_names)
     if (b['package_names'] != null &&
         b['package_names'].toString().trim().isNotEmpty) {
       try {
@@ -653,7 +651,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
         listaLimpia = rawApps.split(RegExp(r',\s*')).map((p) {
           if (p.contains('.')) {
             var segmentos = p.split('.');
-            // Extrae el nombre principal (ej: de com.whatsapp toma whatsapp)
             String ident = segmentos.length >= 2
                 ? segmentos[segmentos.length - 2]
                 : segmentos.last;
@@ -666,22 +663,22 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       }
     }
 
-    // 4. Construcción de la Interfaz (UI)
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Encabezado: Título y Botón Eliminar
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.red.shade50,
-                  child: Icon(icono, color: Colors.red, size: 20),
+                  backgroundColor: colorPrimario.withOpacity(
+                    0.1,
+                  ), // <-- ADAPTADO DINÁMICAMENTE
+                  child: Icon(icono, color: colorPrimario, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -704,15 +701,11 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
               ],
             ),
             const Divider(height: 24),
-
-            // Información de Tiempo
             Text(
               "⏰ ${b['hora_inicio']} - ${b['hora_fin']}",
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
-
-            // Información de Días
             Row(
               children: [
                 Icon(
@@ -729,16 +722,15 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                 ),
               ],
             ),
-
-            // Sección de Apps con Chips (Solo se muestra si hay apps)
             if (listaLimpia.isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "APPS RESTRINGIDAS:",
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  color:
+                      colorPrimario, // <-- REEMPLAZADO DEEPPURPLE POR TU COLOR NEUTRO
                 ),
               ),
               const SizedBox(height: 8),
@@ -749,14 +741,14 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                   return Chip(
                     label: Text(
                       nombreApp,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Colors.deepPurple,
+                        color: colorPrimario,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    backgroundColor: Colors.deepPurple.shade50,
-                    side: BorderSide(color: Colors.deepPurple.shade100),
+                    backgroundColor: colorPrimario.withOpacity(0.08),
+                    side: BorderSide(color: colorPrimario.withOpacity(0.2)),
                     visualDensity: VisualDensity.compact,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -771,15 +763,17 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  // ── Botón de modo ──────────────────────────────────────────────────────────
-
-  Widget _botonModo(String modo, IconData icono, String label) {
+  Widget _botonModo(
+    String modo,
+    IconData icono,
+    String label,
+    Color colorPrimario,
+  ) {
     final seleccionado = _modoSeleccionado == modo;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {
           _modoSeleccionado = seleccionado ? null : modo;
-          // 🧹 LIMPIEZA: Si entramos a modo horario, empezamos con 0 apps seleccionadas
           if (_modoSeleccionado == 'horario') {
             _appsSeleccionadasParaHorario.clear();
           }
@@ -787,22 +781,19 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: seleccionado ? AppColors.primary : Colors.white,
+            color: seleccionado ? colorPrimario : Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primary),
+            border: Border.all(color: colorPrimario),
           ),
           child: Column(
             children: [
-              Icon(
-                icono,
-                color: seleccionado ? Colors.white : AppColors.primary,
-              ),
+              Icon(icono, color: seleccionado ? Colors.white : colorPrimario),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: seleccionado ? Colors.white : AppColors.primary,
+                  color: seleccionado ? Colors.white : colorPrimario,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -813,8 +804,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     );
   }
 
-  Widget _formHorario() {
+  Widget _formHorario(Color colorPrimario) {
     return Card(
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -826,27 +818,31 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _selectorHoras(),
+            _selectorHoras(colorPrimario),
             const SizedBox(height: 16),
             const Text(
               'Repetir los días:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            _selectorDias(),
+            _selectorDias(colorPrimario),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: ElevatedButton(
                 onPressed: _guardarBloqueo,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: colorPrimario, // <-- ADAPTADO DINÁMICAMENTE
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Guardar horario'),
+                child: const Text(
+                  'Guardar horario',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ],

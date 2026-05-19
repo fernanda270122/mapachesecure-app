@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // <-- AÑADIDO
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
 import 'package:mapachesecure_app/services/api_service.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RevisarEvidenciasScreen extends StatefulWidget {
@@ -36,9 +36,9 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
       });
     } catch (e) {
       setState(() => _cargando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -55,76 +55,136 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha el tema exclusivo del padre
+    final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: temaPadre.background,
       appBar: AppBar(
         title: const Text(
           'Revisar Evidencias',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
+        backgroundColor: temaPadre.primary, // <-- APPBAR DINÁMICO
         foregroundColor: Colors.white,
       ),
-      body: AppBackground(child: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : _evidencias.isEmpty
-          ? const Center(
-              child: Text("No hay evidencias pendientes por ahora 👏", style: TextStyle(color: Colors.white) ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(15),
-              itemCount: _evidencias.length,
-              itemBuilder: (context, index) {
-                final item = _evidencias[index];
-                return _buildEvidenciaCard(item);
-              },
-            ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        // Tu degradado insignia al 0.62 para armonizar el fondo
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
+              temaPadre.background,
+            ],
+          ),
+        ),
+        child: _cargando
+            ? const Center(child: CircularProgressIndicator())
+            : _evidencias.isEmpty
+            ? const Center(
+                child: Text(
+                  "No hay evidencias pendientes por ahora 👏",
+                  style: TextStyle(
+                    color: Colors.black54,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ), // <-- COLOR AJUSTADO
+                ),
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(15),
+                itemCount: _evidencias.length,
+                itemBuilder: (context, index) {
+                  final item = _evidencias[index];
+                  return _buildEvidenciaCard(
+                    item,
+                    temaPadre.primary,
+                  ); // <-- PASADO EL COLOR DINÁMICO
+                },
+              ),
       ),
     );
   }
 
-  Widget _buildEvidenciaCard(dynamic item) {
+  Widget _buildEvidenciaCard(dynamic item, Color colorTema) {
     return Card(
+      elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Column(
         children: [
           ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.history_edu)),
+            leading: CircleAvatar(
+              backgroundColor: colorTema.withOpacity(
+                0.1,
+              ), // <-- MATIZ DEL COLOR DEL PADRE
+              child: Icon(
+                Icons.history_edu,
+                color: colorTema,
+              ), // <-- ÍCONO DINÁMICO
+            ),
             title: Text(
               item['titulo'] ?? 'Desafío Sin Nombre',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text("Hijo: ${item['hijo_nombre']}"),
+            subtitle: Text(
+              "Hijo: ${item['hijo_nombre']}",
+              style: const TextStyle(color: Colors.black54),
+            ),
           ),
 
           if (item['url_evidencia'] != null)
-            Image.network(
-              item['url_evidencia'],
-              height: 200,
-              fit: BoxFit.cover,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                  12,
+                ), // Un toque más estilizado para las fotos
+                child: Image.network(
+                  item['url_evidencia'],
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
 
           Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
                   onPressed: () => _procesarEvidencia(item['id'], false),
                   icon: const Icon(Icons.close),
-                  label: const Text("Rechazar"),
+                  label: const Text(
+                    "Rechazar",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
                 ElevatedButton.icon(
                   onPressed: () => _procesarEvidencia(item['id'], true),
                   icon: const Icon(Icons.check),
-                  label: const Text("Aprobar"),
+                  label: const Text(
+                    "Aprobar",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ],
