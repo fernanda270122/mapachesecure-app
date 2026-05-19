@@ -15,19 +15,49 @@ class PaletaColorPadre {
 class AppPaletasPadre {
   static const Map<String, PaletaColorPadre> paletas = {
     'Celeste Neutro': PaletaColorPadre(
-      primary: Color(0xFF2B6CB0), // Celeste sobrio
-      accent: Color(0xFF90CDF4), // Celeste claro
-      background: Color(0xFFF7FAFC), // Fondo limpio grisáceo
+      primary: Color(0xFF2B6CB0),
+      accent: Color(0xFF90CDF4),
+      background: Color(0xFFF7FAFC),
     ),
     'Café Beige': PaletaColorPadre(
-      primary: Color(0xFF8C6239), // Café elegante
-      accent: Color(0xFFD6C5B3), // Beige sutil
-      background: Color(0xFFFDFBF7), // Fondo crema claro
+      primary: Color(0xFF8C6239),
+      accent: Color(0xFFD6C5B3),
+      background: Color(0xFFFDFBF7),
     ),
     'Verde Olivo': PaletaColorPadre(
-      primary: Color(0xFF2F855A), // Verde neutro
-      accent: Color(0xFF9AE6B4), // Verde claro suave
-      background: Color(0xFFF0FDF4), // Fondo matiz verde
+      primary: Color(0xFF2F855A),
+      accent: Color(0xFF9AE6B4),
+      background: Color(0xFFF0FDF4),
+    ),
+    'Damasco': PaletaColorPadre(
+      primary: Color(0xFFE07A5F),
+      accent: Color(0xFFF4A261),
+      background: Color(0xFFFFFDFB),
+    ),
+    'Lila Pastel': PaletaColorPadre(
+      primary: Color(0xFF8E7DBE),
+      accent: Color(0xFFD7BDE2),
+      background: Color(0xFFFDFBFE),
+    ),
+    'Turquesa': PaletaColorPadre(
+      primary: Color(0xFF3B9A9C),
+      accent: Color(0xFF4DB6AC),
+      background: Color(0xFFF4FAFA),
+    ),
+    'Negro Absoluto': PaletaColorPadre(
+      primary: Color(0xFF1A1A1A),
+      accent: Color(0xFFCBD5E1),
+      background: Color(0xFF121212),
+    ),
+    'Blanco grisáceo': PaletaColorPadre(
+      primary: Color.fromARGB(255, 153, 156, 163),
+      accent: Color(0xFFCBD5E1),
+      background: Color(0xFFFFFFFF),
+    ),
+    'Azul Pastel': PaletaColorPadre(
+      primary: Color(0xFF6BAED6),
+      accent: Color(0xFF9ECAE1),
+      background: Color(0xFFF7FAFC),
     ),
   };
 }
