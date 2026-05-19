@@ -247,8 +247,6 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
-
-            // Botón para entrar a tu pantalla de colores
             _buildDrawerItem(
               context,
               Icons.palette_outlined,
@@ -262,7 +260,6 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
-
             const Divider(),
             _buildDrawerItem(
               context,
@@ -315,25 +312,30 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ¡AQUÍ ESTÁ EL CAMBIO! Renderizamos el carrusel al inicio del body
+                      _buildCarrusel(),
+                      const SizedBox(height: 25),
+
                       const Text(
                         'Actividad de hoy',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors
-                              .black87, // Texto oscuro para que resalte en fondos claros
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 15),
+
+                      // Renderizamos las métricas generales del día antes de los hijos
                       _buildResumenHoy(),
                       const SizedBox(height: 30),
+
                       const Text(
                         'Hijos conectados',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors
-                              .black87, // Texto oscuro para que resalte en fondos claros
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 15),
@@ -475,9 +477,21 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
 
   Widget _buildCarrusel() {
     final slides = [
-      {'color': const Color(0xFF7C4DFF), 'icono': Icons.shield},
-      {'color': const Color(0xFF00897B), 'icono': Icons.child_care},
-      {'color': const Color(0xFF1565C0), 'icono': Icons.stars},
+      {
+        'imagen': 'assets/carrucel/carrucel1.jpeg',
+        'texto':
+            'Controla el tiempo de pantalla de tus hijos y bloquea apps cuando lo necesites',
+      },
+      {
+        'imagen': 'assets/carrucel/carrucel2.jpeg',
+        'texto':
+            'Asigna desafíos cognitivos, físicos y del hogar para que tus hijos ganen RaccuPoints',
+      },
+      {
+        'imagen': 'assets/carrucel/carrucel3.jpeg',
+        'texto':
+            'Tus hijos pueden canjear sus puntos por recompensas que tú defines',
+      },
     ];
 
     return Column(
@@ -493,31 +507,11 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
-                  color: slide['color'] as Color,
                   borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      slide['icono'] as IconData,
-                      color: Colors.white,
-                      size: 40,
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'RaccuApp',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Text(
-                      'by CAVY',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                  ],
+                  image: DecorationImage(
+                    image: AssetImage(slide['imagen'] as String),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               );
             },
