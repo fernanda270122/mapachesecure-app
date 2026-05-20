@@ -105,16 +105,25 @@ void onStart(ServiceInstance service) async {
   // Conjunto de claves de reglas activas en el último chequeo
   Set<String> reglasActivasPrevias = {};
 
-  String _claveRegla(ReglaBloqueo r) => '${r.inicio}_${r.fin}_${r.dias.join('-')}';
+  String _claveRegla(ReglaBloqueo r) =>
+      '${r.inicio}_${r.fin}_${r.dias.join('-')}';
 
-  Set<String> _reglasActivasAhora(List<ReglaBloqueo> reglas, bool Function(ReglaBloqueo) estaActiva) {
+  Set<String> _reglasActivasAhora(
+    List<ReglaBloqueo> reglas,
+    bool Function(ReglaBloqueo) estaActiva,
+  ) {
     return reglas.where(estaActiva).map(_claveRegla).toSet();
   }
 
-  Future<void> _notificarCambioHorario(bool iniciando, ReglaBloqueo regla) async {
+  Future<void> _notificarCambioHorario(
+    bool iniciando,
+    ReglaBloqueo regla,
+  ) async {
     await notifHorario.show(
       id: iniciando ? 300 : 301,
-      title: iniciando ? '⏰ Bloqueo de horario iniciado' : '✅ Bloqueo de horario terminado',
+      title: iniciando
+          ? '⏰ Bloqueo de horario iniciado'
+          : '✅ Bloqueo de horario terminado',
       body: iniciando
           ? 'Las apps están restringidas hasta las ${regla.fin}'
           : 'Las apps están disponibles nuevamente (desde las ${regla.fin})',
@@ -203,13 +212,19 @@ void onStart(ServiceInstance service) async {
   // --- INICIO DEL SERVICIO ---
   await actualizarReglasDesdeAPI();
   // Guardamos el estado inicial sin notificar (la app acaba de arrancar)
-  reglasActivasPrevias = _reglasActivasAhora(reglasProgramadas, estaEnHorarioProhibido);
+  reglasActivasPrevias = _reglasActivasAhora(
+    reglasProgramadas,
+    estaEnHorarioProhibido,
+  );
 
   // Sincronización de reglas cada minuto + detección de inicio/fin de bloqueo
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     await actualizarReglasDesdeAPI();
 
-    final reglasActuales = _reglasActivasAhora(reglasProgramadas, estaEnHorarioProhibido);
+    final reglasActuales = _reglasActivasAhora(
+      reglasProgramadas,
+      estaEnHorarioProhibido,
+    );
 
     for (final regla in reglasProgramadas) {
       final clave = _claveRegla(regla);
@@ -259,14 +274,52 @@ void onStart(ServiceInstance service) async {
       if (ultimosEventos.isNotEmpty) {
         String appActual = ultimosEventos.last.packageName ?? '';
 
-        // 🟢 1. SALVOCONDUCTO (Zona Segura)
-        // Agregamos todos los nombres posibles del Launcher de Samsung y Android base
+        // 🟢 1. SALVOCONDUCTO (Zona Segura Completa)
         List<String> zonaSegura = [
           miPropiaApp, // Tu aplicación MapacheSecure
-          "com.sec.android.app.launcher", // Samsung One UI Home (S23 Ultra)
-          "com.google.android.apps.nexuslauncher", // Google Pixel Launcher
-          "com.android.launcher", // Android Launcher base
-          "com.android.systemui", // Interfaz de sistema (notificaciones/recientes)
+          // Samsung
+          "com.sec.android.app.launcher",
+          "com.samsung.android.app.spage",
+
+          // Google / Pixel
+          "com.google.android.apps.nexuslauncher",
+          "com.google.android.launcher",
+
+          // AOSP base (Nuvia, Android Go, genéricos)
+          "com.android.launcher",
+          "com.android.launcher2",
+          "com.android.launcher3",
+          "com.android.launcher4",
+
+          // Sistema Android
+          "com.android.systemui",
+
+          // Xiaomi / Redmi / POCO — MIUI y HyperOS
+          "com.miui.home",
+          "com.miui.msa.global",
+
+          // Motorola
+          "com.motorola.launcher3",
+
+          // Huawei / Honor
+          "com.huawei.android.launcher",
+          "com.honor.android.launcher",
+
+          // OPPO / Realme / OnePlus
+          "com.coloros.launcher",
+          "com.realme.launcher",
+          "com.oneplus.launcher",
+
+          // Vivo
+          "com.bbk.launcher2",
+          "com.vivo.launcher",
+
+          // LG
+          "com.lge.launcher3",
+
+          // ZTE / Nuvia
+          "com.zte.launcher",
+          "com.nuvia.launcher",
         ];
 
         // Si el niño está en el inicio o en tu app, no evaluamos nada más

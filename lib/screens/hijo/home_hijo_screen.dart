@@ -18,6 +18,9 @@ import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/colores_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/avatar_screen.dart';
+import 'package:usage_stats/usage_stats.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/services.dart';
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -42,14 +45,16 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   @override
   void initState() {
     super.initState();
-    _cargarDatos();
-    _tts.setLanguage('es-MX');
+    _cargarDatos(); //
+    _tts.setLanguage('es-MX'); //
+
+    // Llamamos a la validación secuencial inteligente
     _activarGuardian();
-    FlutterBackgroundService().startService();
+
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: true);
+    )..repeat(reverse: true); //
     _floatAnimation = Tween<double>(begin: -8, end: 8).animate(
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
@@ -91,10 +96,94 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
-    var isRunning = await service.isRunning();
-    if (!isRunning) {
-      service.startService();
+    bool isRunning = await service.isRunning();
+
+    // Si el servicio ya está corriendo, no hacemos nada
+    if (isRunning) return;
+
+    // Verificamos si FALTA al menos uno de los dos primeros permisos obligatorios
+    bool usageGranted = await UsageStats.checkUsagePermission() ?? false;
+    bool overlayGranted = await Permission.systemAlertWindow.isGranted;
+
+    // Si falta alguno, le mostramos el cartel explicativo antes de mandarlo a los Ajustes
+    if (!usageGranted || !overlayGranted) {
+      bool? iniciarFlujo = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false, // Obliga a leer el mensaje
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            backgroundColor: const Color(
+              0xFF1E1E2C,
+            ), // Ajusta al color de tu app
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.shield_outlined, color: Colors.orange),
+                SizedBox(width: 10),
+                Text(
+                  "Configuración Requerida",
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ],
+            ),
+            content: const Text(
+              "A continuación, MapacheSecure te solicitará 3 permisos del sistema para que el guardián pueda proteger el dispositivo. Por favor, actívalos en cada pantalla que aparezca.",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text(
+                  "ENTENDIDO",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      // Si cerró el diálogo o pasó algo raro, no continuamos para evitar bucles
+      if (iniciarFlujo != true) return;
     }
+
+    // ==========================================
+    // 🚀 INICIA EL FLUJO SECUENCIAL DE PERMISOS
+    // ==========================================
+
+    // 🛡️ PERMISO 1: Acceso a estadísticas de uso
+    if (!usageGranted) {
+      await UsageStats.grantUsagePermission();
+      return;
+    }
+
+    // 🛡️ PERMISO 2: Mostrar sobre otras apps
+    if (!overlayGranted) {
+      await Permission.systemAlertWindow.request();
+      return;
+    }
+
+    // 🛡️ PERMISO 3: Excluir de optimización de batería (Kotlin)
+    try {
+      const platform = MethodChannel('mapachesecure/battery');
+      await platform.invokeMethod('requestIgnoreBatteryOptimizations');
+    } catch (e) {
+      print("❌ Error al solicitar exclusión de batería: $e");
+    }
+
+    // 🏁 Si todo está al día, se enciende el Guardián
+    await service.startService();
   }
 
   Future<void> _cargarDatos() async {
@@ -320,9 +409,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   }
 
   Map<String, dynamic> _calcularNivel(int puntos) {
-    const List<int> puntosNivel = [
-      0, 500, 1100, 1900, 2900, 4100, 5500,
-    ];
+    const List<int> puntosNivel = [0, 500, 1100, 1900, 2900, 4100, 5500];
     int nivel = 0;
     for (int i = 1; i < puntosNivel.length; i++) {
       if (puntos >= puntosNivel[i])
@@ -410,7 +497,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                   CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.white,
-                    backgroundImage: _avatarPath != null ? AssetImage(_avatarPath!) : null,
+                    backgroundImage: _avatarPath != null
+                        ? AssetImage(_avatarPath!)
+                        : null,
                     child: _avatarPath == null
                         ? const Icon(Icons.star, color: Colors.orange, size: 35)
                         : null,
@@ -484,17 +573,17 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               },
             ),
             _buildDrawerOption(
-                Icons.palette_outlined,
-                'Colores',
-                Colors.teal,
-                () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ColoresScreen()),
-                  );
-                },
-              ),
+              Icons.palette_outlined,
+              'Colores',
+              Colors.teal,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ColoresScreen()),
+                );
+              },
+            ),
             _buildDrawerOption(
               Icons.account_circle,
               'Mi Avatar',
@@ -527,146 +616,157 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         elevation: 0,
       ),
       body: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh:
-                    _cargarDatos, // Implementa refresco manual como en el Padre[cite: 1]
-                child: SafeArea(
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '¡Hola, ${_nombre.split(' ').first}!',
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh:
+                  _cargarDatos, // Implementa refresco manual como en el Padre
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '¡Hola, ${_nombre.split(' ').first}!',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: tema.onBackground,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Text(
+                                  'Nivel ${_calcularNivel(_puntos)['nivel']}',
                                   style: TextStyle(
-                                    fontSize: 26,
+                                    fontSize: 14,
+                                    color: Colors.orange,
                                     fontWeight: FontWeight.bold,
-                                    color: tema.onBackground,
                                   ),
                                 ),
-                                const SizedBox(height: 5),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  child: Text(
-                                    'Nivel ${_calcularNivel(_puntos)['nivel']}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            GestureDetector(
-                              onTap: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => const AvatarScreen()),
-                                );
-                                if (result != null) setState(() => _avatarPath = result);
-                              },
-                              child: CircleAvatar(
-                                radius: 35,
-                                backgroundColor: tema.accent,
-                                backgroundImage: _avatarPath != null ? AssetImage(_avatarPath!) : null,
-                                child: _avatarPath == null
-                                    ? const Icon(Icons.face, size: 40, color: Colors.white)
-                                    : null,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 15),
-                        _buildMascotaCard(),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Desafíos disponibles:',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: tema.onBackground,
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 15),
-
-                        // Generación dinámica de desafíos desde el Backend
-                        _desafios.isEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                child: Center(
-                                  child: Text(
-                                    "No hay desafíos disponibles",
-                                    style: TextStyle(color: tema.onBackground.withOpacity(0.6)),
-                                  ),
-                                ),
-                              )
-                            : Column(
-                                children: _desafios.map((desafio) {
-                                  return _buildChallengeCard(
-                                    context, // Agregamos el context para navegar
-                                    desafio, // Pasamos el mapa completo
-                                    _pendientes.contains(
-                                      desafio['id'].toString(),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-
-                        const SizedBox(height: 10),
-                        Center(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
+                          GestureDetector(
+                            onTap: () async {
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      const TiendaRecompensasHijoScreen(),
+                                  builder: (_) => const AvatarScreen(),
                                 ),
                               );
+                              if (result != null)
+                                setState(() => _avatarPath = result);
                             },
-                            icon: const Icon(
-                              Icons.emoji_events,
-                              color: Colors.white,
+                            child: CircleAvatar(
+                              radius: 35,
+                              backgroundColor: tema.accent,
+                              backgroundImage: _avatarPath != null
+                                  ? AssetImage(_avatarPath!)
+                                  : null,
+                              child: _avatarPath == null
+                                  ? const Icon(
+                                      Icons.face,
+                                      size: 40,
+                                      color: Colors.white,
+                                    )
+                                  : null,
                             ),
-                            label: const Text(
-                              'Recompensas',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      _buildMascotaCard(),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Desafíos disponibles:',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: tema.onBackground,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+
+                      // Generación dinámica de desafíos desde el Backend
+                      _desafios.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Center(
+                                child: Text(
+                                  "No hay desafíos disponibles",
+                                  style: TextStyle(
+                                    color: tema.onBackground.withOpacity(0.6),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Column(
+                              children: _desafios.map((desafio) {
+                                return _buildChallengeCard(
+                                  context, // Agregamos el context para navegar
+                                  desafio, // Pasamos el mapa completo
+                                  _pendientes.contains(
+                                    desafio['id'].toString(),
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 15,
+
+                      const SizedBox(height: 10),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const TiendaRecompensasHijoScreen(),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.emoji_events,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            'Recompensas',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 40,
+                              vertical: 15,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 30),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
               ),
+            ),
     );
   }
 
