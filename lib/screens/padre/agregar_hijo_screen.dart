@@ -28,9 +28,9 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
   static const _opcionesSexo = ['masculino', 'femenino', 'otro'];
   static const _opcionesNivel = ['pre-basica', 'basica', 'media'];
   static const _opcionesPersonalidad = [
-    'curioso',
-    'activo',
-    'tranquilo',
+    'curioso/a',
+    'activo/a',
+    'tranquilo/a',
     'creativo',
     'sociable',
   ];
@@ -129,7 +129,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(respuesta['detail'] ?? 'Error al agregar hijo'),
+            content: Text(respuesta['detail'] ?? 'Error al agregar hijo/a'),
             backgroundColor: Colors.red,
           ),
         );
@@ -153,7 +153,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       backgroundColor: temaPadre.background,
       appBar: AppBar(
         title: const Text(
-          'Agregar Hijo',
+          'Agregar Hijo/a',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: temaPadre.primary,
@@ -188,7 +188,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                 TextFormField(
                   controller: _nombreCtrl,
                   decoration: _inputDecor(
-                    'Nombre del hijo',
+                    'Nombre del hijo/a',
                     Icons.person,
                     temaPadre.primary,
                   ),
@@ -235,7 +235,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                 const SizedBox(height: 28),
 
                 // --- Perfil del hijo ---
-                _seccionTitulo('Perfil del hijo'),
+                _seccionTitulo('Perfil del hijo/a'),
                 const SizedBox(height: 12),
 
                 _dropdownField(
@@ -273,7 +273,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                 _seccionTitulo('Intereses'),
                 const SizedBox(height: 4),
                 const Text(
-                  'Selecciona los que más le gustan al niño',
+                  'Selecciona lo que mas les gusta a tus hijos/as',
                   style: TextStyle(fontSize: 13, color: Colors.black54),
                 ),
                 const SizedBox(height: 12),
@@ -338,7 +338,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                     child: _cargando
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
-                            'Agregar Hijo',
+                            'Agregar Hijo/a',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

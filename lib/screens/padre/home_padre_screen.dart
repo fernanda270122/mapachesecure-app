@@ -176,7 +176,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
             _buildDrawerItem(
               context,
               Icons.person_add,
-              'Agregar Hijo',
+              'Agregar Hijo/a',
               temaPadre.primary,
               () async {
                 Navigator.pop(context);

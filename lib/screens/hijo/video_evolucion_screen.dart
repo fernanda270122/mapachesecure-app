@@ -78,7 +78,7 @@ class _VideoEvolucionScreenState extends State<VideoEvolucionScreen> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
-                    '¡Súrge ahora \ny ovedece mi llamada! 🦝✨' ,
+                    '¡Surge ahora y obedece mi llamada! 🦝✨' ,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
