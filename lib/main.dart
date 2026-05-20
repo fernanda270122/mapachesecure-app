@@ -175,6 +175,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _verificarSesion();
   }
+
   Future<void> _verificarSesion() async {
     final auth = AuthService();
     final service = FlutterBackgroundService();
@@ -188,7 +189,6 @@ class _SplashScreenState extends State<SplashScreen> {
       final rol = await auth.getRol();
       if (!mounted) return;
 
-
       if (rol == 'padre') {
         if (await service.isRunning()) {
           service.invoke("stopService");
@@ -198,14 +198,19 @@ class _SplashScreenState extends State<SplashScreen> {
           MaterialPageRoute(builder: (_) => const HomePadreScreen()),
         );
       } else if (rol == 'hijo') {
-        if (!(await service.isRunning())) {
-          await service.startService();
-        }
+        // 🛡️ REMOVEMOS EL service.startService() DE AQUÍ PARA EVITAR EL CRASH.
+        // Delegamos el encendido al flujo seguro con permisos en HomeHijoScreen.
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeHijoScreen()),
         );
       }
+    } else {
+      // 💡 RECOMENDACIÓN: Si no está logueado, mándalo al Login en vez de dejarlo congelado
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
   }
 
