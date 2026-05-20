@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Archivos locales no relacionados al proyecto
+flutter_01.png
+log.txt
+android/app/src/main/kotlin/com/mapachesecure/mapachesecure_app/BloqueoAccessibilityService.kt
+android/app/src/main/res/xml/
