@@ -37,10 +37,13 @@ class MainActivity: FlutterActivity() {
         }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ACCESSIBILITY_CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "isAccessibilityEnabled") {
-                result.success(isAccessibilityServiceEnabled())
-            } else {
-                result.notImplemented()
+            when (call.method) {
+                "isAccessibilityEnabled" -> result.success(isAccessibilityServiceEnabled())
+                "openAccessibilitySettings" -> {
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    result.success(true)
+                }
+                else -> result.notImplemented()
             }
         }
     }

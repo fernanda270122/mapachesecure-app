@@ -149,10 +149,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                   backgroundColor: Colors.orange,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(dialogContext);
-                  SystemChannels.platform.invokeMethod('SystemNavigator.openAccessibilitySettings')
-                      .catchError((_) {});
+                  await _accessibilityChannel.invokeMethod('openAccessibilitySettings');
                 },
                 child: const Text("IR A AJUSTES", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),

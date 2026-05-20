@@ -53,7 +53,7 @@ class BloqueoAccessibilityService : AccessibilityService() {
     }
 
     private fun bloquear(packageName: String, prefs: android.content.SharedPreferences) {
-        prefs.edit().putString("flutter.app_bloqueada_actual", packageName).apply()
+        prefs.edit().putString("flutter.app_bloqueada_actual", packageName).commit()
         performGlobalAction(GLOBAL_ACTION_HOME)
         val intent = packageManager.getLaunchIntentForPackage("com.mapachesecure.mapachesecure_app")
         intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
