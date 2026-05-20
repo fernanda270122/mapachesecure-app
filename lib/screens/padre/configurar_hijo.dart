@@ -249,6 +249,35 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           backgroundColor: Colors.green,
         ),
       );
+
+      // Popup informativo que desaparece automáticamente a los 5 segundos
+      showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) {
+          Future.delayed(const Duration(seconds: 5), () {
+            if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+          });
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: const Color(0xFF1A237E),
+            content: Row(
+              children: const [
+                Icon(Icons.info_outline, color: Colors.white, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'El bloqueo de apps puede tardar entre 2 a 3 minutos en activarse.',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
