@@ -30,7 +30,10 @@ class ReglaBloqueo {
       fin: json['hora_fin'],
       // Decodificamos la lista de días [0,1,2...] que viene de Supabase
       dias: List<int>.from(jsonDecode(json['dias_semana'])),
-      appsAfectadas: (json['package_names'] as String? ?? "").split(','),
+      appsAfectadas: (json['package_names'] as String? ?? "")
+              .split(',')
+              .where((s) => s.isNotEmpty)
+              .toList(),
     );
   }
 }
@@ -156,9 +159,8 @@ void onStart(ServiceInstance service) async {
     final int inicioMin = aMinutos(regla.inicio);
     final int finMin = aMinutos(regla.fin);
 
-    // DateTime.weekday: Lunes es 1, Domingo es 7.
-    // Supabase: Lunes suele ser 0. Normalizamos:
-    if (!regla.dias.contains(ahora.weekday)) return false;
+    // DateTime.weekday: Lunes=1, Domingo=7. Supabase: Lunes=0, Domingo=6.
+    if (!regla.dias.contains(ahora.weekday - 1)) return false;
 
     return horaActualMin >= inicioMin && horaActualMin <= finMin;
   }

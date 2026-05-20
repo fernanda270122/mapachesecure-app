@@ -373,8 +373,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
                           // 🛡️ PASO 2: LIMPIAR DATOS
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.remove('user_id');
+                          final onboardingKeys = prefs.getKeys()
+                              .where((k) => k.startsWith('onboarding_'))
+                              .toList();
+                          final savedFlags = {
+                            for (var k in onboardingKeys) k: prefs.getBool(k),
+                          };
                           await prefs.clear();
+                          for (final entry in savedFlags.entries) {
+                            if (entry.value != null) {
+                              await prefs.setBool(entry.key, entry.value!);
+                            }
+                          }
 
                           if (context.mounted) {
                             Navigator.pushAndRemoveUntil(

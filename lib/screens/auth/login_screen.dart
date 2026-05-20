@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(child: Image.asset('assets/racculogo.png', height: 150)),
               const SizedBox(height: 10),
               const Text(
-                'Iniciar Sesion',
+                'Iniciar Sesión',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
@@ -262,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _emailController,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                  hintText: 'Correo electronico',
+                  hintText: 'Correo electrónico',
                   hintStyle: TextStyle(color: Colors.white70),
                   border: OutlineInputBorder(),
                 ),
@@ -275,7 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: const TextStyle(color: Colors.white),
                 obscureText: true,
                 decoration: const InputDecoration(
-                  hintText: 'Contrasena',
+                  hintText: 'Contraseña',
                   hintStyle: TextStyle(color: Colors.white70),
                   border: OutlineInputBorder(),
                 ),
@@ -350,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 },
                 child: const Text(
-                  'Olvide mi contrasena',
+                  'Olvidé mi contraseña',
                   style: TextStyle(color: AppColors.accent),
                 ),
               ),
