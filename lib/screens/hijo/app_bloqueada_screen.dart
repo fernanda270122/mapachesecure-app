@@ -56,7 +56,7 @@ class AppBloqueadaScreen extends StatelessWidget {
                     );
                   },
                   icon: const Icon(Icons.home),
-                  label: const Text('VOLVER A MAPACHESECURE'),
+                  label: const Text('VOLVER A RACCU'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFFB71C1C),

@@ -194,6 +194,8 @@ void onStart(ServiceInstance service) async {
       if (respInstante.statusCode == 200) {
         final List<dynamic> data = jsonDecode(respInstante.body);
         appsEnListaNegra = data.map((e) => e.toString()).toList();
+        // Persiste para AccessibilityService
+        await prefs.setString('apps_bloqueadas_instante', jsonEncode(appsEnListaNegra));
       }
 
       if (respHorarios.statusCode == 200) {
@@ -201,6 +203,8 @@ void onStart(ServiceInstance service) async {
         reglasProgramadas = data
             .map((json) => ReglaBloqueo.fromJson(json))
             .toList();
+        // Persiste para AccessibilityService
+        await prefs.setString('bloqueos_horario', respHorarios.body);
       }
 
       print(

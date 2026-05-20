@@ -18,9 +18,9 @@ import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/colores_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/avatar_screen.dart';
-import 'package:usage_stats/usage_stats.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
+
+const _accessibilityChannel = MethodChannel('mapachesecure/accessibility');
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -107,89 +107,66 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     }
   }
 
-  // Variable para que el cartel explicativo aparezca SOLO la primera vez que se monta la pantalla
   bool _mostrarCartelInicial = true;
+
+  Future<bool> _isAccessibilityEnabled() async {
+    try {
+      return await _accessibilityChannel.invokeMethod('isAccessibilityEnabled') as bool;
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
-    bool isRunning = await service.isRunning();
+    final bool accesibilidadActiva = await _isAccessibilityEnabled();
 
-    if (isRunning) return;
-
-    bool usageGranted = await UsageStats.checkUsagePermission() ?? false;
-    bool overlayGranted = await Permission.systemAlertWindow.isGranted;
-
-    // 1. Mostrar cartel explicativo SÓLO si falta algún permiso Y es la primera vez que entra
-    if ((!usageGranted || !overlayGranted) && _mostrarCartelInicial) {
-      _mostrarCartelInicial = false; // Nos aseguramos de apagarlo de inmediato
-
-      bool? iniciarFlujo = await showDialog<bool>(
+    // Guía al usuario a activar el servicio de accesibilidad si no está activo
+    if (!accesibilidadActiva && _mostrarCartelInicial) {
+      _mostrarCartelInicial = false;
+      if (!mounted) return;
+      await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
             backgroundColor: const Color(0xFF1E1E2C),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Row(
               children: [
-                Icon(Icons.shield_outlined, color: Colors.orange),
+                Icon(Icons.accessibility_new, color: Colors.orange),
                 SizedBox(width: 10),
-                Text(
-                  "Configuración Requerida",
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
+                Text("Activar Guardián", style: TextStyle(color: Colors.white, fontSize: 18)),
               ],
             ),
             content: const Text(
-              "A continuación, MapacheSecure te solicitará 2 permisos del sistema para que el guardián pueda proteger el dispositivo. Por favor, actívalos en cada pantalla que aparezca.",
+              "Para que Raccu pueda proteger el dispositivo, activa el servicio en:\n\nAjustes → Accesibilidad → Aplicaciones instaladas → Raccu",
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
             actions: [
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text(
-                  "ENTENDIDO",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  SystemChannels.platform.invokeMethod('SystemNavigator.openAccessibilitySettings')
+                      .catchError((_) {});
+                },
+                child: const Text("IR A AJUSTES", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           );
         },
       );
-
-      if (iniciarFlujo != true) return;
+      return;
     }
 
-    // ==========================================
-    // 🚀 FLUJO SECUENCIAL INTERACTIVO (REBOBINADO)
-    // ==========================================
-
-    // 🛡️ PASO 1: Acceso a estadísticas de uso
-    if (!usageGranted) {
-      await UsageStats.grantUsagePermission();
-      return; // Manda a Ajustes. Al volver, el observer ejecuta el Paso 2
-    }
-
-    // 🛡️ PASO 2: Mostrar sobre otras apps
-    if (!overlayGranted) {
-      await Permission.systemAlertWindow.request();
-      return; // Manda a Ajustes. Al volver, el observer entrará directo al inicio del servicio
-    }
-
-    // 🏁 ¡CONTRATO CUMPLIDO! Si llegó aquí es porque tiene los 2 permisos activos.
+    // Con accesibilidad activa, solo necesitamos el servicio de fondo para sync de reglas
+    final bool isRunning = await service.isRunning();
     if (!isRunning) {
-      print("🚀 Levantando Guardián Raccu de inmediato...");
+      print("🚀 Levantando Guardián Raccu...");
       await service.startService();
     }
   }
