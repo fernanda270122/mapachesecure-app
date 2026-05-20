@@ -123,7 +123,7 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'Hijo: ${c['usuarios']?['nombre'] ?? ''}',
+                          '${_genero(c)}: ${c['usuarios']?['nombre'] ?? ''}',
                           style: const TextStyle(color: Colors.black54),
                         ),
                       ),
