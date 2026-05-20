@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/screens/auth/registro_screen.dart';
+import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 import 'recuperar_password.dart';
@@ -64,9 +65,16 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('hijo_id', usuarioId);
       }
 
-      final destino = rol == 'padre'
+      final Widget homeScreen = rol == 'padre'
           ? const HomePadreScreen()
           : const HomeHijoScreen();
+
+      final onboardingVisto =
+          prefs.getBool('onboarding_${usuarioId}_${rol}_visto') ?? false;
+
+      final Widget destino = onboardingVisto
+          ? homeScreen
+          : OnboardingScreen(rol: rol, destino: homeScreen);
 
       Navigator.pushReplacement(
         context,
@@ -170,7 +178,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         // 2. Verificamos que quien autoriza sea realmente un 'padre'
                         if (respuesta['perfil']['rol'] == 'padre') {
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear(); // Limpiamos rastro del hijo
+                          final onboardingKeys = prefs.getKeys()
+                              .where((k) => k.startsWith('onboarding_'))
+                              .toList();
+                          final savedFlags = {
+                            for (var k in onboardingKeys) k: prefs.getBool(k),
+                          };
+                          await prefs.clear();
+                          for (final entry in savedFlags.entries) {
+                            if (entry.value != null) {
+                              await prefs.setBool(entry.key, entry.value!);
+                            }
+                          }
 
                           if (context.mounted) {
                             Navigator.pushAndRemoveUntil(
