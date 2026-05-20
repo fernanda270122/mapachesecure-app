@@ -119,9 +119,16 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
-    final bool accesibilidadActiva = await _isAccessibilityEnabled();
 
-    // Guía al usuario a activar el servicio de accesibilidad si no está activo
+    // Siempre arrancar el servicio de fondo (sincroniza reglas a SharedPreferences)
+    final bool isRunning = await service.isRunning();
+    if (!isRunning) {
+      print("🚀 Levantando Guardián Raccu...");
+      await service.startService();
+    }
+
+    // Verificar accesibilidad y guiar al usuario si no está activa
+    final bool accesibilidadActiva = await _isAccessibilityEnabled();
     if (!accesibilidadActiva && _mostrarCartelInicial) {
       _mostrarCartelInicial = false;
       if (!mounted) return;
@@ -159,14 +166,6 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           );
         },
       );
-      return;
-    }
-
-    // Con accesibilidad activa, solo necesitamos el servicio de fondo para sync de reglas
-    final bool isRunning = await service.isRunning();
-    if (!isRunning) {
-      print("🚀 Levantando Guardián Raccu...");
-      await service.startService();
     }
   }
 

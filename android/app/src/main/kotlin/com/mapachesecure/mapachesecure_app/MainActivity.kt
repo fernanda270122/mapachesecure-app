@@ -49,16 +49,10 @@ class MainActivity: FlutterActivity() {
     }
 
     private fun isAccessibilityServiceEnabled(): Boolean {
-        val serviceName = "$packageName/.BloqueoAccessibilityService"
         val enabledServices = Settings.Secure.getString(
             contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ) ?: return false
-        val splitter = TextUtils.SimpleStringSplitter(':')
-        splitter.setString(enabledServices)
-        while (splitter.hasNext()) {
-            if (splitter.next().equals(serviceName, ignoreCase = true)) return true
-        }
-        return false
+        return enabledServices.lowercase().contains("bloqueoaccessibilityservice")
     }
 }
