@@ -30,7 +30,7 @@ class HomeHijoScreen extends StatefulWidget {
 }
 
 class _HomeHijoScreenState extends State<HomeHijoScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final FlutterTts _tts = FlutterTts();
   String _nombre = '';
   String? _avatarPath;
@@ -45,6 +45,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _cargarDatos(); //
     _tts.setLanguage('es-MX'); //
 
@@ -63,8 +64,20 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _floatController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 🔄 Si el estado es 'resumed', significa que el niño acaba de volver de los Ajustes a la app
+    if (state == AppLifecycleState.resumed) {
+      print(
+        "🦝 MapacheSecure: El usuario regresó a la app. Evaluando siguiente permiso...",
+      );
+      _activarGuardian(); // Volvemos a llamar a la secuencia inteligente
+    }
   }
 
   Future<void> _cargarNivelVisto() async {
@@ -94,27 +107,28 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     }
   }
 
+  // Variable para que el cartel explicativo aparezca SOLO la primera vez que se monta la pantalla
+  bool _mostrarCartelInicial = true;
+
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
     bool isRunning = await service.isRunning();
 
-    // Si el servicio ya está corriendo, no hacemos nada
     if (isRunning) return;
 
-    // Verificamos si FALTA al menos uno de los dos primeros permisos obligatorios
     bool usageGranted = await UsageStats.checkUsagePermission() ?? false;
     bool overlayGranted = await Permission.systemAlertWindow.isGranted;
 
-    // Si falta alguno, le mostramos el cartel explicativo antes de mandarlo a los Ajustes
-    if (!usageGranted || !overlayGranted) {
+    // 1. Mostrar cartel explicativo SÓLO si falta algún permiso Y es la primera vez que entra
+    if ((!usageGranted || !overlayGranted) && _mostrarCartelInicial) {
+      _mostrarCartelInicial = false; // Nos aseguramos de apagarlo de inmediato
+
       bool? iniciarFlujo = await showDialog<bool>(
         context: context,
-        barrierDismissible: false, // Obliga a leer el mensaje
+        barrierDismissible: false,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
-            backgroundColor: const Color(
-              0xFF1E1E2C,
-            ), // Ajusta al color de tu app
+            backgroundColor: const Color(0xFF1E1E2C),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -129,7 +143,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               ],
             ),
             content: const Text(
-              "A continuación, MapacheSecure te solicitará 3 permisos del sistema para que el guardián pueda proteger el dispositivo. Por favor, actívalos en cada pantalla que aparezca.",
+              "A continuación, MapacheSecure te solicitará 2 permisos del sistema para que el guardián pueda proteger el dispositivo. Por favor, actívalos en cada pantalla que aparezca.",
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
             actions: [
@@ -154,36 +168,30 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         },
       );
 
-      // Si cerró el diálogo o pasó algo raro, no continuamos para evitar bucles
       if (iniciarFlujo != true) return;
     }
 
     // ==========================================
-    // 🚀 INICIA EL FLUJO SECUENCIAL DE PERMISOS
+    // 🚀 FLUJO SECUENCIAL INTERACTIVO (REBOBINADO)
     // ==========================================
 
-    // 🛡️ PERMISO 1: Acceso a estadísticas de uso
+    // 🛡️ PASO 1: Acceso a estadísticas de uso
     if (!usageGranted) {
       await UsageStats.grantUsagePermission();
-      return;
+      return; // Manda a Ajustes. Al volver, el observer ejecuta el Paso 2
     }
 
-    // 🛡️ PERMISO 2: Mostrar sobre otras apps
+    // 🛡️ PASO 2: Mostrar sobre otras apps
     if (!overlayGranted) {
       await Permission.systemAlertWindow.request();
-      return;
+      return; // Manda a Ajustes. Al volver, el observer entrará directo al inicio del servicio
     }
 
-    // 🛡️ PERMISO 3: Excluir de optimización de batería (Kotlin)
-    try {
-      const platform = MethodChannel('mapachesecure/battery');
-      await platform.invokeMethod('requestIgnoreBatteryOptimizations');
-    } catch (e) {
-      print("❌ Error al solicitar exclusión de batería: $e");
+    // 🏁 ¡CONTRATO CUMPLIDO! Si llegó aquí es porque tiene los 2 permisos activos.
+    if (!isRunning) {
+      print("🚀 Levantando Guardián Raccu de inmediato...");
+      await service.startService();
     }
-
-    // 🏁 Si todo está al día, se enciende el Guardián
-    await service.startService();
   }
 
   Future<void> _cargarDatos() async {
