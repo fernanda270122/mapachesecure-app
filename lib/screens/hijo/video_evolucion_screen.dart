@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoEvolucionScreen extends StatefulWidget {
-  const VideoEvolucionScreen({super.key});
+  final String videoPath;
+  final String mensaje;
+
+  const VideoEvolucionScreen({
+    super.key,
+    required this.videoPath,
+    this.mensaje = '¡Surge ahora y obedece mi llamada! 🦝✨',
+  });
 
   @override
   State<VideoEvolucionScreen> createState() => _VideoEvolucionScreenState();
@@ -20,7 +27,7 @@ class _VideoEvolucionScreenState extends State<VideoEvolucionScreen> {
   }
 
   Future<void> _initVideo() async {
-    _controller = VideoPlayerController.asset('assets/mascota/mago.mp4');
+    _controller = VideoPlayerController.asset(widget.videoPath);
     await _controller.initialize();
 
     if (!mounted) return;
@@ -74,13 +81,13 @@ class _VideoEvolucionScreenState extends State<VideoEvolucionScreen> {
             duration: const Duration(milliseconds: 800),
             child: Container(
               color: Colors.black.withOpacity(0.65),
-              child: const Center(
+              child: Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
-                    '¡Surge ahora y obedece mi llamada! 🦝✨' ,
+                    widget.mensaje,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

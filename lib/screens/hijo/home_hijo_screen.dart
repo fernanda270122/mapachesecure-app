@@ -18,9 +18,11 @@ import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/colores_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/avatar_screen.dart';
+import 'package:mapachesecure_app/models/avatar_type.dart';
+import 'package:mapachesecure_app/screens/hijo/seleccion_avatar_screen.dart';
+import 'package:usage_stats/usage_stats.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
-
-const _accessibilityChannel = MethodChannel('mapachesecure/accessibility');
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -35,6 +37,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   String _nombre = '';
   String? _avatarPath;
   int _puntos = 0;
+  String _tipoAvatar = 'mago';
   List<dynamic> _desafios = [];
   bool _cargando = true;
   Set<String> _pendientes = {};
@@ -89,83 +92,151 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   Future<void> _verificarEvolucion(int puntos) async {
     final nivel = _calcularNivel(puntos)['nivel'] as int;
-    if (nivel >= 1 && _nivelMascotaVisto < 1) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('nivel_mascota_visto', nivel);
-      setState(() => _nivelMascotaVisto = nivel);
-      if (mounted) {
-        await Navigator.push(
+    if (nivel < 1 || nivel <= _nivelMascotaVisto) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final hijoId = prefs.getString('user_id') ?? '';
+
+    // Primera vez en nivel 1: selección de avatar
+    if (_nivelMascotaVisto < 1) {
+      final tipoGuardado = prefs.getString('tipo_avatar') ?? '';
+      if (tipoGuardado.isEmpty) {
+        if (!mounted) return;
+        final elegido = await Navigator.push<String>(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const VideoEvolucionScreen(),
+            pageBuilder: (_, __, ___) => const SeleccionAvatarScreen(),
             transitionsBuilder: (_, anim, __, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 600),
           ),
         );
+        if (elegido != null) {
+          await prefs.setString('tipo_avatar', elegido);
+          setState(() => _tipoAvatar = elegido);
+          try {
+            final api = ApiService();
+            await api.put('/usuarios/$hijoId/tipo-avatar', {'tipo_avatar': elegido});
+          } catch (_) {}
+        } else {
+          // El niño cerró la pantalla sin elegir — no avanzamos nivel
+          return;
+        }
+      } else {
+        // Ya tiene avatar guardado, lo carga
+        setState(() => _tipoAvatar = tipoGuardado);
       }
     }
-  }
 
-  bool _mostrarCartelInicial = true;
+    // Reproduce video: "ha despertado" en nivel 1, "subió al nivel N" en 2-6
+    final avatar = AvatarTypes.byId(_tipoAvatar);
+    final mensaje = nivel == 1
+        ? '¡${avatar.nombre} ha despertado! 🦝✨'
+        : '¡${avatar.nombre} subió al nivel $nivel! 🦝✨';
 
-  Future<bool> _isAccessibilityEnabled() async {
-    try {
-      return await _accessibilityChannel.invokeMethod('isAccessibilityEnabled') as bool;
-    } catch (_) {
-      return false;
+    if (avatar.videoPath != null && mounted) {
+      await Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => VideoEvolucionScreen(
+            videoPath: avatar.videoPath!,
+            mensaje: mensaje,
+          ),
+          transitionsBuilder: (_, anim, __, child) =>
+              FadeTransition(opacity: anim, child: child),
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
     }
+
+    await prefs.setInt('nivel_mascota_visto', nivel);
+    setState(() => _nivelMascotaVisto = nivel);
   }
+
+  // Variable para que el cartel explicativo aparezca SOLO la primera vez que se monta la pantalla
+  bool _mostrarCartelInicial = true;
 
   Future<void> _activarGuardian() async {
     final service = FlutterBackgroundService();
+    bool isRunning = await service.isRunning();
 
-    // Siempre arrancar el servicio de fondo (sincroniza reglas a SharedPreferences)
-    final bool isRunning = await service.isRunning();
-    if (!isRunning) {
-      print("🚀 Levantando Guardián Raccu...");
-      await service.startService();
-    }
+    if (isRunning) return;
 
-    // Verificar accesibilidad y guiar al usuario si no está activa
-    final bool accesibilidadActiva = await _isAccessibilityEnabled();
-    if (!accesibilidadActiva && _mostrarCartelInicial) {
-      _mostrarCartelInicial = false;
-      if (!mounted) return;
-      await showDialog<void>(
+    bool usageGranted = await UsageStats.checkUsagePermission() ?? false;
+    bool overlayGranted = await Permission.systemAlertWindow.isGranted;
+
+    // 1. Mostrar cartel explicativo SÓLO si falta algún permiso Y es la primera vez que entra
+    if ((!usageGranted || !overlayGranted) && _mostrarCartelInicial) {
+      _mostrarCartelInicial = false; // Nos aseguramos de apagarlo de inmediato
+
+      bool? iniciarFlujo = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext dialogContext) {
           return AlertDialog(
             backgroundColor: const Color(0xFF1E1E2C),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Row(
               children: [
-                Icon(Icons.accessibility_new, color: Colors.orange),
+                Icon(Icons.shield_outlined, color: Colors.orange),
                 SizedBox(width: 10),
-                Text("Activar Guardián", style: TextStyle(color: Colors.white, fontSize: 18)),
+                Text(
+                  "Configuración Requerida",
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ],
             ),
             content: const Text(
-              "Para que Raccu pueda proteger el dispositivo, activa el servicio en:\n\nAjustes → Accesibilidad → Aplicaciones instaladas → Raccu",
+              "A continuación, MapacheSecure te solicitará 2 permisos del sistema para que el guardián pueda proteger el dispositivo. Por favor, actívalos en cada pantalla que aparezca.",
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
             actions: [
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                onPressed: () async {
-                  Navigator.pop(dialogContext);
-                  await _accessibilityChannel.invokeMethod('openAccessibilitySettings');
-                },
-                child: const Text("IR A AJUSTES", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text(
+                  "ENTENDIDO",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           );
         },
       );
+
+      if (iniciarFlujo != true) return;
+    }
+
+    // ==========================================
+    // 🚀 FLUJO SECUENCIAL INTERACTIVO (REBOBINADO)
+    // ==========================================
+
+    // 🛡️ PASO 1: Acceso a estadísticas de uso
+    if (!usageGranted) {
+      await UsageStats.grantUsagePermission();
+      return; // Manda a Ajustes. Al volver, el observer ejecuta el Paso 2
+    }
+
+    // 🛡️ PASO 2: Mostrar sobre otras apps
+    if (!overlayGranted) {
+      await Permission.systemAlertWindow.request();
+      return; // Manda a Ajustes. Al volver, el observer entrará directo al inicio del servicio
+    }
+
+    // 🏁 ¡CONTRATO CUMPLIDO! Si llegó aquí es porque tiene los 2 permisos activos.
+    if (!isRunning) {
+      print("🚀 Levantando Guardián Raccu de inmediato...");
+      await service.startService();
     }
   }
 
@@ -174,15 +245,26 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     final nombre = prefs.getString('nombre') ?? 'Explorador';
     final hijoId = prefs.getString('user_id') ?? '';
     final avatar = prefs.getString('avatar_hijo');
+    final tipoAvatar = prefs.getString('tipo_avatar') ?? 'mago';
 
     try {
       final api = ApiService();
       final puntosData = await api.get('/desafios/puntos/$hijoId');
       final desafiosData = await api.get('/desafios/hijo/$hijoId');
       final completadosData = await api.get('/desafios/completados/$hijoId');
+      final perfilData = await api.get('/usuarios/$hijoId');
       final nuevoPuntos = puntosData is Map
           ? (puntosData['total_puntos'] ?? 0)
           : 0;
+
+      // tipo_avatar del backend es fuente de verdad; sincroniza con SharedPreferences
+      String tipoAvatarFinal = tipoAvatar;
+      if (perfilData is Map && perfilData['tipo_avatar'] != null) {
+        tipoAvatarFinal = perfilData['tipo_avatar'] as String;
+        if (tipoAvatarFinal != tipoAvatar) {
+          await prefs.setString('tipo_avatar', tipoAvatarFinal);
+        }
+      }
 
       setState(() {
         if (completadosData is List) {
@@ -195,6 +277,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         _nombre = nombre;
         _avatarPath = avatar;
         _puntos = nuevoPuntos;
+        _tipoAvatar = tipoAvatarFinal;
 
         if (desafiosData is List) {
           // --- PASO 1: FILTRAR POR ESTADO ACTIVO
@@ -223,6 +306,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         }
         _cargando = false;
       });
+
+      // Si ya tiene avatar en el backend, sincroniza nivel_mascota_visto para que
+      // al volver a iniciar sesión no se muestre la selección ni videos ya vistos
+      if (tipoAvatarFinal.isNotEmpty) {
+        final nivelActual = _calcularNivel(nuevoPuntos)['nivel'] as int;
+        final nivelVisto = prefs.getInt('nivel_mascota_visto') ?? -1;
+        if (nivelVisto < nivelActual) {
+          await prefs.setInt('nivel_mascota_visto', nivelActual);
+          setState(() => _nivelMascotaVisto = nivelActual);
+        }
+      }
+
       await _verificarEvolucion(nuevoPuntos);
     } catch (e) {
       print("Error en Home: $e");
@@ -755,6 +850,19 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                         ),
                       ),
                       const SizedBox(height: 30),
+                      // TODO: BORRAR ANTES DE ENTREGAR
+                      ElevatedButton(
+                        onPressed: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setInt('nivel_mascota_visto', -1);
+                          await prefs.remove('tipo_avatar');
+                          setState(() => _nivelMascotaVisto = -1);
+                          await _verificarEvolucion(500);
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        child: const Text('🧪 TEST MASCOTA', style: TextStyle(color: Colors.white)),
+                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -784,7 +892,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     final int nivel = nivelInfo['nivel'];
     final double progreso = nivelInfo['progreso'];
     final int puntosNext = nivelInfo['puntosNext'];
-    final pet = PetModel(puntos: _puntos);
+    final pet = PetModel(puntos: _puntos, tipoAvatar: _tipoAvatar);
 
     return Container(
       padding: const EdgeInsets.all(20),

@@ -51,56 +51,37 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+class _MyAppState extends State<MyApp> {
   final _appLinks = AppLinks();
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _escucharDeepLinks();
-    _verificarBloquePendiente();
 
     FlutterBackgroundService().on('mostrarBloqueo').listen((event) async {
       final auth = AuthService();
       final prefs = await SharedPreferences.getInstance();
+
       final String? userId = prefs.getString('user_id');
       final String? rol = await auth.getRol();
-      if (userId != null && userId.isNotEmpty && rol == 'hijo' && event != null) {
+
+      // SOLO bloqueamos si el usuario existe y es hijo
+      if (userId != null &&
+          userId.isNotEmpty &&
+          rol == 'hijo' &&
+          event != null) {
         navigatorKey.currentState?.pushNamedAndRemoveUntil(
           '/pantalla-bloqueo',
           (route) => false,
           arguments: event['app'],
         );
+      } else {
+        print(
+          "🚫 Bloqueo descartado por seguridad (Sesión no válida para hijo)",
+        );
       }
     });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _verificarBloquePendiente();
-    }
-  }
-
-  Future<void> _verificarBloquePendiente() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? appBloqueada = prefs.getString('app_bloqueada_actual');
-    final String? rol = prefs.getString('rol');
-    if (appBloqueada != null && appBloqueada.isNotEmpty && rol == 'hijo') {
-      await prefs.remove('app_bloqueada_actual');
-      navigatorKey.currentState?.pushNamedAndRemoveUntil(
-        '/pantalla-bloqueo',
-        (route) => false,
-        arguments: appBloqueada,
-      );
-    }
   }
 
   void _escucharDeepLinks() async {
@@ -236,20 +217,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: 0.6,
-            child: Image.asset(
-              'assets/raccu.png',
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-          const ColoredBox(color: Color(0x881A237E)),
-        ],
+      body: Image.asset(
+        'assets/raccu.png',
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
       ),
     );
   }
