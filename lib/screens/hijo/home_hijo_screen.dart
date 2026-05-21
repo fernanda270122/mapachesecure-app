@@ -257,12 +257,21 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           ? (puntosData['total_puntos'] ?? 0)
           : 0;
 
-      // tipo_avatar del backend es fuente de verdad; sincroniza con SharedPreferences
+      // tipo_avatar y foto_perfil del backend son fuente de verdad
       String tipoAvatarFinal = tipoAvatar;
-      if (perfilData is Map && perfilData['tipo_avatar'] != null) {
-        tipoAvatarFinal = perfilData['tipo_avatar'] as String;
-        if (tipoAvatarFinal != tipoAvatar) {
-          await prefs.setString('tipo_avatar', tipoAvatarFinal);
+      String? avatarFinal = avatar;
+      if (perfilData is Map) {
+        if (perfilData['tipo_avatar'] != null) {
+          tipoAvatarFinal = perfilData['tipo_avatar'] as String;
+          if (tipoAvatarFinal != tipoAvatar) {
+            await prefs.setString('tipo_avatar', tipoAvatarFinal);
+          }
+        }
+        if (perfilData['foto_perfil'] != null) {
+          avatarFinal = perfilData['foto_perfil'] as String;
+          if (avatarFinal != avatar) {
+            await prefs.setString('avatar_hijo', avatarFinal!);
+          }
         }
       }
 
@@ -275,7 +284,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           print('pendientes: $_pendientes');
         }
         _nombre = nombre;
-        _avatarPath = avatar;
+        _avatarPath = avatarFinal;
         _puntos = nuevoPuntos;
         _tipoAvatar = tipoAvatarFinal;
 

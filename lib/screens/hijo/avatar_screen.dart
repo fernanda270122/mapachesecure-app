@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
+import 'package:mapachesecure_app/services/api_service.dart';
 
 class AvatarScreen extends StatefulWidget {
   const AvatarScreen({super.key});
@@ -40,6 +41,11 @@ class _AvatarScreenState extends State<AvatarScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('avatar_hijo', path);
     setState(() => _avatarActual = path);
+    try {
+      final hijoId = prefs.getString('user_id') ?? '';
+      final api = ApiService();
+      await api.put('/usuarios/$hijoId/foto-perfil', {'foto_perfil': path});
+    } catch (_) {}
     if (mounted) Navigator.pop(context, path);
   }
 
