@@ -30,6 +30,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   String _nombre = '';
   List<dynamic> _hijos = [];
   bool _cargando = true;
+  bool _refreshando = false;
   int _totalDesafios = 0;
   int _totalPuntos = 0;
   int _totalMinutos = 0;
@@ -115,6 +116,20 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         _statsPorHijo = statsPorHijo;
         _cargando = false;
       });
+    } on ApiUnauthorizedException {
+      if (_refreshando) {
+        await _cerrarSesionPorExpiracion();
+        return;
+      }
+      _refreshando = true;
+      final auth = AuthService();
+      final renovado = await auth.refreshToken();
+      _refreshando = false;
+      if (renovado) {
+        _cargarDatos();
+      } else {
+        await _cerrarSesionPorExpiracion();
+      }
     } catch (e) {
       setState(() {
         _nombre = nombre;
@@ -122,6 +137,20 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         _cargando = false;
       });
     }
+  }
+
+  Future<void> _cerrarSesionPorExpiracion() async {
+    final auth = AuthService();
+    await auth.logout();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tu sesión expiró. Inicia sesión nuevamente.')),
+    );
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   @override

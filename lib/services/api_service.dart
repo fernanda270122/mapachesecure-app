@@ -2,6 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+class ApiUnauthorizedException implements Exception {
+  const ApiUnauthorizedException();
+}
+
 class ApiService {
   // URL de producción — no cambiar a 'http://10.0.2.2:8000'; (solo funciona en emulador)
   static const String _baseUrl = 'https://mapachesecure-backend.onrender.com';
@@ -25,6 +29,11 @@ class ApiService {
       Uri.parse('$_baseUrl$endpoint'),
       headers: await _headers(),
     );
+    if (response.statusCode == 401) throw const ApiUnauthorizedException();
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+    }
     return jsonDecode(response.body);
   }
 
@@ -53,6 +62,11 @@ class ApiService {
       headers: await _headers(),
       body: jsonEncode(body),
     );
+    if (response.statusCode == 401) throw const ApiUnauthorizedException();
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+    }
     return jsonDecode(response.body);
   }
 
@@ -61,6 +75,11 @@ class ApiService {
       Uri.parse('$_baseUrl$endpoint'),
       headers: await _headers(),
     );
+    if (response.statusCode == 401) throw const ApiUnauthorizedException();
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+    }
     return jsonDecode(response.body);
   }
 }

@@ -40,6 +40,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   String _tipoAvatar = 'mago';
   List<dynamic> _desafios = [];
   bool _cargando = true;
+  bool _refreshando = false;
   Set<String> _pendientes = {};
   late AnimationController _floatController;
   late Animation<double> _floatAnimation;
@@ -328,18 +329,45 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
       }
 
       await _verificarEvolucion(nuevoPuntos);
+    } on ApiUnauthorizedException {
+      if (_refreshando) {
+        await _cerrarSesionPorExpiracion();
+        return;
+      }
+      _refreshando = true;
+      final auth = AuthService();
+      final renovado = await auth.refreshToken();
+      _refreshando = false;
+      if (renovado) {
+        _cargarDatos();
+      } else {
+        await _cerrarSesionPorExpiracion();
+      }
     } catch (e) {
       print("Error en Home: $e");
-
-      // 🛡️ Validación de seguridad obligatoria
       if (mounted) {
         setState(() {
-          _nombre =
-              nombre; // Asegúrate de que 'nombre' esté definido en este scope
+          _nombre = nombre;
           _cargando = false;
         });
       }
     }
+  }
+
+  Future<void> _cerrarSesionPorExpiracion() async {
+    final service = FlutterBackgroundService();
+    if (await service.isRunning()) service.invoke("stopService");
+    final auth = AuthService();
+    await auth.logout();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Tu sesión expiró. Inicia sesión nuevamente.')),
+    );
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
   }
 
   // 🛡️ ESCUDO DE SEGURIDAD PARA CIERRE DE SESIÓN

@@ -13,11 +13,37 @@ class AuthService {
     if (response['access_token'] != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', response['access_token']);
+      if (response['refresh_token'] != null) {
+        await prefs.setString('refresh_token', response['refresh_token']);
+      }
       await prefs.setString('user_id', response['user_id']);
       await prefs.setString('rol', response['perfil']['rol']);
       await prefs.setString('nombre', response['perfil']['nombre']);
     }
     return response;
+  }
+
+  Future<bool> refreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshTkn = prefs.getString('refresh_token');
+    if (refreshTkn == null) return false;
+    try {
+      final response = await _api.post(
+        '/auth/refresh',
+        {'refresh_token': refreshTkn},
+        auth: false,
+      );
+      if (response['access_token'] != null) {
+        await prefs.setString('token', response['access_token']);
+        if (response['refresh_token'] != null) {
+          await prefs.setString('refresh_token', response['refresh_token']);
+        }
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<Map<String, dynamic>> registro(

@@ -2,6 +2,30 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 
+// Handler de mensajes en background (app cerrada o en segundo plano).
+// Debe ser una función top-level (fuera de cualquier clase) — requisito de Firebase.
+@pragma('vm:entry-point')
+Future<void> firebaseBackgroundMessageHandler(RemoteMessage message) async {
+  final notification = message.notification;
+  if (notification == null) return;
+
+  // Mostramos la notificación localmente cuando llega en background
+  final plugin = FlutterLocalNotificationsPlugin();
+  await plugin.show(
+    message.hashCode,
+    notification.title,
+    notification.body,
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'mapache_channel', // Debe coincidir con el canal creado en init()
+        'Guardián Raccu',
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+    ),
+  );
+}
+
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final ApiService _api = ApiService();
@@ -9,14 +33,24 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
+  // Canal para el aviso de inicio de sesión
   static const _loginChannelId = 'login_channel';
   static const _loginChannelName = 'Notificaciones de Sesión';
 
-  /// Solo inicializa el plugin y los listeners. No toca el backend.
+  // Canal para notificaciones de evidencias y desafíos (FCM)
+  static const _mainChannelId = 'mapache_channel';
+  static const _mainChannelName = 'Guardián Raccu';
+
+  /// Inicializa canales, permisos y listeners. Se llama en main() al arrancar la app.
   Future<void> init() async {
     await _initLocalNotifications();
     await _messaging.requestPermission();
+
+    // Listener para mensajes cuando la app está en primer plano
     FirebaseMessaging.onMessage.listen(_mostrarNotificacionFCM);
+
+    // Registrar el handler de background (app cerrada o minimizada)
+    FirebaseMessaging.onBackgroundMessage(firebaseBackgroundMessageHandler);
   }
 
   /// Envía el token FCM al backend. Llamar DESPUÉS del login.
@@ -39,19 +73,32 @@ class NotificationService {
       settings: const InitializationSettings(android: androidSettings),
     );
 
-    // Canal dedicado para notificaciones de sesión
-    const AndroidNotificationChannel loginChannel = AndroidNotificationChannel(
-      _loginChannelId,
-      _loginChannelName,
-      description: 'Aviso cuando inicias sesión en Raccu',
-      importance: Importance.high,
-    );
-
-    await _localNotifications
+    // En Android 8+ los canales deben crearse antes de usarlos,
+    // si no existen las notificaciones simplemente no aparecen
+    final androidPlugin = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(loginChannel);
+        >();
+
+    // Canal para el aviso de inicio de sesión
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _loginChannelId,
+        _loginChannelName,
+        description: 'Aviso cuando inicias sesión en Raccu',
+        importance: Importance.high,
+      ),
+    );
+
+    // Canal para evidencias y validaciones — usado por el handler de FCM
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _mainChannelId,
+        _mainChannelName,
+        description: 'Notificaciones de evidencias y desafíos',
+        importance: Importance.high,
+      ),
+    );
   }
 
   /// Muestra una notificación local confirmando el inicio de sesión.
@@ -75,6 +122,7 @@ class NotificationService {
     );
   }
 
+  // Muestra notificaciones FCM cuando la app está en primer plano
   void _mostrarNotificacionFCM(RemoteMessage message) {
     final notification = message.notification;
     if (notification == null) return;
@@ -85,8 +133,8 @@ class NotificationService {
       body: notification.body,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'mapache_channel',
-          'Guardián Raccu',
+          _mainChannelId,
+          _mainChannelName,
           importance: Importance.high,
           priority: Priority.high,
         ),

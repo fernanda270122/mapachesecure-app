@@ -46,12 +46,16 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
   Future<void> _procesarEvidencia(String desafioId, bool aprobado) async {
     try {
       await _api.put('/desafios/validar/$desafioId?aprobado=$aprobado', {});
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(aprobado ? '¡Desafío aprobado! 🎉' : 'Evidencia rechazada')),
+      );
       _fetchEvidencias();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Error al procesar")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'), duration: const Duration(seconds: 6)),
+      );
     }
   }
 
