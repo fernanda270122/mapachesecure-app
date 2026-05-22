@@ -42,6 +42,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   List<dynamic> _desafios = [];
   bool _cargando = true;
   bool _refreshando = false;
+  bool _navegandoAvatar = false;
   Set<String> _pendientes = {};
   late AnimationController _floatController;
   late Animation<double> _floatAnimation;
@@ -791,12 +792,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                           ),
                           GestureDetector(
                             onTap: () async {
+                              if (_navegandoAvatar) return;
+                              _navegandoAvatar = true;
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const AvatarScreen(),
                                 ),
                               );
+                              _navegandoAvatar = false;
                               if (result != null)
                                 setState(() => _avatarPath = result);
                             },
