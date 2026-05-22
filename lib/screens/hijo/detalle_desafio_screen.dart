@@ -142,8 +142,10 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
   Widget build(BuildContext context) {
     final tema = context.watch<TemaProvider>().colores;
     return Scaffold(
+      backgroundColor: tema.background,
       appBar: AppBar(
         backgroundColor: tema.primary,
+        foregroundColor: Colors.white,
         title: Text(widget.desafio['titulo'] ?? 'Resolver Desafío'),
         centerTitle: true,
       ),

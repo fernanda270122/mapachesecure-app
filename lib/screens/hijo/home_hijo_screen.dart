@@ -375,80 +375,70 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   // 🛡️ ESCUDO DE SEGURIDAD PARA CIERRE DE SESIÓN
   void _intentarCerrarSesion(BuildContext context) {
+    final tema = context.read<TemaProvider>().colores;
     final emailController = TextEditingController();
     final passController = TextEditingController();
     bool validando = false;
 
     showDialog(
       context: context,
-      barrierDismissible: false, // El niño no puede tocar fuera para cerrar
+      barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.background,
+          backgroundColor: tema.background,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.lock_outline, color: AppColors.accent),
-              SizedBox(width: 10),
+              Icon(Icons.lock_outline, color: tema.accent),
+              const SizedBox(width: 10),
               Text(
                 "Validación de Adulto",
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style: TextStyle(color: tema.onBackground, fontSize: 18),
               ),
             ],
           ),
-          // ... dentro de tu showDialog
           content: SingleChildScrollView(
-            // 👈 ESTO EVITA EL OVERFLOW
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   "Para cerrar sesión y desactivar el Guardián, un adulto debe ingresar sus datos.",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(color: tema.onBackground.withOpacity(0.7), fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 TextField(
                   controller: emailController,
-                  style: const TextStyle(color: Colors.white),
-                  keyboardType:
-                      TextInputType.emailAddress, // Mejora la UX del teclado
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: tema.onBackground),
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
                     labelText: "Correo del Adulto",
-                    labelStyle: TextStyle(color: AppColors.accent),
+                    labelStyle: TextStyle(color: tema.accent),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white24),
+                      borderSide: BorderSide(color: tema.onBackground.withOpacity(0.2)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.accent),
+                      borderSide: BorderSide(color: tema.accent),
                     ),
-                    prefixIcon: Icon(
-                      Icons.email,
-                      color: Colors.white54,
-                      size: 20,
-                    ),
+                    prefixIcon: Icon(Icons.email, color: tema.onBackground.withOpacity(0.5), size: 20),
                   ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: passController,
                   obscureText: true,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: tema.onBackground),
+                  decoration: InputDecoration(
                     labelText: "Contraseña",
-                    labelStyle: TextStyle(color: AppColors.accent),
+                    labelStyle: TextStyle(color: tema.accent),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white24),
+                      borderSide: BorderSide(color: tema.onBackground.withOpacity(0.2)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.accent),
+                      borderSide: BorderSide(color: tema.accent),
                     ),
-                    prefixIcon: Icon(
-                      Icons.lock,
-                      color: Colors.white54,
-                      size: 20,
-                    ),
+                    prefixIcon: Icon(Icons.lock, color: tema.onBackground.withOpacity(0.5), size: 20),
                   ),
                 ),
               ],
@@ -457,14 +447,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text(
+              child: Text(
                 "CANCELAR",
-                style: TextStyle(color: Colors.white60),
+                style: TextStyle(color: tema.onBackground.withOpacity(0.5)),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: tema.accent,
+                foregroundColor: Colors.white,
               ),
               onPressed: validando
                   ? null
