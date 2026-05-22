@@ -23,6 +23,7 @@ import 'package:mapachesecure_app/screens/hijo/seleccion_avatar_screen.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/services.dart';
+import 'package:mapachesecure_app/services/notification_service.dart';
 
 class HomeHijoScreen extends StatefulWidget {
   const HomeHijoScreen({super.key});
@@ -50,8 +51,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _cargarDatos(); //
-    _tts.setLanguage('es-MX'); //
+    _cargarDatos();
+    NotificationService().registrarToken();
+    _tts.setLanguage('es-MX');
 
     // Llamamos a la validación secuencial inteligente
     _activarGuardian();

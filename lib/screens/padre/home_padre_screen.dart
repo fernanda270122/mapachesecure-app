@@ -18,6 +18,7 @@ import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
 import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
 import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
+import 'package:mapachesecure_app/services/notification_service.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -44,6 +45,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
+    NotificationService().registrarToken();
     _carruselTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!_carruselController.hasClients) return;
       final siguiente = (_carruselPagina + 1) % 3;

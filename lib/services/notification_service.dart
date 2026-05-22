@@ -12,10 +12,10 @@ Future<void> firebaseBackgroundMessageHandler(RemoteMessage message) async {
   // Mostramos la notificación localmente cuando llega en background
   final plugin = FlutterLocalNotificationsPlugin();
   await plugin.show(
-    message.hashCode,
-    notification.title,
-    notification.body,
-    const NotificationDetails(
+    id: message.hashCode,
+    title: notification.title,
+    body: notification.body,
+    notificationDetails: const NotificationDetails(
       android: AndroidNotificationDetails(
         'mapache_channel', // Debe coincidir con el canal creado en init()
         'Guardián Raccu',
@@ -57,11 +57,15 @@ class NotificationService {
   Future<void> registrarToken() async {
     try {
       final token = await _messaging.getToken();
+      print('[FCM] Token obtenido: $token');
       if (token != null) {
         await _api.post('/notificaciones/token', {'fcm_token': token});
+        print('[FCM] Token registrado en backend correctamente');
+      } else {
+        print('[FCM] Token es null — no se pudo obtener');
       }
-    } catch (_) {
-      // Si falla el registro del token, no interrumpimos el flujo de la app
+    } catch (e) {
+      print('[FCM] Error al registrar token: $e');
     }
   }
 
@@ -125,6 +129,7 @@ class NotificationService {
   // Muestra notificaciones FCM cuando la app está en primer plano
   void _mostrarNotificacionFCM(RemoteMessage message) {
     final notification = message.notification;
+    print('[FCM] Mensaje recibido en foreground: ${message.messageId}');
     if (notification == null) return;
 
     _localNotifications.show(
