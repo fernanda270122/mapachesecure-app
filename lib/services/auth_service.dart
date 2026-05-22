@@ -64,15 +64,18 @@ class AuthService {
     final service = FlutterBackgroundService();
     var isRunning = await service.isRunning();
     if (isRunning) {
-      service.invoke("stopService"); 
+      service.invoke("stopService");
     }
     final prefs = await SharedPreferences.getInstance();
-    final allKeys = prefs.getKeys().where((k) => k.startsWith('onboarding_')).toList();
-    final saved = {for (var k in allKeys) k: prefs.getBool(k)};
+    // Preservar preferencias de onboarding y tema del padre entre sesiones
+    final onboardingKeys = prefs.getKeys().where((k) => k.startsWith('onboarding_')).toList();
+    final savedBools = {for (var k in onboardingKeys) k: prefs.getBool(k)};
+    final savedPaleta = prefs.getString('paleta_padre_preferida');
     await prefs.clear();
-    for (final entry in saved.entries) {
+    for (final entry in savedBools.entries) {
       if (entry.value != null) await prefs.setBool(entry.key, entry.value!);
     }
+    if (savedPaleta != null) await prefs.setString('paleta_padre_preferida', savedPaleta);
   }
 
   Future<String?> getRol() async {
