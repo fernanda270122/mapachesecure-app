@@ -127,23 +127,30 @@ class NotificationService {
   }
 
   // Muestra notificaciones FCM cuando la app está en primer plano
-  void _mostrarNotificacionFCM(RemoteMessage message) {
+  Future<void> _mostrarNotificacionFCM(RemoteMessage message) async {
     final notification = message.notification;
     print('[FCM] Mensaje recibido en foreground: ${message.messageId}');
-    if (notification == null) return;
-
-    _localNotifications.show(
-      id: message.hashCode,
-      title: notification.title,
-      body: notification.body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _mainChannelId,
-          _mainChannelName,
-          importance: Importance.high,
-          priority: Priority.high,
+    if (notification == null) {
+      print('[FCM] Sin campo notification en el mensaje');
+      return;
+    }
+    try {
+      await _localNotifications.show(
+        id: message.hashCode,
+        title: notification.title,
+        body: notification.body,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _mainChannelId,
+            _mainChannelName,
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
         ),
-      ),
-    );
+      );
+      print('[FCM] Notificacion local mostrada correctamente');
+    } catch (e) {
+      print('[FCM] Error al mostrar notificacion local: $e');
+    }
   }
 }
