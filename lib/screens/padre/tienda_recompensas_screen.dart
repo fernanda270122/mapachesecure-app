@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- AÑADIDO
-import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 
@@ -140,6 +140,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
       await _api.delete('/recompensas/catalogo/$id');
       _cargarComunidad();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No puedes eliminar esta recompensa')),
       );
@@ -166,137 +167,165 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            // Ajuste responsivo de teclado + zona segura inferior
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom +
+                MediaQuery.of(context).viewPadding.bottom +
+                20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nueva recompensa',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: nombreCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Nombre',
-                  labelStyle: const TextStyle(color: Colors.black54),
-                  border: const OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: colorTema, width: 2),
+          // 🛡️ SOLUCIÓN AL ERROR: Permite scroll cuando el teclado reduce el espacio visible
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nueva recompensa',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black, // Título en negro
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: descCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Descripción',
-                  labelStyle: const TextStyle(color: Colors.black54),
-                  border: const OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: colorTema, width: 2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: puntosCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Puntos sugeridos',
-                  labelStyle: const TextStyle(color: Colors.black54),
-                  border: const OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: colorTema, width: 2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Ícono:',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: iconos
-                    .map(
-                      (e) => GestureDetector(
-                        onTap: () => setModalState(() => icono = e),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: icono == e
-                                  ? colorTema
-                                  : Colors.grey.shade300,
-                              width: icono == e ? 2 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                            color: icono == e
-                                ? colorTema.withOpacity(0.1)
-                                : Colors.white,
-                          ),
-                          child: Text(e, style: const TextStyle(fontSize: 24)),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: colorTema),
-                  onPressed: () async {
-                    if (nombreCtrl.text.isEmpty) return;
-                    if (_hijoSeleccionadoId == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Selecciona un hijo primero'),
-                        ),
-                      );
-                      return;
-                    }
-                    final prefs = await SharedPreferences.getInstance();
-                    final padreId = prefs.getString('user_id') ?? '';
-                    try {
-                      await _api.post('/recompensas/', {
-                        'padre_id': padreId,
-                        'hijo_id': _hijoSeleccionadoId,
-                        'titulo': '$icono ${nombreCtrl.text}',
-                        'costo_puntos': int.tryParse(puntosCtrl.text) ?? 50,
-                      });
-                      if (!context.mounted) return;
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            '¡Recompensa personalizada agregada! 🎁',
-                          ),
-                        ),
-                      );
-                    } catch (e) {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                    }
-                  },
-                  child: const Text(
-                    'Agregar',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nombreCtrl,
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ), // ✍️ Texto al escribir en negro
+                  decoration: InputDecoration(
+                    labelText: 'Nombre',
+                    labelStyle: const TextStyle(color: Colors.black54),
+                    border: const OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: colorTema, width: 2),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descCtrl,
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ), // ✍️ Texto al escribir en negro
+                  decoration: InputDecoration(
+                    labelText: 'Descripción',
+                    labelStyle: const TextStyle(color: Colors.black54),
+                    border: const OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: colorTema, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: puntosCtrl,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
+                    color: Colors.black,
+                  ), // ✍️ Texto al escribir en negro
+                  decoration: InputDecoration(
+                    labelText: 'Puntos sugeridos',
+                    labelStyle: const TextStyle(color: Colors.black54),
+                    border: const OutlineInputBorder(),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: colorTema, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Ícono:',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black, // Subtítulo en negro
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: iconos
+                      .map(
+                        (e) => GestureDetector(
+                          onTap: () => setModalState(() => icono = e),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: icono == e
+                                    ? colorTema
+                                    : Colors.grey.shade300,
+                                width: icono == e ? 2 : 1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              color: icono == e
+                                  ? colorTema.withOpacity(0.1)
+                                  : Colors.white,
+                            ),
+                            child: Text(
+                              e,
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: colorTema),
+                    onPressed: () async {
+                      if (nombreCtrl.text.isEmpty) return;
+                      if (_hijoSeleccionadoId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Selecciona un hijo primero'),
+                          ),
+                        );
+                        return;
+                      }
+                      final prefs = await SharedPreferences.getInstance();
+                      final padreId = prefs.getString('user_id') ?? '';
+                      try {
+                        await _api.post('/recompensas/', {
+                          'padre_id': padreId,
+                          'hijo_id': _hijoSeleccionadoId,
+                          'titulo': '$icono ${nombreCtrl.text}',
+                          'costo_puntos': int.tryParse(puntosCtrl.text) ?? 50,
+                        });
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              '¡Recompensa personalizada agregada! 🎁',
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                      }
+                    },
+                    child: const Text(
+                      'Agregar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -337,6 +366,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: colorBoton),
             onPressed: () async {
+              // Corrección de Contexto: Cierra diálogo antes, ejecuta después de forma limpia
               Navigator.pop(context);
               await _guardarRecompensas();
             },
@@ -389,7 +419,6 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Escucha el tema exclusivo del padre
     final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
 
     return Scaffold(
@@ -410,7 +439,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
             FloatingActionButton.extended(
               heroTag: 'btnConfirmar',
               onPressed: () => _confirmarSeleccion(temaPadre.primary),
-              backgroundColor: temaPadre.primary, // <-- ADAPTADO DINÁMICAMENTE
+              backgroundColor: temaPadre.primary,
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text(
                 'Confirmar',
@@ -431,7 +460,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                   ),
             backgroundColor: _confirmado
                 ? Colors.grey.shade400
-                : Colors.black87, // <-- TONO SOBRIO NEUTRO
+                : Colors.black87,
             child: const Icon(Icons.add, color: Colors.white),
           ),
         ],
@@ -449,185 +478,280 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
             ],
           ),
         ),
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _cargarComunidad,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    if (_hijos.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(
-                            0.06,
-                          ), // Tono neutro oscuro sutil
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.black.withOpacity(0.08),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.child_care,
-                              color: temaPadre.primary,
-                            ), // Ícono de tu paleta
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Asignar a:',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
+        child: SafeArea(
+          bottom:
+              true, // Protege la interfaz de la barra de gestos nativa del celular
+          child: _cargando
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _cargarComunidad,
+                  // LayoutBuilder calcula el ancho real para decidir cuántas columnas usar
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Si el ancho de pantalla es mayor a 600px usa 2 columnas, si no, usa 1.
+                      final int columnas = constraints.maxWidth > 600 ? 2 : 1;
+
+                      return CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverPadding(
+                            padding: const EdgeInsets.only(
+                              top: 16,
+                              left: 16,
+                              right: 16,
+                              bottom: 0,
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: DropdownButton<String>(
-                                value: _hijoSeleccionadoId,
-                                dropdownColor: Colors.white, // Menú limpio
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                items: _hijos.map<DropdownMenuItem<String>>((
-                                  h,
-                                ) {
-                                  return DropdownMenuItem<String>(
-                                    value: h['id'],
-                                    child: Text(
-                                      h['nombre'] ?? 'Sin nombre',
+                            sliver: SliverList(
+                              delegate: SliverChildListDelegate([
+                                if (_hijos.isNotEmpty) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.06),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.black.withOpacity(0.08),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.child_care,
+                                          color: temaPadre.primary,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        const Text(
+                                          'Asignar a:',
+                                          style: TextStyle(
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: DropdownButton<String>(
+                                            value: _hijoSeleccionadoId,
+                                            dropdownColor: Colors.white,
+                                            isExpanded: true,
+                                            underline: const SizedBox(),
+                                            items: _hijos
+                                                .map<DropdownMenuItem<String>>((
+                                                  h,
+                                                ) {
+                                                  return DropdownMenuItem<
+                                                    String
+                                                  >(
+                                                    value: h['id'],
+                                                    child: Text(
+                                                      h['nombre'] ??
+                                                          'Sin nombre',
+                                                      style: const TextStyle(
+                                                        color: Colors.black87,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  );
+                                                })
+                                                .toList(),
+                                            onChanged: (val) {
+                                              setState(() {
+                                                _hijoSeleccionadoId = val;
+                                                _hijoSeleccionadoNombre =
+                                                    _hijos.firstWhere(
+                                                      (h) => h['id'] == val,
+                                                    )['nombre'] ??
+                                                    '';
+                                                _activas = List.generate(
+                                                  _recompensasSistema.length,
+                                                  (_) => false,
+                                                );
+                                                _confirmado = false;
+                                              });
+                                              _cargarRecompensasActivas(val!);
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                                const Text(
+                                  'Del sistema',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Activa las recompensas que quieres ofrecer a tu hijo',
+                                  style: TextStyle(
+                                    color: Colors.black54,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                              ]),
+                            ),
+                          ),
+
+                          // SECCIÓN RESPONSIVA: Grid Adaptable para las Recompensas del Sistema
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            sliver: SliverGrid(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columnas,
+                                    mainAxisExtent:
+                                        80, // Altura fija ideal para Switches en lista
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 10,
+                                  ),
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                i,
+                              ) {
+                                final r = _recompensasSistema[i];
+                                final color = r['color'] as Color;
+                                final activa = _activas[i];
+                                return Card(
+                                  elevation: 1,
+                                  margin: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: SwitchListTile(
+                                    secondary: CircleAvatar(
+                                      backgroundColor: activa
+                                          ? color.withOpacity(0.15)
+                                          : Colors.grey.shade100,
+                                      child: Text(
+                                        r['icono'] as String,
+                                        style: const TextStyle(fontSize: 20),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      r['nombre'] as String,
                                       style: const TextStyle(
-                                        color: Colors.black87,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${r['puntos']} Pts',
+                                      style: TextStyle(
+                                        color: activa ? color : Colors.grey,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  setState(() {
-                                    _hijoSeleccionadoId = val;
-                                    _hijoSeleccionadoNombre =
-                                        _hijos.firstWhere(
-                                          (h) => h['id'] == val,
-                                        )['nombre'] ??
-                                        '';
-                                    _activas = List.generate(
-                                      _recompensasSistema.length,
-                                      (_) => false,
-                                    );
-                                    _confirmado = false;
-                                  });
-                                  _cargarRecompensasActivas(val!);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    const Text(
-                      'Del sistema',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87, // <-- CAMBIADO A OSCURO
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Activa las recompensas que quieres ofrecer a tu hijo',
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 13,
-                      ), // <-- CAMBIADO A OSCURO
-                    ),
-                    const SizedBox(height: 12),
-                    ...List.generate(_recompensasSistema.length, (i) {
-                      final r = _recompensasSistema[i];
-                      final color = r['color'] as Color;
-                      final activa = _activas[i];
-                      return Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: SwitchListTile(
-                          secondary: CircleAvatar(
-                            backgroundColor: activa
-                                ? color.withOpacity(0.15)
-                                : Colors.grey.shade100,
-                            child: Text(
-                              r['icono'] as String,
-                              style: const TextStyle(fontSize: 20),
+                                    value: activa,
+                                    activeColor: temaPadre.primary,
+                                    onChanged: _confirmado
+                                        ? null
+                                        : (val) {
+                                            if (val &&
+                                                _activas
+                                                        .where((a) => a)
+                                                        .length >=
+                                                    3) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Puedes activar máximo 3 recompensas',
+                                                  ),
+                                                ),
+                                              );
+                                              return;
+                                            }
+                                            setState(() => _activas[i] = val);
+                                          },
+                                  ),
+                                );
+                              }, childCount: _recompensasSistema.length),
                             ),
                           ),
-                          title: Text(
-                            r['nombre'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(
-                            '${r['puntos']} MapachePoints',
-                            style: TextStyle(
-                              color: activa ? color : Colors.grey,
-                              fontWeight: FontWeight.w500,
+
+                          // Título de la sección de Comunidad
+                          SliverPadding(
+                            padding: const EdgeInsets.only(
+                              top: 24,
+                              left: 16,
+                              right: 16,
+                              bottom: 8,
                             ),
-                          ),
-                          value: activa,
-                          activeColor: temaPadre
-                              .primary, // <-- TU COLOR PRIMARIO DINÁMICO
-                          onChanged: _confirmado
-                              ? null
-                              : (val) {
-                                  if (val &&
-                                      _activas.where((a) => a).length >= 3) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Puedes activar máximo 3 recompensas',
+                            sliver: SliverToBoxAdapter(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Recomendadas por la comunidad',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  if (_comunidad.isEmpty)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      child: Text(
+                                        'Aún no hay recompensas de la comunidad. ¡Sé el primero en agregar una!',
+                                        style: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                    );
-                                    return;
-                                  }
-                                  setState(() => _activas[i] = val);
-                                },
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Recomendadas por la comunidad',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87, // <-- CAMBIADO A OSCURO
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_comunidad.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Text(
-                          'Aún no hay recompensas de la comunidad. ¡Sé el primero en agregar una!',
-                          style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ..._comunidad.map(
-                      (r) => _tarjetaComunidad(r, temaPadre.primary),
-                    ), // <-- SE LE PASA TU COLOR
-                  ],
+
+                          // SECCIÓN RESPONSIVA: Grid Adaptable para la Comunidad
+                          SliverPadding(
+                            // 🟢 Padding inferior extra de 110px para evitar el pegado inferior y no tapar botones flotantes
+                            padding: const EdgeInsets.only(
+                              left: 16,
+                              right: 16,
+                              bottom: 110,
+                            ),
+                            sliver: SliverGrid(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columnas,
+                                    mainAxisExtent:
+                                        95, // Más altura por si hay descripción
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 10,
+                                  ),
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final r = _comunidad[index];
+                                return _tarjetaComunidad(r, temaPadre.primary);
+                              }, childCount: _comunidad.length),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }
@@ -635,40 +759,44 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
   Widget _tarjetaComunidad(dynamic r, Color colorTema) {
     return Card(
       elevation: 1,
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Text(r['icono'] ?? '🎁', style: const TextStyle(fontSize: 28)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Text(r['icono'] ?? '🎁', style: const TextStyle(fontSize: 26)),
         title: Text(
           r['nombre'] ?? '',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (r['descripcion'] != null &&
-                  r['descripcion'].toString().isNotEmpty) ...[
-                Text(
-                  r['descripcion'],
-                  style: const TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 2),
-              ],
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (r['descripcion'] != null &&
+                r['descripcion'].toString().isNotEmpty)
               Text(
-                '${r['puntos_sugeridos']} MapachePoints',
-                style: TextStyle(
-                  color: colorTema, // <-- ADAPTADO AL COLOR DE TU TEMA NEUTRO
-                  fontWeight: FontWeight.w600,
-                ),
+                r['descripcion'],
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
+            const SizedBox(height: 2),
+            Text(
+              '${r['puntos_sugeridos']} Pts',
+              style: TextStyle(
+                color: colorTema,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
+          constraints: const BoxConstraints(),
+          padding: EdgeInsets.zero,
+          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
           onPressed: () => _eliminar(r['id']),
         ),
       ),

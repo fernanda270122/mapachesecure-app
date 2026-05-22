@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- AÑADIDO
-import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import '../../services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
@@ -99,6 +99,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
     return diff.toLowerCase();
   }
 
+  // MODAL 1: SECTOR DE MISIONES IA CORREGIDO Y RESPONSIVO
   void _mostrarSelectorIA(
     BuildContext context,
     String categoria,
@@ -106,90 +107,160 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
     Color colorBoton,
   ) {
     Set<int> seleccionados = {};
+    final mediaQuery = MediaQuery.of(context);
+    final anchoPantalla = mediaQuery.size.width;
+    // Capturamos la altura de la pantalla para limitar el modal al 85% de la pantalla como máximo
+    final altoMaximoModal = mediaQuery.size.height * 0.85;
+    final paddingInferiorSistema = mediaQuery.viewPadding.bottom;
+
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      isScrollControlled: true, // Permite que el modal crezca si es necesario
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(anchoPantalla * 0.06),
+        ),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Selecciona misiones para $_hijoNombre:",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+            return SafeArea(
+              child: ConstrainedBox(
+                // Ponemos un límite físico para que el modal nunca intente salirse de la pantalla
+                constraints: BoxConstraints(maxHeight: altoMaximoModal),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top: 24,
+                    left: 24,
+                    right: 24,
+                    bottom: 24 + paddingInferiorSistema,
                   ),
-                  const SizedBox(height: 15),
-                  ...List.generate(_opcionesIA.length, (index) {
-                    final desafio = _opcionesIA[index];
-                    final isSelected = seleccionados.contains(index);
-                    return CheckboxListTile(
-                      title: Text(
-                        desafio['titulo'],
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        "${desafio['descripcion']}\n${desafio['puntos']} pts",
-                      ),
-                      value: isSelected,
-                      activeColor: colorBoton, // <-- ASOCIADO A TU TEMA
-                      onChanged: (bool? value) {
-                        setModalState(() {
-                          if (value == true) {
-                            seleccionados.add(index);
-                          } else {
-                            seleccionados.remove(index);
-                          }
-                        });
-                      },
-                    );
-                  }),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorBoton, // <-- ASOCIADO A TU TEMA
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      onPressed: seleccionados.isEmpty
-                          ? null
-                          : () {
-                              List<Map<String, dynamic>> elegidos =
-                                  seleccionados
-                                      .map(
-                                        (i) => Map<String, dynamic>.from(
-                                          _opcionesIA[i],
-                                        ),
-                                      )
-                                      .toList();
-                              Navigator.pop(context);
-                              _confirmarVariosDesafios(
-                                elegidos,
-                                categoria,
-                                dificultad,
-                              );
-                            },
-                      child: Text(
-                        "Enviar ${seleccionados.length} misiones",
-                        style: const TextStyle(
-                          color: Colors.white,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 1. TÍTULO FIJO (No se mueve con el scroll)
+                      Text(
+                        "Selecciona misiones para $_hijoNombre:",
+                        style: TextStyle(
+                          fontSize: (anchoPantalla * 0.045).clamp(16.0, 22.0),
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 15),
+
+                      // 2. CONTENIDO CON SCROLL (Flexible absorbe el espacio sobrante sin romper la pantalla)
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap:
+                              true, // Se adapta al tamaño del contenido si es poco
+                          itemCount: _opcionesIA.length,
+                          itemBuilder: (context, index) {
+                            final desafio = _opcionesIA[index];
+                            final isSelected = seleccionados.contains(index);
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorBoton.withOpacity(0.05)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: CheckboxListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                title: Text(
+                                  desafio['titulo'],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: (anchoPantalla * 0.038).clamp(
+                                      14.0,
+                                      17.0,
+                                    ),
+                                  ),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    "${desafio['descripcion']}\n\n⭐ ${desafio['puntos']} pts",
+                                    style: TextStyle(
+                                      fontSize: (anchoPantalla * 0.034).clamp(
+                                        12.0,
+                                        15.0,
+                                      ),
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                value: isSelected,
+                                activeColor: colorBoton,
+                                controlAffinity:
+                                    ListTileControlAffinity.trailing,
+                                onChanged: (bool? value) {
+                                  setModalState(() {
+                                    if (value == true) {
+                                      seleccionados.add(index);
+                                    } else {
+                                      seleccionados.remove(index);
+                                    }
+                                  });
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // 3. BOTÓN FIJO ABAJO (Siempre visible y clickeable)
+                      SizedBox(
+                        width: double.infinity,
+                        height: (anchoPantalla * 0.12).clamp(45.0, 55.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorBoton,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: seleccionados.isEmpty
+                              ? null
+                              : () {
+                                  List<Map<String, dynamic>> elegidos =
+                                      seleccionados
+                                          .map(
+                                            (i) => Map<String, dynamic>.from(
+                                              _opcionesIA[i],
+                                            ),
+                                          )
+                                          .toList();
+                                  Navigator.pop(context);
+                                  _confirmarVariosDesafios(
+                                    elegidos,
+                                    categoria,
+                                    dificultad,
+                                  );
+                                },
+                          child: Text(
+                            "Enviar ${seleccionados.length} misiones",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: (anchoPantalla * 0.038).clamp(
+                                14.0,
+                                17.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -211,7 +282,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
           'descripcion': desafio['descripcion'],
           'puntos': desafio['puntos'],
           'tipo': categoria.toLowerCase(),
-          'dificultad': dificultad.toLowerCase(),
+          'dificultad': difficultyToBackend(dificultad),
           'hijo_id': _hijoId,
           'esta_activo': false,
         });
@@ -237,13 +308,19 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
   @override
   Widget build(BuildContext context) {
     final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
+    final mediaQuery = MediaQuery.of(context);
+    final anchoPantalla = mediaQuery.size.width;
+    final paddingInferiorSistema = mediaQuery.viewPadding.bottom;
 
     return Scaffold(
       backgroundColor: temaPadre.background,
       appBar: AppBar(
         title: Text(
           'Desafíos de $_hijoNombre',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: (anchoPantalla * 0.05).clamp(18.0, 24.0),
+          ),
         ),
         backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
@@ -264,38 +341,47 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
         child: _cargando
             ? const Center(child: CircularProgressIndicator())
             : ListView(
-                padding: const EdgeInsets.all(20),
+                // Ajustamos el padding de fondo dinámicamente sumando la barra inferior del celular
+                padding: EdgeInsets.only(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  bottom: 40 + paddingInferiorSistema,
+                ),
                 children: [
                   _buildSeccion(
                     'Cognitiva',
                     _desafiosCognitiva,
                     Colors.blue,
                     Icons.psychology,
+                    anchoPantalla,
                   ),
                   _buildSeccion(
                     'Física',
                     _desafiosFisica,
                     Colors.orange,
                     Icons.fitness_center,
+                    anchoPantalla,
                   ),
                   _buildSeccion(
                     'Hogar',
                     _desafiosHogar,
                     Colors.green,
                     Icons.home,
+                    anchoPantalla,
                   ),
                   if (_desafiosCognitiva.isEmpty &&
                       _desafiosFisica.isEmpty &&
                       _desafiosHogar.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 30),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30),
                       child: Center(
                         child: Text(
                           'No hay desafíos asignados.\nGenera algunos con IA.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black54,
-                            fontSize: 15,
+                            fontSize: (anchoPantalla * 0.038).clamp(13.0, 16.0),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -304,8 +390,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
                   const SizedBox(height: 30),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          temaPadre.primary, // <-- ADAPTADO DINÁMICAMENTE
+                      backgroundColor: temaPadre.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -315,10 +400,10 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
                     onPressed: () =>
                         _mostrarFormularioIA(context, temaPadre.primary),
                     icon: const Icon(Icons.auto_awesome),
-                    label: const Text(
+                    label: Text(
                       'Generar nuevos con IA',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: (anchoPantalla * 0.04).clamp(14.0, 18.0),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -334,6 +419,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
     List<dynamic> desafios,
     Color color,
     IconData icono,
+    double anchoPantalla,
   ) {
     if (desafios.isEmpty) return const SizedBox.shrink();
     return Column(
@@ -343,12 +429,12 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Text(
             titulo,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: (anchoPantalla * 0.042).clamp(14.0, 18.0),
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
-          ), // <-- CAMBIADO A OSCURO PARA CONTRASTE
+          ),
         ),
         ...desafios.map(
           (d) => _buildChallengeCard(
@@ -360,6 +446,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
             color: color,
             icono: icono,
             estaActivo: d['esta_activo'] ?? false,
+            anchoPantalla: anchoPantalla,
           ),
         ),
       ],
@@ -375,6 +462,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
     required Color color,
     required IconData icono,
     required bool estaActivo,
+    required double anchoPantalla,
   }) {
     return Card(
       elevation: 1,
@@ -391,13 +479,16 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
           titulo,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 15,
+            fontSize: (anchoPantalla * 0.038).clamp(14.0, 17.0),
             color: estaActivo ? Colors.black87 : Colors.grey[600],
           ),
         ),
         subtitle: Text(
           '$puntos pts • $dificultad',
-          style: TextStyle(fontSize: 12, color: color),
+          style: TextStyle(
+            fontSize: (anchoPantalla * 0.032).clamp(11.0, 14.0),
+            color: color,
+          ),
         ),
         trailing: Switch(
           value: estaActivo,
@@ -412,7 +503,10 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
               children: [
                 Text(
                   descripcion,
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  style: TextStyle(
+                    fontSize: (anchoPantalla * 0.035).clamp(12.0, 15.0),
+                    color: Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -432,118 +526,138 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
     );
   }
 
+  // MODAL 2: FORMULARIO DE GENERACIÓN CON IA RESPONSIVO
   void _mostrarFormularioIA(BuildContext context, Color colorTema) {
     String categoria = 'cognitiva';
     String dificultad = 'facil';
 
+    final mediaQuery = MediaQuery.of(context);
+    final anchoPantalla = mediaQuery.size.width;
+    final paddingInferiorSistema = mediaQuery.viewPadding.bottom;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(25),
-        ), // Un poquito más curvado arriba
+          top: Radius.circular(anchoPantalla * 0.06),
+        ),
       ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Generar con IA para $_hijoNombre',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors
-                      .black87, // <-- CORREGIDO: Cambiado de morado a negro neutro
+        builder: (context, setModalState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 24,
+              left: 24,
+              right: 24,
+              bottom: 24 + paddingInferiorSistema,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Generar con IA para $_hijoNombre',
+                  style: TextStyle(
+                    fontSize: (anchoPantalla * 0.045).clamp(16.0, 22.0),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Categoría',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color:
-                      colorTema, // <-- CORREGIDO: Ahora usa el color de tu paleta (ej: tu verde actual)
+                const SizedBox(height: 20),
+                Text(
+                  'Categoría',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: (anchoPantalla * 0.035).clamp(13.0, 16.0),
+                    color: colorTema,
+                  ),
                 ),
-              ),
-
-              Theme(
-                data: Theme.of(context).copyWith(canvasColor: Colors.white),
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: categoria,
-                  style: const TextStyle(color: Colors.black87, fontSize: 16),
-                  underline: Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ), // Una línea más sutil
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'cognitiva',
-                      child: Text('Cognitiva'),
+                Theme(
+                  data: Theme.of(context).copyWith(canvasColor: Colors.white),
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: categoria,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: (anchoPantalla * 0.04).clamp(14.0, 18.0),
                     ),
-                    DropdownMenuItem(value: 'fisica', child: Text('Física')),
-                    DropdownMenuItem(value: 'hogar', child: Text('Hogar')),
-                  ],
-                  onChanged: (v) => setModalState(() => categoria = v!),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              Text(
-                'Dificultad',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color:
-                      colorTema, // <-- CORREGIDO: Combinación perfecta con tu color de paleta
-                ),
-              ),
-
-              Theme(
-                data: Theme.of(context).copyWith(canvasColor: Colors.white),
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: dificultad,
-                  style: const TextStyle(color: Colors.black87, fontSize: 16),
-                  underline: Container(
-                    height: 1,
-                    color: Colors.grey.shade300,
-                  ), // Una línea más sutil
-                  items: const [
-                    DropdownMenuItem(value: 'facil', child: Text('Fácil')),
-                    DropdownMenuItem(value: 'medio', child: Text('Medio')),
-                    DropdownMenuItem(value: 'dificil', child: Text('Difícil')),
-                  ],
-                  onChanged: (v) => setModalState(() => dificultad = v!),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                height: 48, // Un poquito más alto el botón para mejor UX
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorTema,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ), // Bordes suavizados
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _generarDesafios(categoria, dificultad, colorTema);
-                  },
-                  child: const Text(
-                    'Generar misiones',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    underline: Container(
+                      height: 1,
+                      color: Colors.grey.shade300,
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'cognitiva',
+                        child: Text('Cognitiva'),
+                      ),
+                      DropdownMenuItem(value: 'fisica', child: Text('Física')),
+                      DropdownMenuItem(value: 'hogar', child: Text('Hogar')),
+                    ],
+                    onChanged: (v) => setModalState(() => categoria = v!),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Text(
+                  'Dificultad',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: (anchoPantalla * 0.035).clamp(13.0, 16.0),
+                    color: colorTema,
+                  ),
+                ),
+                Theme(
+                  data: Theme.of(context).copyWith(canvasColor: Colors.white),
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: dificultad,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: (anchoPantalla * 0.04).clamp(14.0, 18.0),
+                    ),
+                    underline: Container(
+                      height: 1,
+                      color: Colors.grey.shade300,
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'facil', child: Text('Fácil')),
+                      DropdownMenuItem(value: 'medio', child: Text('Medio')),
+                      DropdownMenuItem(
+                        value: 'dificil',
+                        child: Text('Difícil'),
+                      ),
+                    ],
+                    onChanged: (v) => setModalState(() => dificultad = v!),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: (anchoPantalla * 0.12).clamp(45.0, 55.0),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorTema,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _generarDesafios(categoria, dificultad, colorTema);
+                    },
+                    child: Text(
+                      'Generar misiones',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: (anchoPantalla * 0.038).clamp(14.0, 17.0),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

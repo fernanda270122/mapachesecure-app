@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- AÑADIDO
-import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,6 +36,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
       });
     } catch (e) {
       setState(() => _cargando = false);
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -47,10 +48,87 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
       await _api.put('/desafios/validar/$desafioId?aprobado=$aprobado', {});
       _fetchEvidencias();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Error al procesar")));
     }
+  }
+
+  // 🎨 DIÁLOGO DE CONFIRMACIÓN ADAPTATIVO CON FONDO LILA PASTEL Y TEXTOS NEGROS
+  void _mostrarConfirmacionDialog({
+    required String desafioId,
+    required bool aprobado,
+    required String tituloDesafio,
+    required Color colorPrimario,
+  }) {
+    // Generamos matemáticamente el color lila suave de fondo usando el primario
+    final colorFondoLilaSuave = Color.lerp(colorPrimario, Colors.white, 0.88)!;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: colorPrimario.withOpacity(0.25),
+              width: 1.2,
+            ),
+          ),
+          backgroundColor: colorFondoLilaSuave,
+          title: Text(
+            aprobado ? '¿Aprobar Evidencia?' : '¿Rechazar Evidencia?',
+            style: const TextStyle(
+              color: Colors.black, // Título totalmente negro
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          content: Text(
+            aprobado
+                ? '¿Estás seguro de que deseas aprobar el desafío "$tituloDesafio"? El niño recibirá sus puntos correspondientes.'
+                : '¿Estás seguro de que deseas rechazar la evidencia de "$tituloDesafio"? Se le notificará al niño para que vuelva a intentarlo.',
+            style: TextStyle(
+              color: colorPrimario.withOpacity(
+                0.9,
+              ), // Texto adaptativo oscuro legible
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext); // Cierra el alert primero
+                _procesarEvidencia(desafioId, aprobado); // Ejecuta la acción
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: aprobado ? Colors.green : Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                aprobado ? 'Sí, Aprobar' : 'Sí, Rechazar',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -65,13 +143,12 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
           'Revisar Evidencias',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: temaPadre.primary, // <-- APPBAR DINÁMICO
+        backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
       ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        // Tu degradado insignia al 0.62 para armonizar el fondo
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -92,7 +169,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
                     color: Colors.black54,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                  ), // <-- COLOR AJUSTADO
+                  ),
                 ),
               )
             : ListView.builder(
@@ -100,10 +177,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
                 itemCount: _evidencias.length,
                 itemBuilder: (context, index) {
                   final item = _evidencias[index];
-                  return _buildEvidenciaCard(
-                    item,
-                    temaPadre.primary,
-                  ); // <-- PASADO EL COLOR DINÁMICO
+                  return _buildEvidenciaCard(item, temaPadre.primary);
                 },
               ),
       ),
@@ -111,6 +185,8 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
   }
 
   Widget _buildEvidenciaCard(dynamic item, Color colorTema) {
+    final String tituloDesafio = item['titulo'] ?? 'Desafío Sin Nombre';
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -118,16 +194,11 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundColor: colorTema.withOpacity(
-                0.1,
-              ), // <-- MATIZ DEL COLOR DEL PADRE
-              child: Icon(
-                Icons.history_edu,
-                color: colorTema,
-              ), // <-- ÍCONO DINÁMICO
+              backgroundColor: colorTema.withOpacity(0.1),
+              child: Icon(Icons.history_edu, color: colorTema),
             ),
             title: Text(
-              item['titulo'] ?? 'Desafío Sin Nombre',
+              tituloDesafio,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
@@ -140,9 +211,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  12,
-                ), // Un toque más estilizado para las fotos
+                borderRadius: BorderRadius.circular(12),
                 child: Image.network(
                   item['url_evidencia'],
                   height: 200,
@@ -158,7 +227,13 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => _procesarEvidencia(item['id'], false),
+                  // 🚀 LLAMADA A LA ALERTA AL TOCAR RECHAZAR
+                  onPressed: () => _mostrarConfirmacionDialog(
+                    desafioId: item['id'].toString(),
+                    aprobado: false,
+                    tituloDesafio: tituloDesafio,
+                    colorPrimario: colorTema,
+                  ),
                   icon: const Icon(Icons.close),
                   label: const Text(
                     "Rechazar",
@@ -173,7 +248,13 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
                   ),
                 ),
                 ElevatedButton.icon(
-                  onPressed: () => _procesarEvidencia(item['id'], true),
+                  // 🚀 LLAMADA A LA ALERTA AL TOCAR APROBAR
+                  onPressed: () => _mostrarConfirmacionDialog(
+                    desafioId: item['id'].toString(),
+                    aprobado: true,
+                    tituloDesafio: tituloDesafio,
+                    colorPrimario: colorTema,
+                  ),
                   icon: const Icon(Icons.check),
                   label: const Text(
                     "Aprobar",

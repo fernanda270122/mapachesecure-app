@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- AÑADIDO
-import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // <-- AÑADIDO PARA LA RESPONSIVIDAD
+import 'package:provider/provider.dart'; // <-- MANTENIDO
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- MANTENIDO
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import 'desafios_hijo_screen.dart';
@@ -45,13 +46,17 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
     return Scaffold(
       backgroundColor: temaPadre.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Gestionar Desafíos',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18.sp,
+          ), // <-- RESPONSIVO
         ),
         backgroundColor: temaPadre.primary, // <-- APPBAR REACTIVO
         foregroundColor: Colors.white,
       ),
+      // 🎨 EL CONTAINER POR FUERA: El degradado fluye completo detrás de toda la pantalla
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -66,47 +71,51 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
             ],
           ),
         ),
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : _hijos.isEmpty
-            ? const Center(
-                child: Text(
-                  'No tienes hijos registrados',
-                  style: TextStyle(
-                    color: Colors.black54,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )
-            : ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  const Text(
-                    'Selecciona un hijo para ver sus desafíos',
+        // 🛡️ EL SAFEAREA POR DENTRO: Evita el choque con la barra inferior física de navegación
+        child: SafeArea(
+          bottom: true,
+          child: _cargando
+              ? const Center(child: CircularProgressIndicator())
+              : _hijos.isEmpty
+              ? Center(
+                  child: Text(
+                    'No tienes hijos registrados',
                     style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 15,
+                      color: Colors.black54,
+                      fontSize: 16.sp, // <-- RESPONSIVO
                       fontWeight: FontWeight.w500,
-                    ), // <-- COLOR AJUSTADO
-                  ),
-                  const SizedBox(height: 16),
-                  ..._hijos.map(
-                    (hijo) => GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DesafiosHijoScreen(hijo: hijo),
-                        ),
-                      ).then((_) => _cargarHijos()),
-                      child: _buildTarjetaHijo(
-                        hijo,
-                        temaPadre.primary,
-                      ), // <-- PASADO EL COLOR DINÁMICO
                     ),
                   ),
-                ],
-              ),
+                )
+              : ListView(
+                  padding: EdgeInsets.all(20.r), // <-- RESPONSIVO
+                  children: [
+                    Text(
+                      'Selecciona un hijo para ver sus desafíos',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 15.sp, // <-- RESPONSIVO
+                        fontWeight: FontWeight.w500,
+                      ), // <-- COLOR AJUSTADO
+                    ),
+                    SizedBox(height: 16.h), // <-- RESPONSIVO
+                    ..._hijos.map(
+                      (hijo) => GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DesafiosHijoScreen(hijo: hijo),
+                          ),
+                        ).then((_) => _cargarHijos()),
+                        child: _buildTarjetaHijo(
+                          hijo,
+                          temaPadre.primary,
+                        ), // <-- PASADO EL COLOR DINÁMICO
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -114,27 +123,44 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
   Widget _buildTarjetaHijo(Map<dynamic, dynamic> hijo, Color colorTema) {
     return Card(
       elevation: 1,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      margin: EdgeInsets.only(bottom: 12.h), // <-- RESPONSIVO
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.r),
+      ), // <-- RESPONSIVO
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 4.h,
+        ), // <-- RESPONSIVO
         leading: CircleAvatar(
           backgroundColor: colorTema.withOpacity(
             0.1,
           ), // <-- MATIZ DEL COLOR DEL PADRE
-          child: Icon(Icons.child_care, color: colorTema), // <-- ÍCONO DINÁMICO
+          radius: 20.r, // <-- RESPONSIVO
+          child: Icon(
+            Icons.child_care,
+            color: colorTema,
+            size: 20.r, // <-- RESPONSIVO
+          ), // <-- ÍCONO DINÁMICO
         ),
         title: Text(
           hijo['nombre'] ?? 'Sin nombre',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16.sp,
+          ), // <-- RESPONSIVO
         ),
-        subtitle: const Text(
+        subtitle: Text(
           'Toca para ver sus desafíos',
-          style: TextStyle(color: Colors.black54),
+          style: TextStyle(
+            color: Colors.black54,
+            fontSize: 13.sp,
+          ), // <-- RESPONSIVO
         ),
         trailing: Icon(
           Icons.chevron_right,
           color: colorTema,
+          size: 24.r, // <-- RESPONSIVO
         ), // <-- FLECHA DINÁMICA
       ),
     );

@@ -9,6 +9,7 @@ import 'recuperar_password.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,6 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _cargando = false;
   String? _error;
 
+  // Obtenemos la paleta Lila Pastel directamente desde tu clase de configuración
+  final paleta = AppPaletasPadre.paletas['Lila Pastel']!;
+
   // Función principal para el inicio de sesión
   Future<void> _login() async {
     setState(() {
@@ -40,13 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
 
-      // Extrae el rol del perfil para decidir a qué pantalla navegar
       final rol = respuesta['perfil']['rol'];
       final nombre = respuesta['perfil']['nombre'] ?? '';
       final usuarioId = respuesta['user_id'].toString();
       final token = respuesta['access_token'];
 
-      // ── GUARDAMOS LOS DATOS PARA EL GUARDIÁN EN SEGUNDO PLANO ──
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_email', _emailController.text);
 
@@ -54,13 +56,9 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('auth_token', token.toString());
       }
 
-      // Registra el token FCM ahora que ya hay sesión activa
       await NotificationService().registrarToken();
-
-      // Notificación local de confirmación de inicio de sesión
       await NotificationService().mostrarNotificacionLogin(nombre, rol);
 
-      // Dependiendo tu rol te lleva a tu home correspondiente
       if (rol != 'padre') {
         await prefs.setString('hijo_id', usuarioId);
       }
@@ -101,17 +99,21 @@ class _LoginScreenState extends State<LoginScreen> {
       barrierDismissible: false,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.background,
+          backgroundColor: paleta.background,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.shield_outlined, color: Colors.orangeAccent),
-              SizedBox(width: 10),
+              const Icon(Icons.shield_outlined, color: Colors.orangeAccent),
+              const SizedBox(width: 10),
               Text(
                 "Autorización Requerida",
-                style: TextStyle(color: Colors.white, fontSize: 18),
+                style: TextStyle(
+                  color: paleta.primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -120,31 +122,35 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Text(
                 "Para desactivar el Guardián, un adulto debe ingresar sus credenciales de acceso.",
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: Colors.black87, fontSize: 13),
               ),
               const SizedBox(height: 20),
-              // Campo de Correo
               TextField(
                 controller: emailController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style: const TextStyle(color: Colors.black87),
+                decoration: InputDecoration(
                   labelText: "Correo del Adulto",
-                  labelStyle: TextStyle(color: AppColors.accent),
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email_outlined, color: Colors.white54),
+                  labelStyle: TextStyle(color: paleta.primary),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                    color: paleta.primary.withOpacity(0.7),
+                  ),
                 ),
               ),
               const SizedBox(height: 15),
-              // Campo de Contraseña
               TextField(
                 controller: passController,
                 obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style: const TextStyle(color: Colors.black87),
+                decoration: InputDecoration(
                   labelText: "Contraseña",
-                  labelStyle: TextStyle(color: AppColors.accent),
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock_outline, color: Colors.white54),
+                  labelStyle: TextStyle(color: paleta.primary),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: paleta.primary.withOpacity(0.7),
+                  ),
                 ),
               ),
             ],
@@ -154,12 +160,13 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text(
                 "CANCELAR",
-                style: TextStyle(color: Colors.white60),
+                style: TextStyle(color: Colors.black54),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: paleta.primary,
+                foregroundColor: Colors.white,
               ),
               onPressed: validando
                   ? null
@@ -168,17 +175,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       try {
                         final authService = AuthService();
-
-                        // 1. Validamos las credenciales directamente con tu servicio
                         final respuesta = await authService.login(
                           emailController.text.trim(),
                           passController.text,
                         );
 
-                        // 2. Verificamos que quien autoriza sea realmente un 'padre'
                         if (respuesta['perfil']['rol'] == 'padre') {
                           final prefs = await SharedPreferences.getInstance();
-                          final onboardingKeys = prefs.getKeys()
+                          final onboardingKeys = prefs
+                              .getKeys()
                               .where((k) => k.startsWith('onboarding_'))
                               .toList();
                           final savedFlags = {
@@ -237,124 +242,176 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: AppBackground(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 60.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(child: Image.asset('assets/racculogo.png', height: 150)),
-              const SizedBox(height: 10),
-              const Text(
-                'Iniciar Sesión',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // email
-              TextField(
-                controller: _emailController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  hintText: 'Correo electrónico',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 15),
-
-              // contraseña
-              TextField(
-                controller: _passwordController,
-                style: const TextStyle(color: Colors.white),
-                obscureText: true,
-                decoration: const InputDecoration(
-                  hintText: 'Contraseña',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Boton de Ingreso
-              ElevatedButton(
-                onPressed: _cargando ? null : _login,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+      backgroundColor: paleta.primary,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [paleta.background, paleta.primary],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 40.0,
+              vertical: 60.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(child: Image.asset('assets/racculogo.png', height: 150)),
+                const SizedBox(height: 10),
+                Text(
+                  'Iniciar Sesión',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: paleta
+                        .primary, // 1. MORADO CORPORATIVO (Perfecto sobre fondo claro)
                   ),
                 ),
-                child: _cargando
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'INGRESAR',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                const SizedBox(height: 20),
+
+                // email
+                TextField(
+                  controller: _emailController,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                  ), // 2. GRIS CASI NEGRO (Legibilidad máxima en inputs)
+                  decoration: InputDecoration(
+                    hintText: 'Correo electrónico',
+                    hintStyle: const TextStyle(color: Colors.black54),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.9),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: paleta.accent),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: paleta.primary, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // contraseña
+                TextField(
+                  controller: _passwordController,
+                  style: const TextStyle(color: Colors.black87),
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Contraseña',
+                    hintStyle: const TextStyle(color: Colors.black54),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.9),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: paleta.accent),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: paleta.primary, width: 2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 25),
+
+                // Boton de Ingreso
+                ElevatedButton(
+                  onPressed: _cargando ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: paleta.primary,
+                    foregroundColor: Colors
+                        .white, // 3. BLANCO ABSOLUTO (Destaca genial sobre el botón oscuro)
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: _cargando
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'INGRESAR',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 15),
+
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors
+                            .redAccent, // 4. ROJO ALERTA ENÉRGICO (No se pierde con el lila)
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
-              ),
-              const SizedBox(height: 10),
+                    ),
+                  ),
 
-              // Muestra el mensaje de error solo si la variable _error no es nula
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                // Boton de registro
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RegistroScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: paleta.accent,
+                    foregroundColor: paleta
+                        .primary, // 5. MORADO CORPORATIVO (La mejor opción contrastando el botón claro)
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    elevation: 1,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                   child: Text(
-                    _error!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
+                    'CREAR CUENTA',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: paleta
+                          .primary, // Forzado para un acabado super premium
+                    ),
                   ),
                 ),
-              const SizedBox(height: 15),
+                const SizedBox(height: 15),
 
-              // boton de registro
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RegistroScreen(),
+                // Para recuperar la contraseña
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RecuperarPassword(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Olvidé mi contraseña',
+                    style: TextStyle(
+                      color: Colors
+                          .white70, // 6. BLANCO SUAVE (Brilla limpio sin saturar el fondo oscuro final)
+                      fontWeight: FontWeight.w600,
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'CREAR CUENTA',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // para recuperar la contraseña
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RecuperarPassword(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Olvidé mi contraseña',
-                  style: TextStyle(color: AppColors.accent),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:app_links/app_links.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // 📦 1. Importamos la librería de adaptabilidad global
 import 'package:http/http.dart' as http;
 import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -34,7 +35,6 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TemaProvider()..cargar()),
-
         ChangeNotifierProvider(
           create: (_) => TemaPadreProvider()..cargarTemaPadre(),
         ),
@@ -66,7 +66,6 @@ class _MyAppState extends State<MyApp> {
       final String? userId = prefs.getString('user_id');
       final String? rol = await auth.getRol();
 
-      // SOLO bloqueamos si el usuario existe y es hijo
       if (userId != null &&
           userId.isNotEmpty &&
           rol == 'hijo' &&
@@ -112,52 +111,67 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: 'Raccu',
+    // 📦 2. Envolvemos el árbol con ScreenUtilInit para automatizar todo el sistema visual
+    return ScreenUtilInit(
+      designSize: const Size(
+        375,
+        812,
+      ), // Medida de lienzo base idónea (ej. iPhone 13/X o emulador estándar)
+      minTextAdapt:
+          true, // Hace que el motor calcule dinámicamente las densidades del texto
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'Raccu',
 
-      routes: {
-        '/home-hijo': (context) => const HomeHijoScreen(),
-        '/pantalla-bloqueo': (context) {
-          // Esto extrae el nombre que enviamos arriba en 'arguments'
-          final String nombre =
-              ModalRoute.of(context)?.settings.arguments as String? ?? "App";
-          return AppBloqueadaScreen(nombreAppIntentada: nombre);
-        },
-      },
+          routes: {
+            '/home-hijo': (context) => const HomeHijoScreen(),
+            '/pantalla-bloqueo': (context) {
+              final String nombre =
+                  ModalRoute.of(context)?.settings.arguments as String? ??
+                  "App";
+              return AppBloqueadaScreen(nombreAppIntentada: nombre);
+            },
+          },
 
-      theme: ThemeData(
-        iconTheme: const IconThemeData(color: Colors.white),
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.accent,
-          primary: AppColors.accent,
-          secondary: AppColors.secondary,
-          surface: AppColors.background,
-        ),
-        scaffoldBackgroundColor: AppColors.background,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.white,
-          elevation: 0,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: AppColors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
+          theme: ThemeData(
+            iconTheme: const IconThemeData(color: Colors.white),
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.accent,
+              primary: AppColors.accent,
+              secondary: AppColors.secondary,
+              surface: AppColors.background,
+            ),
+            scaffoldBackgroundColor: AppColors.background,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              elevation: 0,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.white,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+              ),
+            ),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: AppColors.textDark),
+              bodyLarge: TextStyle(color: AppColors.textDark),
+              titleMedium: TextStyle(color: AppColors.textDark),
             ),
           ),
-        ),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: AppColors.textDark),
-          bodyLarge: TextStyle(color: AppColors.textDark),
-          titleMedium: TextStyle(color: AppColors.textDark),
-        ),
-      ),
-      home: const SplashScreen(),
+          home:
+              child, // 📦 3. Asigna la propiedad child provista por el builder
+        );
+      },
+      // 📦 4. Declaramos la pantalla raíz aquí afuera para que ScreenUtil inyecte sus dimensiones antes de construirla
+      child: const SplashScreen(),
     );
   }
 }
@@ -198,15 +212,12 @@ class _SplashScreenState extends State<SplashScreen> {
           MaterialPageRoute(builder: (_) => const HomePadreScreen()),
         );
       } else if (rol == 'hijo') {
-        // 🛡️ REMOVEMOS EL service.startService() DE AQUÍ PARA EVITAR EL CRASH.
-        // Delegamos el encendido al flujo seguro con permisos en HomeHijoScreen.
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeHijoScreen()),
         );
       }
     } else {
-      // 💡 RECOMENDACIÓN: Si no está logueado, mándalo al Login en vez de dejarlo congelado
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),

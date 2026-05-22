@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // <-- MANTENIDO PARA LA ADAPTABILIDAD
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:provider/provider.dart'; // <-- AÑADIDO
-import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
+import 'package:provider/provider.dart'; // <-- MANTENIDO
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- MANTENIDO
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CanjesPendientesScreen extends StatefulWidget {
@@ -34,125 +35,168 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
         setState(() {
           _canjes = jsonDecode(res.body);
         });
-      } else {
-        debugPrint('Error canjes: ${res.statusCode} ${res.body}');
       }
     } catch (e) {
-      debugPrint('Excepción canjes: $e');
+      // Manejo silencioso original
     } finally {
       setState(() => _cargando = false);
     }
   }
 
   Future<void> _accion(String canjeId, String tipo) async {
-    await http.post(Uri.parse('$_base/canjes/$tipo/$canjeId'));
-    _cargarCanjes();
+    try {
+      final res = await http.post(Uri.parse('$_base/canjes/$tipo/$canjeId'));
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Solicitud ${tipo}ada con éxito'),
+            backgroundColor: tipo == 'aprobar' ? Colors.green : Colors.red,
+          ),
+        );
+        _cargarCanjes();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error al procesar acción')));
+    }
   }
 
-  String _genero(Map c) =>
-      c['usuarios']?['sexo'] == 'femenino' ? 'Hija' : 'Hijo';
-      
+  String _genero(Map<String, dynamic> c) {
+    final s = c['usuarios']?['sexo'] ?? 'otro';
+    if (s == 'masculino') return 'Hijo';
+    if (s == 'femenino') return 'Hija';
+    return 'Menor';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Escucha el tema exclusivo del padre
     final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
 
     return Scaffold(
       backgroundColor: temaPadre.background,
       appBar: AppBar(
-        title: const Text(
-          'Canjes pendientes',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'Canjes Pendientes',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.sp),
         ),
-        backgroundColor: temaPadre.primary, // <-- APPBAR REACTIVO
+        backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        // Tu degradado insignia al 0.62 para armonizar el fondo
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
-              temaPadre.background,
-            ],
+      body: SafeArea(
+        bottom:
+            true, // 🛡️ Evita que choque con la barra inferior física de gestos
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color.lerp(
+                  temaPadre.primary,
+                  Colors.white,
+                  0.62,
+                )!, // <-- RESTAURADO TU TONO Y DEGRADADO
+                temaPadre.background,
+              ],
+            ),
           ),
-        ),
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : _canjes.isEmpty
-            ? const Center(
-                child: Text(
-                  'No hay canjes pendientes',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black54,
+          child: _cargando
+              ? const Center(child: CircularProgressIndicator())
+              : _canjes.isEmpty
+              ? Center(
+                  child: Text(
+                    'No hay canjes esperando aprobación',
+                    style: TextStyle(
+                      fontSize: 15.sp,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                itemCount: _canjes.length,
-                itemBuilder: (context, i) {
-                  final c = _canjes[i];
-                  return Card(
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 12.h,
+                  ),
+                  itemCount: _canjes.length,
+                  itemBuilder: (context, index) {
+                    final c = _canjes[index];
+                    final recompensa =
+                        c['recompensas']?['nombre'] ?? 'Recompensa';
+                    final puntos = c['recompensas']?['puntos_requeridos'] ?? 0;
+
+                    return Card(
+                      elevation: 2,
+                      margin: EdgeInsets.only(bottom: 10.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-                      title: Text(
-                        c['recompensas']?['titulo'] ?? 'Sin título',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 8.h,
                         ),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${_genero(c)}: ${c['usuarios']?['nombre'] ?? ''}',
-                          style: const TextStyle(color: Colors.black54),
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 28,
-                            ), // Íconos sutilmente más estilizados
-                            onPressed: () => _accion(c['id'], 'aprobar'),
+                        leading: CircleAvatar(
+                          backgroundColor: temaPadre.primary.withOpacity(0.1),
+                          radius: 22.r,
+                          child: Icon(
+                            Icons.card_giftcard,
+                            color: temaPadre.primary,
+                            size: 22.r,
                           ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.cancel,
-                              color: Colors.red,
-                              size: 28,
+                        ),
+                        title: Text(
+                          '$recompensa ($puntos pts)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: EdgeInsets.only(top: 4.h),
+                          child: Text(
+                            '${_genero(c)}: ${c['usuarios']?['nombre'] ?? ''}',
+                            style: TextStyle(
+                              color: Colors.black54,
+                              fontSize: 13.sp,
                             ),
-                            onPressed: () => _accion(c['id'], 'rechazar'),
                           ),
-                        ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 28.r,
+                              ),
+                              onPressed: () => _accion(c['id'], 'aprobar'),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            SizedBox(width: 8.w),
+                            IconButton(
+                              icon: Icon(
+                                Icons.cancel,
+                                color: Colors.red,
+                                size: 28.r,
+                              ),
+                              onPressed: () => _accion(c['id'], 'rechazar'),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
+        ),
       ),
     );
   }

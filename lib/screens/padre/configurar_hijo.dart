@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // <-- AÑADIDO
-import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- AÑADIDO
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
 
@@ -65,47 +66,70 @@ class ConfigurarHijoScreen extends StatefulWidget {
 }
 
 class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
-  // Apps bloqueadas
+  final ApiService _api = ApiService();
   List<dynamic> _appsBlockeadas = [];
   bool _cargando = true;
-  // Bloqueos programados
   List<dynamic> _bloqueos = [];
-
-  // Modo seleccionado para agregar bloqueo
   String? _modoSeleccionado;
-  // 'inmediato', 'horario', 'calendario'
 
-  // Horario
   int _horaInicio = 20;
   int _minutoInicio = 0;
   int _horaFin = 22;
   int _minutoFin = 0;
 
-  // Días de la semana (1=lun, 7=dom)
   final Set<int> _diasSeleccionados = {};
   final _diasNombres = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   final Set<String> _appsSeleccionadasParaHorario = {};
+
+  // Determinar si hay un bloqueo total activo en el backend
+  bool get _hayBloqueoTotalActivo => _bloqueos.any((b) => b['tipo'] == 'total');
 
   bool _estaBloqueadaPorHorario(Map bloqueo, String packageActual) {
     if (bloqueo['tipo'] != 'horario' || bloqueo['package_names'] == null) {
       return false;
     }
-    final ahora = DateTime.now();
-    final int horaActualMin = ahora.hour * 60 + ahora.minute;
+
+    // 🇨🇱 FORZAR HORARIO CHILENO (UTC -4)
+    // DateTime.now().toUtc() nos da la hora cero global.
+    // Le restamos 4 horas estrictas para tener siempre la hora exacta de Chile Continental.
+    final ahoraChile = DateTime.now().toUtc().subtract(
+      const Duration(hours: 4),
+    );
+
+    final int horaActualMin = ahoraChile.hour * 60 + ahoraChile.minute;
 
     int aMinutos(String s) {
       final partes = s.split(':');
       return int.parse(partes[0]) * 60 + int.parse(partes[1]);
     }
 
-    final int inicioMin = aMinutos(bloqueo['hora_inicio']);
-    final int finMin = aMinutos(bloqueo['hora_fin']);
-    final List<dynamic> dias = jsonDecode(bloqueo['dias_semana']);
-    if (!dias.contains(ahora.weekday)) return false;
+    try {
+      final int inicioMin = aMinutos(bloqueo['hora_inicio']);
+      final int finMin = aMinutos(bloqueo['hora_fin']);
 
-    bool enHorario = horaActualMin >= inicioMin && horaActualMin <= finMin;
-    List<String> appsEnRegla = (bloqueo['package_names'] as String).split(',');
-    return enHorario && appsEnRegla.contains(packageActual);
+      // 1. Decodificamos los días que vienen del backend
+      final List<dynamic> diasRaw = jsonDecode(bloqueo['dias_semana']);
+      List<int> diasEnEnteros = diasRaw
+          .map((d) => int.parse(d.toString()))
+          .toList();
+
+      // 2. Usamos el día de la semana calculado bajo el horario de Chile
+      // Dart: 1=Lunes, 2=Martes, 3=Miércoles, 4=Jueves, etc.
+      if (!diasEnEnteros.contains(ahoraChile.weekday)) return false;
+
+      bool enHorario = horaActualMin >= inicioMin && horaActualMin <= finMin;
+
+      // Limpieza de espacios fantasmas para asegurar el bloqueo
+      List<String> appsEnRegla = (bloqueo['package_names'] as String)
+          .split(',')
+          .map((package) => package.trim())
+          .toList();
+
+      return enHorario && appsEnRegla.contains(packageActual.trim());
+    } catch (e) {
+      print("Error en evaluación con Zona Horaria Chile: $e");
+      return false;
+    }
   }
 
   @override
@@ -123,8 +147,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
 
   Future<void> _cargarApps() async {
     try {
-      final api = ApiService();
-      final apps = await api.get('/apps/${widget.hijo['id']}');
+      final apps = await _api.get('/apps/${widget.hijo['id']}');
       setState(() {
         _appsBlockeadas = apps is List ? apps : [];
         _cargando = false;
@@ -146,10 +169,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   }
 
   Future<void> _toggleApp(Map app, bool activar) async {
-    final api = ApiService();
     try {
       if (activar) {
-        await api.post('/apps/', {
+        await _api.post('/apps/', {
           'hijo_id': widget.hijo['id'],
           'nombre_app': app['nombre'],
           'package_name': app['package'],
@@ -157,7 +179,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
         });
       } else {
         final appId = _getAppId(app['package']);
-        if (appId != null) await api.delete('/apps/$appId');
+        if (appId != null) await _api.delete('/apps/$appId');
       }
       await _cargarApps();
     } catch (e) {
@@ -173,18 +195,14 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
 
   Future<void> _cargarBloqueos() async {
     try {
-      final api = ApiService();
-      final data = await api.get('/bloqueos/${widget.hijo['id']}');
+      final data = await _api.get('/bloqueos/${widget.hijo['id']}');
       setState(() => _bloqueos = data is List ? data : []);
-    } catch (e) {
-      // Vacío si falla
-    }
+    } catch (e) {}
   }
 
   Future<void> _eliminarBloqueo(String id) async {
     try {
-      final api = ApiService();
-      await api.delete('/bloqueos/$id');
+      await _api.delete('/bloqueos/$id');
       await _cargarBloqueos();
     } catch (e) {
       if (!mounted) return;
@@ -197,8 +215,37 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     }
   }
 
+  // 🚀 LÓGICA DE GUARDADO COMPLEMENTADA CON BLOQUEO TOTAL
+  Future<void> _toggleBloqueoTotal(bool activar) async {
+    try {
+      if (activar) {
+        await _api.post('/bloqueos/${widget.hijo['id']}', {
+          'tipo': 'total',
+          'hora_inicio': '00:00',
+          'hora_fin': '23:59',
+          'dias_semana': [1, 2, 3, 4, 5, 6, 7],
+          'package_names': _appsPopulares.map((e) => e['package']).join(','),
+        });
+      } else {
+        final bloqueoTotal = _bloqueos.firstWhere(
+          (b) => b['tipo'] == 'total',
+          orElse: () => null,
+        );
+        if (bloqueoTotal != null) {
+          await _api.delete('/bloqueos/${bloqueoTotal['id']}');
+        }
+      }
+      await _cargarBloqueos();
+      _mostrarAlertaRetraso();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al modificar Bloqueo Total')),
+      );
+    }
+  }
+
   Future<void> _guardarBloqueo() async {
-    final api = ApiService();
     try {
       if (_modoSeleccionado == 'horario') {
         if (_diasSeleccionados.isEmpty) {
@@ -227,7 +274,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
             '${_horaFin.toString().padLeft(2, '0')}:${_minutoFin.toString().padLeft(2, '0')}';
         final String packageNames = _appsSeleccionadasParaHorario.join(',');
 
-        await api.post('/bloqueos/${widget.hijo['id']}', {
+        await _api.post('/bloqueos/${widget.hijo['id']}', {
           'tipo': 'horario',
           'hora_inicio': inicio,
           'hora_fin': fin,
@@ -241,43 +288,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
         _appsSeleccionadasParaHorario.clear();
       });
       await _cargarBloqueos();
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bloqueo guardado con éxito'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      // Popup informativo que desaparece automáticamente a los 5 segundos
-      showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (dialogContext) {
-          Future.delayed(const Duration(seconds: 5), () {
-            if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-          });
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            backgroundColor: const Color(0xFF1A237E),
-            content: Row(
-              children: const [
-                Icon(Icons.info_outline, color: Colors.white, size: 28),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'El bloqueo de apps puede tardar entre 2 a 3 minutos en activarse.',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
+      _mostrarAlertaRetraso();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -289,6 +300,52 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     }
   }
 
+  void _mostrarAlertaRetraso() {
+    final temaPadre = context.read<TemaPadreProvider>().coloresPadre;
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        Future.delayed(const Duration(seconds: 5), () {
+          if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+        });
+
+        final colorFondoLilaSuave = Color.lerp(
+          temaPadre.primary,
+          Colors.white,
+          0.88,
+        )!;
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+            side: BorderSide(
+              color: temaPadre.primary.withOpacity(0.25),
+              width: 1.2,
+            ),
+          ),
+          backgroundColor: colorFondoLilaSuave,
+          content: Row(
+            children: [
+              Icon(Icons.info_outline, color: temaPadre.primary, size: 28.r),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  'El bloqueo de apps puede tardar entre 2 a 3 minutos en activarse y/o desactivarse.',
+                  style: TextStyle(
+                    color: Colors.black, // Cambiado a negro neto
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _scrollPicker(
     int valor,
     int maxValor,
@@ -297,13 +354,13 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   ) {
     final controller = FixedExtentScrollController(initialItem: valor);
     return SizedBox(
-      height: 120,
-      width: 60,
+      height: 110.h,
+      width: 45.w,
       child: ListWheelScrollView.useDelegate(
         controller: controller,
-        itemExtent: 40,
+        itemExtent: 38.h,
         perspective: 0.003,
-        diameterRatio: 1.5,
+        diameterRatio: 1.4,
         physics: const FixedExtentScrollPhysics(),
         onSelectedItemChanged: onChanged,
         childDelegate: ListWheelChildBuilderDelegate(
@@ -312,11 +369,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
             child: Text(
               index.toString().padLeft(2, '0'),
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 20.sp,
                 fontWeight: FontWeight.bold,
-                color: index == valor
-                    ? colorPrimario
-                    : Colors.grey.shade400, // <-- REFRESCADO DINÁMICAMENTE
+                color: index == valor ? colorPrimario : Colors.grey.shade400,
               ),
             ),
           ),
@@ -330,97 +385,110 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Column(
-              children: [
-                const Text(
-                  'Inicio',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _scrollPicker(
-                      _horaInicio,
-                      24,
-                      colorPrimario,
-                      (v) => setState(() => _horaInicio = v),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    'Inicio',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      fontSize: 13.sp,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        ':',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _scrollPicker(
+                        _horaInicio,
+                        24,
+                        colorPrimario,
+                        (v) => setState(() => _horaInicio = v),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 2.w),
+                        child: Text(
+                          ':',
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    _scrollPicker(
-                      _minutoInicio,
-                      60,
-                      colorPrimario,
-                      (v) => setState(() => _minutoInicio = v),
-                    ),
-                  ],
-                ),
-              ],
+                      _scrollPicker(
+                        _minutoInicio,
+                        60,
+                        colorPrimario,
+                        (v) => setState(() => _minutoInicio = v),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const Icon(Icons.arrow_forward, color: Colors.grey),
-            Column(
-              children: [
-                const Text(
-                  'Fin',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _scrollPicker(
-                      _horaFin,
-                      24,
-                      colorPrimario,
-                      (v) => setState(() => _horaFin = v),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              child: Icon(Icons.arrow_forward, color: Colors.grey, size: 20.r),
+            ),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    'Fin',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                      fontSize: 13.sp,
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        ':',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _scrollPicker(
+                        _horaFin,
+                        24,
+                        colorPrimario,
+                        (v) => setState(() => _horaFin = v),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 2.w),
+                        child: Text(
+                          ':',
+                          style: TextStyle(
+                            fontSize: 24.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    _scrollPicker(
-                      _minutoFin,
-                      60,
-                      colorPrimario,
-                      (v) => setState(() => _minutoFin = v),
-                    ),
-                  ],
-                ),
-              ],
+                      _scrollPicker(
+                        _minutoFin,
+                        60,
+                        colorPrimario,
+                        (v) => setState(() => _minutoFin = v),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         Builder(
           builder: (context) {
             final inicioMin = _horaInicio * 60 + _minutoInicio;
             final finMin = _horaFin * 60 + _minutoFin;
             final diff = finMin - inicioMin;
             if (diff < 120 && diff > 0) {
-              return const Text(
-                'El bloqueo debe ser de mínimo 2 horas',
-                style: TextStyle(color: Colors.red, fontSize: 12),
+              return Padding(
+                padding: EdgeInsets.only(top: 4.h),
+                child: Text(
+                  'El bloqueo debe ser de mínimo 2 horas',
+                  style: TextStyle(color: Colors.red, fontSize: 12.sp),
+                ),
               );
             }
             return const SizedBox.shrink();
@@ -434,10 +502,11 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     return Wrap(
       spacing: 8,
       children: List.generate(7, (i) {
+        // i = 0 es Lunes (1), i = 3 es Jueves (4)
         final dia = i + 1;
         final seleccionado = _diasSeleccionados.contains(dia);
         return FilterChip(
-          label: Text(_diasNombres[i]),
+          label: Text(_diasNombres[i]), // Utiliza tu lista ['Lun', 'Mar'...]
           selected: seleccionado,
           onSelected: (val) => setState(() {
             if (val) {
@@ -446,19 +515,10 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
               _diasSeleccionados.remove(dia);
             }
           }),
-          selectedColor: colorPrimario.withOpacity(
-            0.2,
-          ), // <-- ADAPTADO DINÁMICAMENTE
-          checkmarkColor: colorPrimario,
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(
-              color: seleccionado ? colorPrimario : Colors.grey.shade300,
-            ),
-          ),
+          selectedColor: AppColors.primary.withOpacity(0.2),
+          checkmarkColor: AppColors.primary,
           labelStyle: TextStyle(
-            color: seleccionado ? colorPrimario : Colors.grey,
+            color: seleccionado ? AppColors.primary : Colors.grey,
             fontWeight: seleccionado ? FontWeight.bold : FontWeight.normal,
           ),
         );
@@ -469,166 +529,245 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   @override
   Widget build(BuildContext context) {
     final temaPadre = context.watch<TemaPadreProvider>().coloresPadre;
-
     return Scaffold(
       backgroundColor: temaPadre.background,
       appBar: AppBar(
         title: Text(
           'Configurar a ${widget.hijo['nombre']}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.sp),
         ),
         backgroundColor: temaPadre.primary,
         foregroundColor: Colors.white,
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
-              temaPadre.background,
-            ],
+      body: SafeArea(
+        bottom: true,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color.lerp(temaPadre.primary, Colors.white, 0.62)!,
+                temaPadre.background,
+              ],
+            ),
           ),
-        ),
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  // ── Bloqueos activos ──────────────────────────────────────
-                  const Text(
-                    'Bloqueos activos',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (_bloqueos.isEmpty)
-                    const Text(
-                      'No hay bloqueos configurados',
-                      style: TextStyle(color: Colors.black54, fontSize: 13),
-                    )
-                  else
-                    ..._bloqueos.map(
-                      (b) => _tarjetaBloqueo(b, temaPadre.primary),
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Agregar bloqueo ───────────────────────────────────────
-                  const Text(
-                    'Agregar bloqueo',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  Row(
-                    children: [
-                      _botonModo(
-                        'horario',
-                        Icons.schedule,
-                        'Horario',
-                        temaPadre.primary,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (_modoSeleccionado == 'horario')
-                    _formHorario(temaPadre.primary),
-
-                  const SizedBox(height: 30),
-
-                  // ── Apps a bloquear ───────────────────────────────────────
-                  const Text(
-                    'Apps a bloquear',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Activa las apps que quieres bloquear durante el bloqueo',
-                    style: TextStyle(color: Colors.black54, fontSize: 13),
-                  ),
-                  const SizedBox(height: 12),
-
-                  ..._appsPopulares.map((app) {
-                    final String package = app['package'] as String;
-                    bool bloqueadaInstante = _estaBloqueada(package);
-                    bool bloqueadaPorHorario = _bloqueos.any(
-                      (b) => _estaBloqueadaPorHorario(b, package),
-                    );
-
-                    final bool estaCheckeada = _modoSeleccionado == 'horario'
-                        ? _appsSeleccionadasParaHorario.contains(package)
-                        : (bloqueadaInstante || bloqueadaPorHorario);
-
-                    return Card(
-                      elevation: 1,
+          child: _cargando
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: EdgeInsets.all(20.r),
+                  children: [
+                    // 🚨 NUEVA TARJETA: INTERRUPTOR DE BLOQUEO TOTAL
+                    // 🚨 TARJETA DE BLOQUEO TOTAL ADAPTATIVA CON LA PALETA DEL PADRE
+                    Card(
+                      color: _hayBloqueoTotalActivo
+                          ? Color.lerp(
+                              temaPadre.primary,
+                              Colors.white,
+                              0.88,
+                            )! // Fondo lila pastel suave si está activo
+                          : Colors.white,
+                      elevation: 3,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16.r),
+                        side: BorderSide(
+                          color: _hayBloqueoTotalActivo
+                              ? temaPadre.primary.withOpacity(0.5)
+                              : Colors.grey.shade200,
+                          width: 1.5,
+                        ),
                       ),
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: SwitchListTile(
-                        secondary: CircleAvatar(
-                          backgroundColor: estaCheckeada
-                              ? Colors.red.shade50
-                              : Colors.grey.shade100,
-                          child: Icon(
-                            app['icono'] as IconData,
-                            color: estaCheckeada ? Colors.red : Colors.grey,
+                      margin: EdgeInsets.only(bottom: 20.h),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.h),
+                        child: SwitchListTile(
+                          title: Text(
+                            'Bloqueo Total Inmediato',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.sp,
+                              color:
+                                  Colors.black, // Texto siempre negro y legible
+                            ),
                           ),
-                        ),
-                        title: Text(
-                          app['nombre'] as String,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          bloqueadaPorHorario
-                              ? 'Bloqueo Programado Activo'
-                              : (estaCheckeada ? 'Bloqueada' : 'Permitida'),
-                          style: TextStyle(
-                            color: estaCheckeada ? Colors.red : Colors.green,
+                          subtitle: Text(
+                            _hayBloqueoTotalActivo
+                                ? 'El dispositivo está completamente restringido.'
+                                : 'Restringe temporalmente todas las aplicaciones.',
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: Colors.black54,
+                            ),
                           ),
+                          secondary: CircleAvatar(
+                            backgroundColor: _hayBloqueoTotalActivo
+                                ? temaPadre.primary
+                                : Colors.grey.shade200,
+                            child: Icon(
+                              Icons.block,
+                              color: _hayBloqueoTotalActivo
+                                  ? Colors.white
+                                  : Colors.grey,
+                            ),
+                          ),
+                          activeColor: temaPadre.primary,
+                          value: _hayBloqueoTotalActivo,
+                          onChanged: (val) => _toggleBloqueoTotal(val),
                         ),
-                        value: estaCheckeada,
-                        activeColor: temaPadre
-                            .primary, // <-- ADAPTADO AL BOTÓN PRINCIPAL DEL PADRE
-                        onChanged: bloqueadaPorHorario
-                            ? null
-                            : (val) {
-                                if (_modoSeleccionado == 'horario') {
-                                  setState(() {
-                                    if (val) {
-                                      _appsSeleccionadasParaHorario.add(
-                                        package,
-                                      );
-                                    } else {
-                                      _appsSeleccionadasParaHorario.remove(
-                                        package,
-                                      );
-                                    }
-                                  });
-                                } else {
-                                  _toggleApp(app, val);
-                                }
-                              },
                       ),
-                    );
-                  }),
-                ],
-              ),
+                    ),
+
+                    Text(
+                      'Bloqueos activos',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    if (_bloqueos.isEmpty)
+                      Text(
+                        'No hay bloqueos configurados',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontSize: 13.sp,
+                        ),
+                      )
+                    else
+                      ..._bloqueos.map(
+                        (b) => _tarjetaBloqueo(b, temaPadre.primary),
+                      ),
+
+                    SizedBox(height: 24.h),
+
+                    // Si el bloqueo total está activo, deshabilitamos la creación de nuevos horarios temporales
+                    if (!_hayBloqueoTotalActivo) ...[
+                      Text(
+                        'Agregar bloqueo',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Row(
+                        children: [
+                          _botonModo(
+                            'horario',
+                            Icons.schedule,
+                            'Horario',
+                            temaPadre.primary,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      if (_modoSeleccionado == 'horario')
+                        _formHorario(temaPadre.primary),
+                      SizedBox(height: 30.h),
+                    ],
+
+                    Text(
+                      'Apps a bloquear',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(height: 6.h),
+                    Text(
+                      _hayBloqueoTotalActivo
+                          ? 'Todas las apps están bloqueadas debido al Bloqueo Total'
+                          : 'Activa las apps que quieres bloquear durante el bloqueo',
+                      style: TextStyle(color: Colors.black54, fontSize: 13.sp),
+                    ),
+                    SizedBox(height: 12.h),
+
+                    ..._appsPopulares.map((app) {
+                      final String package = app['package'] as String;
+                      bool bloqueadaInstante = _estaBloqueada(package);
+                      bool bloqueadaPorHorario = _bloqueos.any(
+                        (b) => _estaBloqueadaPorHorario(b, package),
+                      );
+
+                      final bool estaCheckeada =
+                          _hayBloqueoTotalActivo ||
+                          (_modoSeleccionado == 'horario'
+                              ? _appsSeleccionadasParaHorario.contains(package)
+                              : (bloqueadaInstante || bloqueadaPorHorario));
+
+                      return Card(
+                        elevation: 1,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        margin: EdgeInsets.only(bottom: 8.h),
+                        child: SwitchListTile(
+                          secondary: CircleAvatar(
+                            backgroundColor: estaCheckeada
+                                ? Colors.red.shade50
+                                : Colors.grey.shade100,
+                            child: Icon(
+                              app['icono'] as IconData,
+                              color: estaCheckeada ? Colors.red : Colors.grey,
+                              size: 20.r,
+                            ),
+                          ),
+                          title: Text(
+                            app['nombre'] as String,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                          subtitle: Text(
+                            _hayBloqueoTotalActivo
+                                ? 'Bloqueo Total Activo'
+                                : (bloqueadaPorHorario
+                                      ? 'Bloqueo Programado Activo'
+                                      : (estaCheckeada
+                                            ? 'Bloqueada'
+                                            : 'Permitida')),
+                            style: TextStyle(
+                              color: estaCheckeada ? Colors.red : Colors.green,
+                              fontSize: 12.sp,
+                            ),
+                          ),
+                          value: estaCheckeada,
+                          activeColor: _hayBloqueoTotalActivo
+                              ? Colors.red
+                              : temaPadre.primary,
+                          onChanged:
+                              (_hayBloqueoTotalActivo || bloqueadaPorHorario)
+                              ? null
+                              : (val) {
+                                  if (_modoSeleccionado == 'horario') {
+                                    setState(() {
+                                      if (val) {
+                                        _appsSeleccionadasParaHorario.add(
+                                          package,
+                                        );
+                                      } else {
+                                        _appsSeleccionadasParaHorario.remove(
+                                          package,
+                                        );
+                                      }
+                                    });
+                                  } else {
+                                    _toggleApp(app, val);
+                                  }
+                                },
+                        ),
+                      );
+                    }),
+                    SizedBox(height: 20.h),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -636,7 +775,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   Widget _tarjetaBloqueo(Map b, Color colorPrimario) {
     String diasTexto = "No definidos";
     List<String> listaLimpia = [];
-    IconData icono = Icons.schedule;
+    IconData icono = b['tipo'] == 'total' ? Icons.block : Icons.schedule;
 
     if (b['dias_semana'] != null) {
       List<String> nombresDias = [
@@ -678,45 +817,72 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       try {
         String rawApps = b['package_names'].toString();
         listaLimpia = rawApps.split(RegExp(r',\s*')).map((p) {
-          if (p.contains('.')) {
-            var segmentos = p.split('.');
+          final packageBuscado = p.trim();
+
+          final appPopular = _appsPopulares.firstWhere(
+            (element) => element['package'] == packageBuscado,
+            orElse: () => {},
+          );
+
+          if (appPopular.isNotEmpty) {
+            return appPopular['nombre'] as String;
+          }
+
+          if (packageBuscado.contains('.')) {
+            var segmentos = packageBuscado.split('.');
             String ident = segmentos.length >= 2
                 ? segmentos[segmentos.length - 2]
                 : segmentos.last;
             return ident[0].toUpperCase() + ident.substring(1);
           }
-          return p.trim().toUpperCase();
+          return packageBuscado.toUpperCase();
         }).toList();
       } catch (e) {
         print("Error en formateo de apps: $e");
       }
     }
 
+    final isTotal = b['tipo'] == 'total';
+
     return Card(
+      color: isTotal ? Colors.red.shade50 : Colors.white,
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.r),
+        side: BorderSide(
+          color: isTotal ? Colors.red.withOpacity(0.5) : Colors.transparent,
+        ),
+      ),
+      margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: colorPrimario.withOpacity(
-                    0.1,
-                  ), // <-- ADAPTADO DINÁMICAMENTE
-                  child: Icon(icono, color: colorPrimario, size: 20),
+                  backgroundColor: isTotal
+                      ? Colors.red.withOpacity(0.2)
+                      : colorPrimario.withOpacity(0.1),
+                  child: Icon(
+                    icono,
+                    color: isTotal ? Colors.red : colorPrimario,
+                    size: 20.r,
+                  ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12.w),
                 Expanded(
                   child: Text(
-                    "BLOQUEO POR HORARIO",
+                    isTotal
+                        ? "BLOQUEO TOTAL DISPOSITIVO"
+                        : "BLOQUEO POR HORARIO",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Colors.grey.shade700,
+                      fontSize: 13.sp,
+                      color: isTotal
+                          ? Colors.red.shade900
+                          : Colors.grey.shade700,
                       letterSpacing: 1.1,
                     ),
                   ),
@@ -729,58 +895,70 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                 ),
               ],
             ),
-            const Divider(height: 24),
+            Divider(height: 24.h),
+
             Text(
-              "⏰ ${b['hora_inicio']} - ${b['hora_fin']}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              isTotal
+                  ? "🚫 RESTRICCIÓN ABSOLUTA"
+                  : "⏰ ${b['hora_inicio']} - ${b['hora_fin']}",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: isTotal ? Colors.red : colorPrimario,
+              ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6.h),
             Row(
               children: [
                 Icon(
                   Icons.calendar_today,
-                  size: 14,
+                  size: 14.r,
                   color: Colors.grey.shade600,
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6.w),
                 Expanded(
                   child: Text(
                     "Días: $diasTexto",
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ],
             ),
-            if (listaLimpia.isNotEmpty) ...[
-              const SizedBox(height: 16),
+            if (listaLimpia.isNotEmpty && !isTotal) ...[
+              SizedBox(height: 16.h),
               Text(
                 "APPS RESTRINGIDAS:",
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 11.sp,
                   fontWeight: FontWeight.bold,
-                  color:
-                      colorPrimario, // <-- REEMPLAZADO DEEPPURPLE POR TU COLOR NEUTRO
+                  color: colorPrimario,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
+                spacing: 8.w,
+                runSpacing: 4.h,
                 children: listaLimpia.map((nombreApp) {
-                  return Chip(
-                    label: Text(
+                  return Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorPrimario.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: colorPrimario.withOpacity(0.3)),
+                    ),
+                    child: Text(
                       nombreApp,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 11.sp,
                         color: colorPrimario,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    backgroundColor: colorPrimario.withOpacity(0.08),
-                    side: BorderSide(color: colorPrimario.withOpacity(0.2)),
-                    visualDensity: VisualDensity.compact,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
                     ),
                   );
                 }).toList(),
@@ -808,20 +986,24 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           }
         }),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 12.h),
           decoration: BoxDecoration(
             color: seleccionado ? colorPrimario : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(color: colorPrimario),
           ),
           child: Column(
             children: [
-              Icon(icono, color: seleccionado ? Colors.white : colorPrimario),
-              const SizedBox(height: 4),
+              Icon(
+                icono,
+                color: seleccionado ? Colors.white : colorPrimario,
+                size: 24.r,
+              ),
+              SizedBox(height: 4.h),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 12.sp,
                   color: seleccionado ? Colors.white : colorPrimario,
                   fontWeight: FontWeight.bold,
                 ),
@@ -836,41 +1018,44 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   Widget _formHorario(Color colorPrimario) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Selecciona el horario',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             _selectorHoras(colorPrimario),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16.h),
+            Text(
               'Repetir los días:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8.h),
             _selectorDias(colorPrimario),
-            const SizedBox(height: 16),
+            SizedBox(height: 16.h),
             SizedBox(
               width: double.infinity,
-              height: 48,
+              height: 48.h,
               child: ElevatedButton(
                 onPressed: _guardarBloqueo,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: colorPrimario, // <-- ADAPTADO DINÁMICAMENTE
+                  backgroundColor: colorPrimario,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'Guardar horario',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

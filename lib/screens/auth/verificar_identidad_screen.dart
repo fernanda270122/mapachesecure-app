@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:http/http.dart'
     as http; // Usamos http directo para el Multipart
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mapachesecure_app/theme/app_paletas_padre.dart'; // Tu paleta unificada
 
 class VerificarIdentidadScreen extends StatefulWidget {
   const VerificarIdentidadScreen({super.key});
@@ -20,8 +19,11 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
   bool _enviando = false;
   final ImagePicker _picker = ImagePicker();
 
-  // URL base de producción que obtuvimos de tu ApiService
+  // URL base de producción
   final String _baseUrl = 'https://mapachesecure-backend.onrender.com';
+
+  // Obtenemos la paleta Lila Pastel idéntica a las pantallas anteriores
+  final paleta = AppPaletasPadre.paletas['Lila Pastel']!;
 
   // Captura la selfie con la cámara frontal
   Future<void> _tomarFotoRostro() async {
@@ -29,7 +31,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
         preferredCameraDevice: CameraDevice.front,
-        imageQuality: 50, // Comatible con la compresión de tus desafíos
+        imageQuality: 50,
       );
       if (photo != null) {
         setState(() => _imageFile = File(photo.path));
@@ -45,8 +47,9 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
   Future<void> _enviarVerificacion() async {
     if (_imageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Por favor, saca una foto de tu rostro!'),
+        SnackBar(
+          backgroundColor: paleta.primary,
+          content: const Text('¡Por favor, saca una foto de tu rostro!'),
         ),
       );
       return;
@@ -55,7 +58,6 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
     setState(() => _enviando = true);
 
     try {
-      // 1. Obtener los datos del usuario logueado en las SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final String userId = prefs.getString('user_id') ?? 'sin_id';
       final String nombre = prefs.getString('user_nombre') ?? 'Usuario Mapache';
@@ -63,39 +65,27 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
           prefs.getString('user_email') ?? 'correo@ejemplo.com';
       final String? token = prefs.getString('token');
 
-      // 2. Crear la petición Multipart apuntando al endpoint de auth.py
       final url = Uri.parse('$_baseUrl/auth/verificar-identidad');
       final request = http.MultipartRequest('POST', url);
 
-      // 3. Añadir las cabeceras de autorización
       if (token != null) {
         request.headers['Authorization'] = 'Bearer $token';
       }
 
-      // --- SOLUCIÓN AL ERROR DE DUPLICADO ---
-      // Creamos un identificador único sumándole los milisegundos actuales al ID del usuario
       final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       final String unicoUserId = '${userId}_$timestamp';
 
-      // 4. Adjuntar los campos de formulario esperados por FastAPI
-      // Pasamos 'unicoUserId' en vez de 'userId' para engañar a Supabase con el nombre del archivo
       request.fields['user_id'] = unicoUserId;
       request.fields['nombre'] = nombre;
       request.fields['email'] = email;
 
-      // 5. Adjuntar el archivo de la foto
       request.files.add(
-        await http.MultipartFile.fromPath(
-          'foto', // Mismo nombre del parámetro en FastAPI
-          _imageFile!.path,
-        ),
+        await http.MultipartFile.fromPath('foto', _imageFile!.path),
       );
 
-      // 6. Enviar la petición al servidor de Render
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      // 7. Evaluar la respuesta del backend
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (mounted) {
           Navigator.pop(context, true);
@@ -124,16 +114,24 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Por qué verificamos tu rostro?'),
+        backgroundColor: Colors.white,
+        title: Text(
+          '¿Por qué verificamos tu rostro?',
+          style: TextStyle(color: paleta.primary, fontWeight: FontWeight.bold),
+        ),
         content: const Text(
           'Utilizamos un análisis facial rápido para confirmar que eres mayor de edad y mantener un entorno seguro en Raccu. No compartiremos tu foto.',
+          style: TextStyle(color: Colors.black87),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Entendido',
-              style: TextStyle(color: Colors.green),
+              style: TextStyle(
+                color: paleta.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -144,22 +142,33 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      // Fondo base oscuro para fusionar la barra inferior
+      backgroundColor: paleta.primary,
       appBar: _buildAppBar(context),
-      body: AppBackground(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 30),
-              _buildHeader(),
-              const SizedBox(height: 40),
-              _buildZonaCapturaRostro(),
-              const SizedBox(height: 40),
-              _buildBotonesAccion(),
-              const SizedBox(height: 20),
-            ],
+      body: Container(
+        // Aplicamos el degradado fluido idéntico a las pantallas anteriores
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [paleta.background, paleta.primary],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 20),
+                _buildHeader(),
+                const SizedBox(height: 35),
+                _buildZonaCapturaRostro(),
+                const SizedBox(height: 35),
+                _buildBotonesAccion(),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -169,40 +178,49 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       elevation: 0,
-      backgroundColor: AppColors.primary,
+      backgroundColor:
+          paleta.background, // Nace claro igual que el inicio del degradado
       centerTitle: true,
-      title: const Text(
+      title: Text(
         'Verificación',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: paleta.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        ),
       ),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: Icon(Icons.arrow_back, color: paleta.primary),
         onPressed: () => Navigator.pop(context),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return const Column(
+    return Column(
       children: [
-        Icon(Icons.face_unlock_rounded, size: 80, color: Colors.green),
-        SizedBox(height: 24),
+        // Cambiado el ícono verde por el morado de marca con una sutil sombra blanca
+        Icon(Icons.face_unlock_rounded, size: 80, color: paleta.primary),
+        const SizedBox(height: 24),
         Text(
           'Verificación de Rostro',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color.fromARGB(221, 255, 255, 255),
+            color: paleta.primary, // Morado corporativo para la zona clara
           ),
         ),
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
         Text(
           'Para proteger la comunidad de Raccu, necesitamos una selfie para verificar que eres mayor de edad.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15,
-            color: Color.fromARGB(255, 255, 255, 255),
+            color: paleta.primary.withOpacity(
+              0.8,
+            ), // Texto legible sobre fondo claro
             height: 1.4,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -216,14 +234,16 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
         height: 260,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: Colors.white.withOpacity(
+            0.9,
+          ), // Fondo blanco semi-sólido premium
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.green.withOpacity(0.3), width: 2),
+          border: Border.all(color: paleta.accent, width: 2),
           boxShadow: [
             BoxShadow(
-              color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -232,32 +252,34 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
                 borderRadius: BorderRadius.circular(22),
                 child: Image.file(_imageFile!, fit: BoxFit.cover),
               )
-            : const Padding(
-                padding: EdgeInsets.all(20.0),
+            : Padding(
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.face_retouching_natural_rounded,
                       size: 60,
-                      color: Colors.green,
+                      color: paleta.primary, // Icono unificado
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       'Toca aquí para tomar la foto',
                       style: TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w600,
+                        color: paleta.primary,
+                        fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(height: 6),
-                    Text(
+                    const SizedBox(height: 8),
+                    const Text(
                       'Asegúrate de que tu rostro se vea claramente y con buena luz.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Color.fromARGB(255, 0, 0, 0),
+                        color: Colors
+                            .black54, // Legibilidad óptima sobre el recuadro blanco
                         fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -271,7 +293,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
     return Column(
       children: [
         _enviando
-            ? const CircularProgressIndicator(color: Colors.green)
+            ? CircularProgressIndicator(color: paleta.accent)
             : ElevatedButton.icon(
                 onPressed: _imageFile == null
                     ? _tomarFotoRostro
@@ -280,46 +302,52 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
                   _imageFile == null
                       ? Icons.camera_alt_rounded
                       : Icons.check_circle_rounded,
-                  color: Colors.white,
+                  color:
+                      paleta.primary, // Texto e ícono morado sobre botón lila
                 ),
                 label: Text(
                   _imageFile == null
                       ? 'Escanear Rostro'
                       : 'Enviar para Verificación',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: paleta.primary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: paleta
+                      .accent, // Botón dinámico brillante en zona baja oscura
                   minimumSize: const Size(double.infinity, 55),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  elevation: 1,
+                  elevation: 2,
                 ),
               ),
         const SizedBox(height: 15),
         if (_imageFile != null && !_enviando) ...[
           TextButton.icon(
             onPressed: _tomarFotoRostro,
-            icon: const Icon(Icons.refresh, color: Colors.grey),
+            icon: const Icon(Icons.refresh, color: Colors.white70),
             label: const Text(
               'Tomar otra foto',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 5),
         ],
         TextButton(
           onPressed: _mostrarExplicacion,
-          child: const Text(
+          child: Text(
             '¿Por qué necesitamos esto?',
             style: TextStyle(
-              color: Colors.green,
-              fontWeight: FontWeight.w600,
+              color: paleta
+                  .accent, // Resalta en blanco/lila suave en la zona inferior
+              fontWeight: FontWeight.bold,
               fontSize: 15,
             ),
           ),
