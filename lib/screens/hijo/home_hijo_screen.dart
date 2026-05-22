@@ -892,19 +892,6 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 30),
-                      // TODO: BORRAR ANTES DE ENTREGAR
-                      ElevatedButton(
-                        onPressed: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setInt('nivel_mascota_visto', -1);
-                          await prefs.remove('tipo_avatar');
-                          setState(() => _nivelMascotaVisto = -1);
-                          await _verificarEvolucion(500);
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        child: const Text('🧪 TEST MASCOTA', style: TextStyle(color: Colors.white)),
-                      ),
                       const SizedBox(height: 20),
                     ],
                   ),
