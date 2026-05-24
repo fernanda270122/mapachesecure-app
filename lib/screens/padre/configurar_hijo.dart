@@ -223,7 +223,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           'tipo': 'total',
           'hora_inicio': '00:00',
           'hora_fin': '23:59',
-          'dias_semana': [1, 2, 3, 4, 5, 6, 7],
+          'dias_semana': [0, 1, 2, 3, 4, 5, 6],
           'package_names': _appsPopulares.map((e) => e['package']).join(','),
         });
       } else {
@@ -503,7 +503,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       spacing: 8,
       children: List.generate(7, (i) {
         // i = 0 es Lunes (1), i = 3 es Jueves (4)
-        final dia = i + 1;
+        final dia = i;
         final seleccionado = _diasSeleccionados.contains(dia);
         return FilterChip(
           label: Text(_diasNombres[i]), // Utiliza tu lista ['Lun', 'Mar'...]
@@ -779,7 +779,6 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
 
     if (b['dias_semana'] != null) {
       List<String> nombresDias = [
-        "",
         "Lunes",
         "Martes",
         "Miércoles",
