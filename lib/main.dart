@@ -21,6 +21,7 @@ import 'package:mapachesecure_app/services/guardian_service.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
+import 'package:mapachesecure_app/providers/actividad_provider.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -38,6 +39,7 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => TemaPadreProvider()..cargarTemaPadre(),
         ),
+        ChangeNotifierProvider(create: (_) => ActividadProvider()),
       ],
       child: const MyApp(),
     ),
