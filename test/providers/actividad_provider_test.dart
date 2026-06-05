@@ -92,5 +92,27 @@ void main() {
         );
       },
     );
+
+    test(
+    '4. La lista de actividad debe quedar vacía al limpiarla',
+    () {
+      SharedPreferences.setMockInitialValues({});
+      final provider = ActividadProvider();
+
+      provider.listaUsoReal.add(
+        UsageInfo(
+          packageName: 'com.youtube.android',
+          totalTimeInForeground: '60000',
+        ),
+      );
+
+      expect(provider.listaUsoReal.isEmpty, false);
+
+      provider.listaUsoReal.clear();
+
+      expect(provider.listaUsoReal.isEmpty, true);
+      expect(provider.tiempoTotalPantalla.inMilliseconds, 0);
+    },
+  );
   });
 }
