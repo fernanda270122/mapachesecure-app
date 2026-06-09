@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:mapachesecure_app/models/avatar_type.dart';

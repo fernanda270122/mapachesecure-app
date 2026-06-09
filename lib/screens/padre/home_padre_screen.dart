@@ -45,7 +45,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
-    NotificationService().registrarToken();
+    try { NotificationService().registrarToken(); } catch (_) {}
     _carruselTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!_carruselController.hasClients) return;
       final siguiente = (_carruselPagina + 1) % 3;

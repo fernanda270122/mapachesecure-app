@@ -1,65 +1,105 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:mapachesecure_app/services/api_service.dart';
+import 'package:mapachesecure_app/models/desafio.dart';
 
 void main() {
-    group('Pruebas unitarias para el Asistente IA', () {
-      test(
-        '1. Un desafío generado debe tener título, descripción y puntos',
-        () {
-          final desafio = {
-            'titulo': 'Ordenar la pieza',
-            'descripcion': 'Paso 1: Recoge la ropa. Paso 2: Ponla en el cajón.',
-            'puntos': 10,
-          };
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-          expect(desafio['titulo'], isNotNull);
-          expect(desafio['descripcion'], isNotNull);
-          expect(desafio['puntos'], isNotNull);
-        },
-      );
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'token': 'token_test'});
+  });
 
-      test(
-        '2. Los puntos deben respetar la escala según la dificultad',
-        () {
-          final desafioFacil = {'puntos': 10};
-          final desafioMedio = {'puntos': 25};
-          final desafioDificil = {'puntos': 45};
+  group('Pruebas para el Asistente IA — MapacheSecure', () {
+    test(
+      '1. POST /ia/generar retorna lista de desafíos correctamente estructurados',
+      () async {
+        final mockClient = MockClient((request) async {
+          if (request.url.path.contains('/ia/generar')) {
+            return http.Response(
+              jsonEncode([
+                {'id': 'ia_1', 'titulo': 'Ordenar la pieza', 'descripcion': 'Recoge tu ropa', 'puntos': 10, 'categoria': 'hogar', 'estado': 'activo'},
+                {'id': 'ia_2', 'titulo': 'Leer 15 minutos', 'descripcion': 'Lee un libro', 'puntos': 20, 'categoria': 'educacion', 'estado': 'activo'},
+                {'id': 'ia_3', 'titulo': 'Hacer la cama', 'descripcion': 'Ordena tu cama', 'puntos': 15, 'categoria': 'hogar', 'estado': 'activo'},
+              ]),
+              200,
+            );
+          }
+          return http.Response('{}', 404);
+        });
 
-          expect(desafioFacil['puntos'] as int, inInclusiveRange(5, 15));
-          expect(desafioMedio['puntos'] as int, inInclusiveRange(20, 35));
-          expect(desafioDificil['puntos'] as int, inInclusiveRange(40, 50));
-        },
-      );
+        late dynamic resultado;
+        await http.runWithClient(() async {
+          final api = ApiService();
+          resultado = await api.post('/ia/generar', {'categoria': 'hogar', 'dificultad': 'facil'});
+        }, () => mockClient);
 
-      test(
-        '3. La cantidad de desafíos generados debe ser la solicitada',
-        () {
-          final respuestaIA = {
-            'desafios': [
-              {'titulo': 'Desafío 1', 'descripcion': 'Desc 1', 'puntos': 10},
-              {'titulo': 'Desafío 2', 'descripcion': 'Desc 2', 'puntos': 10},
-              {'titulo': 'Desafío 3', 'descripcion': 'Desc 3', 'puntos': 10},
-            ],
-          };
+        expect(resultado, isList);
+        expect((resultado as List).length, 3);
+      },
+    );
 
-          final cantidad = 3;
-          final desafios = List<dynamic>.from(respuestaIA['desafios'] ?? []);
+    test(
+      '2. Los desafíos generados por la IA se parsean correctamente como modelo Desafio',
+      () {
+        final jsonIA = {
+          'id': 'ia_001',
+          'titulo': 'Ayudar en la cocina',
+          'descripcion': 'Paso 1: Lava los platos. Paso 2: Seca y guarda.',
+          'categoria': 'hogar',
+          'puntos': 25,
+          'tiempo_estimado_minutos': 20,
+          'estado': 'activo',
+          'hijo_id': 'hijo_test',
+        };
 
-          expect(desafios.length, cantidad);
-        },
-      );
+        final desafio = Desafio.fromJson(jsonIA);
 
-      test(
-        '4. Una respuesta vacía o malformada no debe romper la app',
-        () {
-          final respuestaVacia = <String, dynamic>{};
-          final respuestaNula = {'desafios': null};
+        expect(desafio.titulo, 'Ayudar en la cocina');
+        expect(desafio.estaActivo, true);
+        expect(desafio.tiempoTexto, '20 min');
+        expect(desafio.puntos, 25);
+      },
+    );
 
-          final desafiosVacia = List<dynamic>.from(respuestaVacia['desafios'] ?? []);
-          final desafiosNula = List<dynamic>.from(respuestaNula['desafios'] ?? []);
+    test(
+      '3. Respuesta vacía de /ia/generar retorna lista vacía sin error',
+      () async {
+        final mockClient = MockClient((request) async {
+          return http.Response(jsonEncode([]), 200);
+        });
 
-          expect(desafiosVacia.isEmpty, true);
-          expect(desafiosNula.isEmpty, true);
-        },
-      );
-    });
-  }
+        late dynamic resultado;
+        await http.runWithClient(() async {
+          final api = ApiService();
+          resultado = await api.post('/ia/generar', {'categoria': 'deporte'});
+        }, () => mockClient);
+
+        expect(resultado, isList);
+        expect((resultado as List).isEmpty, true);
+      },
+    );
+
+    test(
+      '4. Un desafío de IA con campos mínimos no rompe el modelo Desafio',
+      () {
+        final jsonMinimo = {
+          'id': 'ia_min',
+          'titulo': 'Desafío simple',
+          'descripcion': null,
+          'puntos': null,
+          'categoria': null,
+          'estado': null,
+        };
+
+        expect(
+          () => Desafio.fromJson(jsonMinimo),
+          returnsNormally,
+        );
+      },
+    );
+  });
+}

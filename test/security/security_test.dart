@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/models/desafio.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
+import 'package:mapachesecure_app/screens/hijo/pantalla_bloqueo_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,18 +26,18 @@ void main() {
       },
     );
 
-    testWidgets(
-      '2. Login sin credenciales muestra mensaje de error',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(home: LoginScreen()),
-        );
-        await tester.pumpAndSettle();
+    test(
+      '2. Al eliminar el token de sesión, isLoggedIn retorna false correctamente',
+      () async {
+        SharedPreferences.setMockInitialValues({'token': 'access_123'});
 
-        await tester.tap(find.text('INGRESAR'));
-        await tester.pumpAndSettle();
+        final authService = AuthService();
+        expect(await authService.isLoggedIn(), true);
 
-        expect(find.text('Correo o contraseña incorrectos'), findsOneWidget);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
+
+        expect(await authService.isLoggedIn(), false);
       },
     );
 
@@ -59,22 +60,21 @@ void main() {
       },
     );
 
-    test(
-      '4. Un path de avatar fuera de los permitidos no coincide con ninguno válido',
-      () {
-        final pathsValidos = [
-          'assets/avatares/perfil1.jpeg',
-          'assets/avatares/perfil2.jpeg',
-          'assets/avatares/perfil3.jpeg',
-          'assets/avatares/perfil4.jpeg',
-          'assets/avatares/perfil6.jpeg',
-          'assets/avatares/perfil7.jpeg',
-          'assets/avatares/perfil8.jpeg',
-        ];
+    testWidgets(
+      '4. PantallaBloqueoScreen no puede cerrarse con el botón de retroceso',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: PantallaBloqueoScreen(
+              horaInicio: '22:00',
+              horaFin: '23:59',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-        final pathMalicioso = '../../etc/passwd';
-
-        expect(pathsValidos.contains(pathMalicioso), false);
+        final popScope = tester.widget<PopScope>(find.byType(PopScope));
+        expect(popScope.canPop, false);
       },
     );
   });

@@ -5,6 +5,23 @@ import 'package:mapachesecure_app/models/pet_model.dart';
 import 'package:mapachesecure_app/models/desafio.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 
+// Subclase que omite FlutterBackgroundService (plugin Android) pero
+// ejecuta la lógica real de preservación de preferencias
+class TestAuthService extends AuthService {
+  @override
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final onboardingKeys = prefs.getKeys().where((k) => k.startsWith('onboarding_')).toList();
+    final savedBools = {for (var k in onboardingKeys) k: prefs.getBool(k)};
+    final savedPaleta = prefs.getString('paleta_padre_preferida');
+    await prefs.clear();
+    for (final entry in savedBools.entries) {
+      if (entry.value != null) await prefs.setBool(entry.key, entry.value!);
+    }
+    if (savedPaleta != null) await prefs.setString('paleta_padre_preferida', savedPaleta);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -23,20 +40,10 @@ void main() {
           'paleta_padre_preferida': 'Celeste Neutro',
         });
 
+        final authService = TestAuthService();
+        await authService.logout();
+
         final prefs = await SharedPreferences.getInstance();
-
-        // Simulamos el logout: guardamos lo que se debe preservar
-        final onboardingCompletado = prefs.getBool('onboarding_completado');
-        final paleta = prefs.getString('paleta_padre_preferida');
-
-        await prefs.clear();
-
-        if (onboardingCompletado != null) {
-          await prefs.setBool('onboarding_completado', onboardingCompletado);
-        }
-        if (paleta != null) {
-          await prefs.setString('paleta_padre_preferida', paleta);
-        }
 
         expect(prefs.getString('token'), null);
         expect(prefs.getString('user_id'), null);

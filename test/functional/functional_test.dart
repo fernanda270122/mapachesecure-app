@@ -61,7 +61,7 @@ void main() {
     );
 
     testWidgets(
-      '3. PantallaBloqueoScreen muestra el horario correcto al usuario',
+      '3. PantallaBloqueoScreen muestra el horario y el mensaje completo al usuario',
       (WidgetTester tester) async {
         await tester.pumpWidget(
           const MaterialApp(
@@ -73,29 +73,24 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Horario de bloqueo: 20:00 - 22:00'), findsOneWidget);
         expect(find.text('App bloqueada'), findsOneWidget);
+        expect(find.text('Horario de bloqueo: 20:00 - 22:00'), findsOneWidget);
+        expect(find.text('Vuelve cuando termine el bloqueo 🦝'), findsOneWidget);
       },
     );
 
     testWidgets(
-      '4. Al cambiar el tema del hijo el provider refleja el nuevo color',
+      '4. Flujo de recuperar contraseña navega a la pantalla correcta',
       (WidgetTester tester) async {
-        SharedPreferences.setMockInitialValues({});
-
-        final temaProvider = TemaProvider();
-
         await tester.pumpWidget(
-          ChangeNotifierProvider.value(
-            value: temaProvider,
-            child: const MaterialApp(home: AvatarScreen()),
-          ),
+          const MaterialApp(home: LoginScreen()),
         );
+        await tester.pumpAndSettle();
 
-        await temaProvider.cambiar('Salvia');
-        await tester.pump();
+        await tester.tap(find.text('Olvidé mi contraseña'));
+        await tester.pumpAndSettle();
 
-        expect(temaProvider.paleta, 'Salvia');
+        expect(find.text('Recuperar contraseña'), findsOneWidget);
       },
     );
   });
