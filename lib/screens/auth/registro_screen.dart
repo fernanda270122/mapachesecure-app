@@ -86,7 +86,8 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _nombreController.text,
         'padre',
       );
-      await auth.login(_emailController.text, _passwordController.text);
+      final loginResp = await auth.login(_emailController.text, _passwordController.text);
+      final userId = loginResp['user_id']?.toString() ?? '';
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user_nombre', _nombreController.text);
@@ -106,6 +107,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
               builder: (_) => OnboardingScreen(
                 rol: 'padre',
                 destino: const HomePadreScreen(),
+                userId: userId,
               ),
             ),
           );
