@@ -127,9 +127,12 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
-      String mensaje = 'Error al registrar';
-      if (e.toString().contains('400')) {
+      String mensaje = 'Error al registrar. Intenta de nuevo.';
+      final msg = e.toString();
+      if (msg.contains('400')) {
         mensaje = 'El correo ya está registrado';
+      } else if (msg.contains('429') || msg.toLowerCase().contains('rate limit') || msg.contains('limite')) {
+        mensaje = 'Se alcanzó el límite de correos por hora. Intenta de nuevo en unos minutos.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensaje), backgroundColor: Colors.red),
