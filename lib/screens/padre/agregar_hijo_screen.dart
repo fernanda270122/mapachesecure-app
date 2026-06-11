@@ -61,7 +61,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
     setState(() => _cargando = true);
     try {
       final api = ApiService();
-      await api.post('/auth/register-hijo', {
+      await api.post('/auth/registro-hijo', {
         'nombre': _nombreCtrl.text.trim(),
         'email': _emailCtrl.text.trim(),
         'password': _passwordCtrl.text.trim(),
