@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class OnboardingScreen extends StatefulWidget {
   final String rol;
   final Widget destino;
-  const OnboardingScreen({super.key, required this.rol, required this.destino});
+  final String? userId;
+  const OnboardingScreen({super.key, required this.rol, required this.destino, this.userId});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -92,7 +93,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _terminar() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('user_id') ?? '';
+    final userId = widget.userId ?? prefs.getString('user_id') ?? '';
     await prefs.setBool('onboarding_${userId}_${widget.rol}_visto', true);
     if (!mounted) return;
     Navigator.pushReplacement(

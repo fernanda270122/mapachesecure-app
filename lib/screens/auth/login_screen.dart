@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final Widget destino = onboardingVisto
           ? homeScreen
-          : OnboardingScreen(rol: rol, destino: homeScreen);
+          : OnboardingScreen(rol: rol, destino: homeScreen, userId: usuarioId);
 
       Navigator.pushReplacement(
         context,
