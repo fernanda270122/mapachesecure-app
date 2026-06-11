@@ -112,7 +112,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
         }
       }
     } catch (e) {
-      setState(() => _error = 'Error al registrarse: ${e.toString()}');
+      final msg = e.toString();
+      String errorMsg = 'Error al registrarse. Intenta de nuevo.';
+      if (msg.contains('429') || msg.toLowerCase().contains('rate limit') || msg.contains('limite')) {
+        errorMsg = 'Se alcanzó el límite de correos por hora. Intenta de nuevo en unos minutos.';
+      }
+      setState(() => _error = errorMsg);
     } finally {
       setState(() => _cargando = false);
     }
