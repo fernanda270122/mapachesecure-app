@@ -73,12 +73,58 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       });
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hijo agregado con éxito'),
-          backgroundColor: Colors.green,
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            '¡Hijo registrado!',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${_nombreCtrl.text.trim()} ya tiene su cuenta en Raccu.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Muéstrale este QR para que descargue la app:',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset('assets/raccu_qr.png', height: 180),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'También le llegará un correo de bienvenida con el enlace de descarga.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Listo'),
+              ),
+            ),
+          ],
         ),
       );
+      if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
       String mensaje = 'Error al registrar';
