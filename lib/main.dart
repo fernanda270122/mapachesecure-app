@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'firebase_options.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/screens/auth/reset_password_screen.dart';
+import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/theme/app_colors.dart';
@@ -214,9 +215,21 @@ class _SplashScreenState extends State<SplashScreen> {
           MaterialPageRoute(builder: (_) => const HomePadreScreen()),
         );
       } else if (rol == 'hijo') {
+        final prefs = await SharedPreferences.getInstance();
+        final userId = prefs.getString('user_id') ?? '';
+        final onboardingVisto = prefs.getBool('onboarding_${userId}_hijo_visto') ?? false;
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeHijoScreen()),
+          MaterialPageRoute(
+            builder: (_) => onboardingVisto
+                ? const HomeHijoScreen()
+                : OnboardingScreen(
+                    rol: 'hijo',
+                    destino: const HomeHijoScreen(),
+                    userId: userId,
+                  ),
+          ),
         );
       }
     } else {
