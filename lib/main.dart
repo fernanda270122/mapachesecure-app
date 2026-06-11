@@ -206,17 +206,28 @@ class _SplashScreenState extends State<SplashScreen> {
       final rol = await auth.getRol();
       if (!mounted) return;
 
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id') ?? '';
+
       if (rol == 'padre') {
         if (await service.isRunning()) {
           service.invoke("stopService");
         }
+        final onboardingVisto = prefs.getBool('onboarding_${userId}_padre_visto') ?? false;
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePadreScreen()),
+          MaterialPageRoute(
+            builder: (_) => onboardingVisto
+                ? const HomePadreScreen()
+                : OnboardingScreen(
+                    rol: 'padre',
+                    destino: const HomePadreScreen(),
+                    userId: userId,
+                  ),
+          ),
         );
       } else if (rol == 'hijo') {
-        final prefs = await SharedPreferences.getInstance();
-        final userId = prefs.getString('user_id') ?? '';
         final onboardingVisto = prefs.getBool('onboarding_${userId}_hijo_visto') ?? false;
         if (!mounted) return;
         Navigator.pushReplacement(
