@@ -87,9 +87,9 @@ class Desafio {
     );
   }
 
-  bool get estaCompletado => estado == 'completado';
-  bool get estaPendiente => estado == 'pendiente';
-  bool get estaActivo => estado == 'activo';
+  bool get estaCompletado => estado.toLowerCase() == 'completado';
+  bool get estaPendiente => estado.toLowerCase() == 'pendiente';
+  bool get estaActivo => estado.toLowerCase() == 'activo';
 
   /// Texto del tiempo para mostrar en la UI: "5 min" o "Sin límite"
   String get tiempoTexto =>
