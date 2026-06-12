@@ -28,9 +28,26 @@ class _RegistroScreenState extends State<RegistroScreen> {
   DateTime? _fechaSeleccionada;
   bool _cargando = false;
   String? _error;
+  Map<String, dynamic>? _cuota;
 
   // Obtenemos la paleta Lila Pastel idéntica a las pantallas anteriores
   final paleta = AppPaletasPadre.paletas['Lila Pastel']!;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCuota();
+  }
+
+  // Consulta cuántos correos de confirmación quedan en la cuota gratuita de Supabase
+  Future<void> _cargarCuota() async {
+    try {
+      final cuota = await AuthService().cuotaCorreos();
+      if (mounted) setState(() => _cuota = cuota);
+    } catch (_) {
+      // Si el endpoint no responde, simplemente no se muestra el contador
+    }
+  }
 
   // Función para abrir el calendario
   Future<void> _seleccionarFecha(BuildContext context) async {
@@ -112,7 +129,12 @@ class _RegistroScreenState extends State<RegistroScreen> {
         }
       }
     } catch (e) {
-      setState(() => _error = 'Error al registrarse: ${e.toString()}');
+      setState(
+        () => _error =
+            'Error al registrarse: ${e.toString().replaceFirst('Exception: ', '')}',
+      );
+      // Refresca el contador: si fue un 429, el backend ya detectó el límite
+      _cargarCuota();
     } finally {
       setState(() => _cargando = false);
     }
@@ -172,6 +194,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                if (_cuota != null) _buildCuotaBanner(),
                 const SizedBox(height: 35),
 
                 // Campos de entrada con fondo blanco 10/10 en legibilidad
@@ -269,6 +292,61 @@ class _RegistroScreenState extends State<RegistroScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Contador de la cuota de correos de confirmación de Supabase (capa gratuita)
+  Widget _buildCuotaBanner() {
+    final enviados = _cuota!['enviados_ultima_hora'] ?? 0;
+    final limite = _cuota!['limite'];
+    final restantes = _cuota!['restantes'];
+    final proximoCupo = _cuota!['proximo_cupo'];
+
+    String texto;
+    IconData icono = Icons.mark_email_read_outlined;
+    Color color = paleta.primary;
+
+    if (limite == null) {
+      texto =
+          'Correos de confirmación enviados esta hora: $enviados\n'
+          'Límite de Supabase aún no detectado';
+    } else if (restantes != null && restantes > 0) {
+      texto = 'Correos de confirmación: $enviados de $limite usados esta hora';
+    } else {
+      icono = Icons.warning_amber_rounded;
+      color = Colors.redAccent;
+      String hora = '';
+      if (proximoCupo != null) {
+        final cupo = DateTime.parse(proximoCupo).toLocal();
+        hora = ' Nuevo cupo a las ${DateFormat('HH:mm').format(cupo)}.';
+      }
+      texto = 'Límite de Supabase alcanzado ($limite por hora).$hora';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: paleta.accent),
+      ),
+      child: Row(
+        children: [
+          Icon(icono, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              texto,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

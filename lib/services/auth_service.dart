@@ -60,6 +60,13 @@ class AuthService {
     }, auth: false);
   }
 
+  /// Estado de la cuota de correos de Supabase (capa gratuita):
+  /// enviados en la última hora, límite detectado y hora del próximo cupo.
+  Future<Map<String, dynamic>> cuotaCorreos() async {
+    final response = await _api.get('/auth/cuota-correos');
+    return Map<String, dynamic>.from(response);
+  }
+
   Future<void> logout() async {
     final service = FlutterBackgroundService();
     var isRunning = await service.isRunning();
