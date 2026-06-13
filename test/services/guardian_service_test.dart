@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mapachesecure_app/services/guardian_service.dart';
 
-/// 🛡️ Un clon seguro que expone la lógica pura del Guardián sin levantar servicios de Android
+/// Un clon seguro que expone la lógica pura del Guardián sin levantar servicios de Android
 class TestGuardianUtils {
   // Replicamos exactamente tu algoritmo de comparación horaria y desfase de días
   bool evaluarHorarioProhibido(ReglaBloqueo regla, DateTime momentoSimulado) {
