@@ -58,7 +58,7 @@ class TestAuthService extends AuthService {
     return {'id': 'nuevo_usuario_id', 'email': email, 'nombre': nombre};
   }
 
-  /// 🛠️ SOBREESCRITURA DE LOGOUT: Nos saltamos el plugin nativo de background
+  /// SOBREESCRITURA DE LOGOUT: Nos saltamos el plugin nativo de background
   /// para evitar el error de plataforma y probamos la persistencia de datos exacta de tu lógica.
   @override
   Future<void> logout() async {
