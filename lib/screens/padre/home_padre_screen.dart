@@ -19,6 +19,7 @@ import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
 import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
 import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
+import 'package:mapachesecure_app/screens/padre/seleccionar_hijo_actividad_screen.dart';
 
 class HomePadreScreen extends StatefulWidget {
   const HomePadreScreen({super.key});
@@ -45,7 +46,9 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
-    try { NotificationService().registrarToken(); } catch (_) {}
+    try {
+      NotificationService().registrarToken();
+    } catch (_) {}
     _carruselTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!_carruselController.hasClients) return;
       final siguiente = (_carruselPagina + 1) % 3;
@@ -85,17 +88,26 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         int puntosHijo = 0;
         int minutosHijo = 0;
 
+        // 1. Cargar Desafíos
         final completados = await api.get('/desafios/completados/$hijoId');
         if (completados is List) desafiosHijo = completados.length;
 
+        // 2. Cargar Puntos
         final puntos = await api.get('/desafios/puntos/$hijoId');
         if (puntos is Map && puntos['total_puntos'] != null) {
           puntosHijo = (puntos['total_puntos'] as num).toInt();
         }
 
-        final estado = await api.get('/apps/estado/$hijoId');
-        if (estado is Map && estado['minutos_usados'] != null) {
-          minutosHijo = (estado['minutos_usados'] as num).toInt();
+        // 3. Cargar Minutos Reales desde nuestro nuevo endpoint
+        try {
+          final actividad = await api.get('/actividad/$hijoId');
+          if (actividad is List) {
+            for (var app in actividad) {
+              minutosHijo += (app['minutos_uso'] as int? ?? 0);
+            }
+          }
+        } catch (_) {
+          // Si el hijo aún no tiene actividad hoy, se mantendrá en 0
         }
 
         statsPorHijo[hijoId] = {
@@ -108,6 +120,8 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         totalPuntos += puntosHijo;
         totalMinutos += minutosHijo;
       }
+
+      if (!mounted) return; // Validación de seguridad por si sales de la app
 
       setState(() {
         _nombre = nombre;
@@ -133,6 +147,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         await _cerrarSesionPorExpiracion();
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _nombre = nombre;
         _hijos = [];
@@ -146,7 +161,9 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
     await auth.logout();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tu sesión expiró. Inicia sesión nuevamente.')),
+      const SnackBar(
+        content: Text('Tu sesión expiró. Inicia sesión nuevamente.'),
+      ),
     );
     Navigator.pushAndRemoveUntil(
       context,
@@ -308,6 +325,24 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                 );
               },
             ),
+            _buildDrawerItem(
+              context,
+              Icons.analytics_outlined, // Ícono de estadísticas/actividad
+              'Actividad de Pantalla',
+              temaPadre.primary,
+              () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    // Tendremos que crear esta pantalla intermedia para elegir al hijo
+                    builder: (context) =>
+                        const SeleccionarHijoActividadScreen(),
+                  ),
+                );
+              },
+            ),
+
             const Divider(),
             _buildDrawerItem(
               context,
@@ -507,7 +542,10 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         ),
         title: Text(
           nombre,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
         subtitle: Text(detalle),
         trailing: Icon(Icons.circle, color: colorEstado, size: 12),
@@ -546,6 +584,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -553,9 +592,17 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
                     children: [
                       _buildStatChip(Icons.access_time, tiempoStr, Colors.blue),
                       const SizedBox(width: 8),
-                      _buildStatChip(Icons.task_alt, '${stats?['desafios'] ?? 0}', Colors.green),
+                      _buildStatChip(
+                        Icons.task_alt,
+                        '${stats?['desafios'] ?? 0}',
+                        Colors.green,
+                      ),
                       const SizedBox(width: 8),
-                      _buildStatChip(Icons.stars, '${stats?['puntos'] ?? 0}', Colors.orange),
+                      _buildStatChip(
+                        Icons.stars,
+                        '${stats?['puntos'] ?? 0}',
+                        Colors.orange,
+                      ),
                     ],
                   ),
                 ],
