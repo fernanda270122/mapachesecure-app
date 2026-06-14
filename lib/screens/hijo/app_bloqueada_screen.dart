@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class AppBloqueadaScreen extends StatelessWidget {
   final String nombreAppIntentada;

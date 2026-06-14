@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/models/desafio.dart';
@@ -60,10 +61,10 @@ void main() {
       final opsPorSegundo = total / (duracionMs / 1000);
       final opsPorMinuto = opsPorSegundo * 60;
 
-      print('── Desafíos: $usuarios usuarios × $desafiosPorUsuario desafíos = $total solicitudes en ${duracionMs}ms');
-      print('   p95        : ${(p95 / 1000).toStringAsFixed(3)}ms');
-      print('   Errores    : $errores / $total (${(tasaError * 100).toStringAsFixed(2)}%)');
-      print('   Throughput : ${opsPorSegundo.toStringAsFixed(0)} ops/s  |  ${opsPorMinuto.toStringAsFixed(0)} ops/min');
+      debugPrint('── Desafíos: $usuarios usuarios × $desafiosPorUsuario desafíos = $total solicitudes en ${duracionMs}ms');
+      debugPrint('   p95        : ${(p95 / 1000).toStringAsFixed(3)}ms');
+      debugPrint('   Errores    : $errores / $total (${(tasaError * 100).toStringAsFixed(2)}%)');
+      debugPrint('   Throughput : ${opsPorSegundo.toStringAsFixed(0)} ops/s  |  ${opsPorMinuto.toStringAsFixed(0)} ops/min');
 
       expect(p95, lessThan(200000),
           reason: 'p95 fue ${(p95 / 1000).toStringAsFixed(2)}ms — supera 200ms');
@@ -110,10 +111,10 @@ void main() {
       final opsPorSegundo = total / (duracionMs / 1000);
       final opsPorMinuto = opsPorSegundo * 60;
 
-      print('── Guardián: $usuarios dispositivos × $appsPorUsuario apps = $total verificaciones en ${duracionMs}ms');
-      print('   p95        : ${(p95 / 1000).toStringAsFixed(3)}ms');
-      print('   Errores    : $errores / $total (${(tasaError * 100).toStringAsFixed(2)}%)');
-      print('   Throughput : ${opsPorSegundo.toStringAsFixed(0)} ops/s  |  ${opsPorMinuto.toStringAsFixed(0)} ops/min');
+      debugPrint('── Guardián: $usuarios dispositivos × $appsPorUsuario apps = $total verificaciones en ${duracionMs}ms');
+      debugPrint('   p95        : ${(p95 / 1000).toStringAsFixed(3)}ms');
+      debugPrint('   Errores    : $errores / $total (${(tasaError * 100).toStringAsFixed(2)}%)');
+      debugPrint('   Throughput : ${opsPorSegundo.toStringAsFixed(0)} ops/s  |  ${opsPorMinuto.toStringAsFixed(0)} ops/min');
 
       expect(p95, lessThan(200000),
           reason: 'p95 fue ${(p95 / 1000).toStringAsFixed(2)}ms — supera 200ms');
@@ -169,12 +170,12 @@ void main() {
       final evolucionesPorSegundo = suberonDeNivel / (duracionMs / 1000);
       final evolucionesPorMinuto = evolucionesPorSegundo * 60;
 
-      print('── Mascotas: $usuarios usuarios concurrentes en ${duracionMs}ms');
-      print('   p95               : ${(p95 / 1000).toStringAsFixed(3)}ms');
-      print('   Errores           : $errores / $usuarios (${(tasaError * 100).toStringAsFixed(2)}%)');
-      print('   Subieron de nivel : $suberonDeNivel / $usuarios usuarios');
-      print('   Evoluciones/s     : ${evolucionesPorSegundo.toStringAsFixed(0)}');
-      print('   Evoluciones/min   : ${evolucionesPorMinuto.toStringAsFixed(0)}');
+      debugPrint('── Mascotas: $usuarios usuarios concurrentes en ${duracionMs}ms');
+      debugPrint('   p95               : ${(p95 / 1000).toStringAsFixed(3)}ms');
+      debugPrint('   Errores           : $errores / $usuarios (${(tasaError * 100).toStringAsFixed(2)}%)');
+      debugPrint('   Subieron de nivel : $suberonDeNivel / $usuarios usuarios');
+      debugPrint('   Evoluciones/s     : ${evolucionesPorSegundo.toStringAsFixed(0)}');
+      debugPrint('   Evoluciones/min   : ${evolucionesPorMinuto.toStringAsFixed(0)}');
 
       expect(p95, lessThan(300000),
           reason: 'p95 fue ${(p95 / 1000).toStringAsFixed(2)}ms — supera 300ms');
@@ -215,10 +216,10 @@ void main() {
       final opsPorSegundo = usuarios / (duracionMs / 1000);
       final opsPorMinuto = opsPorSegundo * 60;
 
-      print('── Avatares: $usuarios usuarios concurrentes en ${duracionMs}ms');
-      print('   p95        : ${(p95 / 1000).toStringAsFixed(3)}ms');
-      print('   Errores    : $errores / $usuarios (${(tasaError * 100).toStringAsFixed(2)}%)');
-      print('   Throughput : ${opsPorSegundo.toStringAsFixed(0)} ops/s  |  ${opsPorMinuto.toStringAsFixed(0)} ops/min');
+      debugPrint('── Avatares: $usuarios usuarios concurrentes en ${duracionMs}ms');
+      debugPrint('   p95        : ${(p95 / 1000).toStringAsFixed(3)}ms');
+      debugPrint('   Errores    : $errores / $usuarios (${(tasaError * 100).toStringAsFixed(2)}%)');
+      debugPrint('   Throughput : ${opsPorSegundo.toStringAsFixed(0)} ops/s  |  ${opsPorMinuto.toStringAsFixed(0)} ops/min');
 
       expect(p95, lessThan(300000),
           reason: 'p95 fue ${(p95 / 1000).toStringAsFixed(2)}ms — supera 300ms');

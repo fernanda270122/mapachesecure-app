@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';

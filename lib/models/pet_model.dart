@@ -10,8 +10,11 @@ class PetModel {
     const List<int> puntosNivel = [0, 500, 1100, 1900, 2900, 4100, 5500];
     int n = 0;
     for (int i = 1; i < puntosNivel.length; i++) {
-      if (puntos >= puntosNivel[i]) n = i;
-      else break;
+      if (puntos >= puntosNivel[i]) {
+        n = i;
+      } else {
+        break;
+      }
     }
     return n;
   }

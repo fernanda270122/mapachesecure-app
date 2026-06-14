@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mapachesecure_app/screens/auth/verificar_identidad_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
-import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';

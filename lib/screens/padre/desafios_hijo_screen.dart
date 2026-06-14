@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import '../../services/api_service.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class DesafiosHijoScreen extends StatefulWidget {
   final Map<dynamic, dynamic> hijo;

@@ -13,11 +13,8 @@ import 'package:mapachesecure_app/screens/padre/configurar_hijo.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/screens/auth/login_screen.dart';
 import 'package:mapachesecure_app/screens/padre/tienda_recompensas_screen.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:mapachesecure_app/screens/padre/consejos_padres_screen.dart';
 import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
-import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 import 'package:mapachesecure_app/screens/padre/seleccionar_hijo_actividad_screen.dart';
 

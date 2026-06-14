@@ -4,8 +4,6 @@ import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/tienda_recompensa_hijo_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
 import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
 import 'package:mapachesecure_app/screens/hijo/mis_desafios_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
@@ -274,7 +272,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         if (perfilData['foto_perfil'] != null) {
           avatarFinal = perfilData['foto_perfil'] as String;
           if (avatarFinal != avatar) {
-            await prefs.setString('avatar_hijo', avatarFinal!);
+            await prefs.setString('avatar_hijo', avatarFinal);
           }
         }
       }

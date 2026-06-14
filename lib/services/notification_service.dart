@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api_service.dart';
 
@@ -57,15 +58,15 @@ class NotificationService {
   Future<void> registrarToken() async {
     try {
       final token = await _messaging.getToken();
-      print('[FCM] Token obtenido: $token');
+      debugPrint('[FCM] Token obtenido: $token');
       if (token != null) {
         await _api.post('/notificaciones/token', {'fcm_token': token});
-        print('[FCM] Token registrado en backend correctamente');
+        debugPrint('[FCM] Token registrado en backend correctamente');
       } else {
-        print('[FCM] Token es null — no se pudo obtener');
+        debugPrint('[FCM] Token es null — no se pudo obtener');
       }
     } catch (e) {
-      print('[FCM] Error al registrar token: $e');
+      debugPrint('[FCM] Error al registrar token: $e');
     }
   }
 
@@ -129,9 +130,9 @@ class NotificationService {
   // Muestra notificaciones FCM cuando la app está en primer plano
   Future<void> _mostrarNotificacionFCM(RemoteMessage message) async {
     final notification = message.notification;
-    print('[FCM] Mensaje recibido en foreground: ${message.messageId}');
+    debugPrint('[FCM] Mensaje recibido en foreground: ${message.messageId}');
     if (notification == null) {
-      print('[FCM] Sin campo notification en el mensaje');
+      debugPrint('[FCM] Sin campo notification en el mensaje');
       return;
     }
     try {
@@ -148,9 +149,9 @@ class NotificationService {
           ),
         ),
       );
-      print('[FCM] Notificacion local mostrada correctamente');
+      debugPrint('[FCM] Notificacion local mostrada correctamente');
     } catch (e) {
-      print('[FCM] Error al mostrar notificacion local: $e');
+      debugPrint('[FCM] Error al mostrar notificacion local: $e');
     }
   }
 }

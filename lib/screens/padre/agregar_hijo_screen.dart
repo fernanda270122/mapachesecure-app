@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart'; // <-- AÑADIDO PAR
 import 'package:provider/provider.dart'; // <-- MANTENIDO
 import 'package:mapachesecure_app/providers/tema_padre_provider.dart'; // <-- MANTENIDO
 import 'package:mapachesecure_app/services/api_service.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
 
 class AgregarHijoScreen extends StatefulWidget {
   const AgregarHijoScreen({super.key});

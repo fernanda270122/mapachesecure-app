@@ -26,7 +26,7 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
       });
       setState(() => _enviado = true);
     } catch (e) {
-      print('ERROR RECUPERAR PASSWORD: $e');
+      debugPrint('ERROR RECUPERAR PASSWORD: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));

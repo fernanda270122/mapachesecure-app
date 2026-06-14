@@ -5,7 +5,6 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 

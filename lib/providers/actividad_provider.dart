@@ -109,7 +109,7 @@ class ActividadProvider with ChangeNotifier {
         await sincronizarActividadConServidor();
       }
     } catch (e) {
-      print("❌ Error cargando tiempos: $e");
+      debugPrint("❌ Error cargando tiempos: $e");
     } finally {
       _cargando = false;
       notifyListeners();
@@ -127,12 +127,12 @@ class ActividadProvider with ChangeNotifier {
           prefs.getString('auth_token') ?? prefs.getString('token');
 
       // 📝 LOG 4: Ver si las credenciales están vacías
-      print(
+      debugPrint(
         "🔑 [Sincronización] Credenciales extraídas -> idHijo: $idHijo | token: ${token != null ? 'Detectado' : 'NULL'}",
       );
 
       if (idHijo == null || token == null) {
-        print(
+        debugPrint(
           "🛑 [Sincronización] Error crítico: idHijo o token son NULL en SharedPreferences. Abortando envío.",
         );
         return;
@@ -141,7 +141,7 @@ class ActividadProvider with ChangeNotifier {
       final url = Uri.parse(
         'https://mapachesecure-backend.onrender.com/actividad/$idHijo',
       );
-      print("🌐 [Sincronización] Conectando con el endpoint: $url");
+      debugPrint("🌐 [Sincronización] Conectando con el endpoint: $url");
 
       final List<Map<String, dynamic>> cuerpoJson = _listaUsoReal.map((app) {
         final milis = int.parse(app.totalTimeInForeground ?? '0');
@@ -154,7 +154,7 @@ class ActividadProvider with ChangeNotifier {
       }).toList();
 
       // 📝 LOG 5: Verificar qué JSON exacto se va a enviar
-      print(
+      debugPrint(
         "📦 [Sincronización] JSON estructurado para enviar: ${jsonEncode({'actividades': cuerpoJson})}",
       );
 
@@ -168,20 +168,20 @@ class ActividadProvider with ChangeNotifier {
       );
 
       // 📝 LOG 6: Respuesta definitiva de tu FastAPI en Render
-      print("📡 [Servidor] Código de respuesta: ${respuesta.statusCode}");
-      print("📡 [Servidor] Cuerpo de respuesta: ${respuesta.body}");
+      debugPrint("📡 [Servidor] Código de respuesta: ${respuesta.statusCode}");
+      debugPrint("📡 [Servidor] Cuerpo de respuesta: ${respuesta.body}");
 
       if (respuesta.statusCode == 200 || respuesta.statusCode == 201) {
-        print(
+        debugPrint(
           "🛡️ Guardián: Actividad diaria sincronizada con el servidor con éxito.",
         );
       } else {
-        print(
+        debugPrint(
           "⚠️ Falló la sincronización de actividad. Código: ${respuesta.statusCode}",
         );
       }
     } catch (e) {
-      print("❌ [Sincronización] Error de red catastrófico: $e");
+      debugPrint("❌ [Sincronización] Error de red catastrófico: $e");
     }
   }
 

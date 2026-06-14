@@ -108,17 +108,17 @@ void onStart(ServiceInstance service) async {
   // Conjunto de claves de reglas activas en el último chequeo
   Set<String> reglasActivasPrevias = {};
 
-  String _claveRegla(ReglaBloqueo r) =>
+  String claveRegla(ReglaBloqueo r) =>
       '${r.inicio}_${r.fin}_${r.dias.join('-')}';
 
-  Set<String> _reglasActivasAhora(
+  Set<String> reglasActivasAhora(
     List<ReglaBloqueo> reglas,
     bool Function(ReglaBloqueo) estaActiva,
   ) {
-    return reglas.where(estaActiva).map(_claveRegla).toSet();
+    return reglas.where(estaActiva).map(claveRegla).toSet();
   }
 
-  Future<void> _notificarCambioHorario(
+  Future<void> notificarCambioHorario(
     bool iniciando,
     ReglaBloqueo regla,
   ) async {
@@ -203,18 +203,18 @@ void onStart(ServiceInstance service) async {
             .toList();
       }
 
-      print(
+      debugPrint(
         "🛡️ Guardián: Sincronizado (Instante: ${appsEnListaNegra.length}, Horarios: ${reglasProgramadas.length})",
       );
     } catch (e) {
-      print("❌ Error de red en el Guardián: $e");
+      debugPrint("❌ Error de red en el Guardián: $e");
     }
   }
 
   // --- INICIO DEL SERVICIO ---
   await actualizarReglasDesdeAPI();
   // Guardamos el estado inicial sin notificar (la app acaba de arrancar)
-  reglasActivasPrevias = _reglasActivasAhora(
+  reglasActivasPrevias = reglasActivasAhora(
     reglasProgramadas,
     estaEnHorarioProhibido,
   );
@@ -223,22 +223,22 @@ void onStart(ServiceInstance service) async {
   Timer.periodic(const Duration(minutes: 1), (timer) async {
     await actualizarReglasDesdeAPI();
 
-    final reglasActuales = _reglasActivasAhora(
+    final reglasActuales = reglasActivasAhora(
       reglasProgramadas,
       estaEnHorarioProhibido,
     );
 
     for (final regla in reglasProgramadas) {
-      final clave = _claveRegla(regla);
+      final clave = claveRegla(regla);
       final eraActiva = reglasActivasPrevias.contains(clave);
       final esActiva = reglasActuales.contains(clave);
 
       if (!eraActiva && esActiva) {
         // La regla acaba de activarse
-        await _notificarCambioHorario(true, regla);
+        await notificarCambioHorario(true, regla);
       } else if (eraActiva && !esActiva) {
         // La regla acaba de desactivarse
-        await _notificarCambioHorario(false, regla);
+        await notificarCambioHorario(false, regla);
       }
     }
 
@@ -257,7 +257,7 @@ void onStart(ServiceInstance service) async {
 
     // Si no hay ID o el rol NO es hijo, el servicio se detiene físicamente
     if (userId == null || userId.isEmpty || rol != 'hijo') {
-      print("🛑 Guardian: Deteniendo servicio. Usuario: $userId, Rol: $rol");
+      debugPrint("🛑 Guardian: Deteniendo servicio. Usuario: $userId, Rol: $rol");
       timer.cancel();
       service.stopSelf();
       return;

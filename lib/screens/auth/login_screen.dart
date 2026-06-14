@@ -6,8 +6,6 @@ import 'package:mapachesecure_app/screens/onboarding/onboarding_screen.dart';
 import 'package:mapachesecure_app/services/auth_service.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 import 'recuperar_password.dart';
-import 'package:mapachesecure_app/theme/app_colors.dart';
-import 'package:mapachesecure_app/theme/app_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
 
