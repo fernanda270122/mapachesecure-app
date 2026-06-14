@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-// Asegúrate de cambiar esto por la ruta exacta de tu proyecto
 import 'package:mapachesecure_app/models/usuario.dart';
 
 void main() {
