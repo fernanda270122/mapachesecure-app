@@ -101,7 +101,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
       await api.post('/desafios/completar', {
         'desafio_id': widget.desafio['id'],
         'hijo_id': hijoId,
-        if (fotoUrl != null) 'foto_url': fotoUrl,
+        'foto_url': ?fotoUrl,
       });
 
       if (mounted) {
@@ -114,6 +114,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al enviar: $e')));
@@ -171,7 +172,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                         // Usamos el color de la dificultad con un poco de transparencia
                         color: _getDificultadColor(
                           widget.desafio['dificultad'],
-                        ).withOpacity(0.1),
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: _getDificultadColor(
@@ -219,7 +220,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.15),
+                            color: Colors.orange.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -237,7 +238,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                         // BOTÓN DE ALTAVOZ
                         Container(
                           decoration: BoxDecoration(
-                            color: tema.primary.withOpacity(0.1),
+                            color: tema.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -266,7 +267,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: tema.primary.withOpacity(0.3),
+                    color: tema.primary.withValues(alpha: 0.3),
                     width: 2,
                   ),
                 ),
@@ -277,7 +278,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
                           Icon(
                             Icons.camera_alt_rounded,
                             size: 55,
-                            color: tema.primary.withOpacity(0.6),
+                            color: tema.primary.withValues(alpha: 0.6),
                           ),
                           const SizedBox(height: 10),
                           const Text('Toca para sacar la foto de evidencia'),

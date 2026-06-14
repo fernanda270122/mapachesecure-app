@@ -64,7 +64,7 @@ class _ColoresScreenState extends State<ColoresScreen> {
                       width: seleccionada ? 2.5 : 1,
                     ),
                     boxShadow: seleccionada
-                        ? [BoxShadow(color: paleta.primary.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 3))]
+                        ? [BoxShadow(color: paleta.primary.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 3))]
                         : [],
                   ),
                   child: Row(

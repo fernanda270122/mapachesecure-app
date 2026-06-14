@@ -40,6 +40,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       });
       setState(() => _listo = true);
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al cambiar la contraseña')),
       );
@@ -84,11 +85,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
+                        color: Colors.white.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 15,
                             offset: const Offset(0, 5),
                           ),
@@ -124,7 +125,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       Text(
                         'Crea una contraseña segura para proteger el acceso a tu cuenta.',
                         style: TextStyle(
-                          color: paleta.primary.withOpacity(0.8),
+                          color: paleta.primary.withValues(alpha: 0.8),
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                         ),
@@ -140,7 +141,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           hintText: 'Nueva contraseña',
                           hintStyle: const TextStyle(color: Colors.black54),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.9),
+                          fillColor: Colors.white.withValues(alpha: 0.9),
                           prefixIcon: Icon(Icons.lock, color: paleta.primary),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -166,7 +167,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           hintText: 'Confirmar contraseña',
                           hintStyle: const TextStyle(color: Colors.black54),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.9),
+                          fillColor: Colors.white.withValues(alpha: 0.9),
                           prefixIcon: Icon(
                             Icons.lock_outline,
                             color: paleta.primary,

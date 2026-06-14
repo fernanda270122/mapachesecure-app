@@ -29,7 +29,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
     _padreId = prefs.getString('user_id') ?? '';
     try {
       final res = await _api.get('/desafios/pendientes/$_padreId');
-      print('respuesta backend: $res');
+      debugPrint('respuesta backend: $res');
       setState(() {
         _evidencias = res is List ? res : [];
         _cargando = false;
@@ -76,7 +76,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: colorPrimario.withOpacity(0.25),
+              color: colorPrimario.withValues(alpha: 0.25),
               width: 1.2,
             ),
           ),
@@ -94,9 +94,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
                 ? '¿Estás seguro de que deseas aprobar el desafío "$tituloDesafio"? El niño recibirá sus puntos correspondientes.'
                 : '¿Estás seguro de que deseas rechazar la evidencia de "$tituloDesafio"? Se le notificará al niño para que vuelva a intentarlo.',
             style: TextStyle(
-              color: colorPrimario.withOpacity(
-                0.9,
-              ), // Texto adaptativo oscuro legible
+              color: colorPrimario.withValues(alpha: 0.9), // Texto adaptativo oscuro legible
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -198,7 +196,7 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundColor: colorTema.withOpacity(0.1),
+              backgroundColor: colorTema.withValues(alpha: 0.1),
               child: Icon(Icons.history_edu, color: colorTema),
             ),
             title: Text(

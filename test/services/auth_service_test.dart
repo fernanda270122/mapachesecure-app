@@ -77,8 +77,9 @@ class TestAuthService extends AuthService {
     for (final entry in savedBools.entries) {
       if (entry.value != null) await prefs.setBool(entry.key, entry.value!);
     }
-    if (savedPaleta != null)
+    if (savedPaleta != null) {
       await prefs.setString('paleta_padre_preferida', savedPaleta);
+    }
   }
 }
 

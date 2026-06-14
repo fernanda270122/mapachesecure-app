@@ -14,7 +14,7 @@ class AppBloqueadaScreen extends StatelessWidget {
         if (didPop) return;
         // Aquí podrías mostrar un mensaje si quisieras,
         // pero lo ideal es no hacer nada para que se quede bloqueado.
-        print("Intento de salida bloqueado por Raccu 🦝");
+        debugPrint("Intento de salida bloqueado por Raccu 🦝");
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFB71C1C), // Rojo intenso de advertencia

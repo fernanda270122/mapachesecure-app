@@ -135,7 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         CircleAvatar(
                           radius: 70,
-                          backgroundColor: (slide['color'] as Color).withOpacity(0.1),
+                          backgroundColor: (slide['color'] as Color).withValues(alpha: 0.1),
                           child: Icon(
                             slide['icono'] as IconData,
                             size: 70,

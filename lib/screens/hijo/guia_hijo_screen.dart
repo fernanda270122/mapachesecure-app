@@ -96,7 +96,7 @@ class GuiaHijoScreen extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: primary.withOpacity(0.1),
+                  backgroundColor: primary.withValues(alpha: 0.1),
                   child: Icon(icono, color: primary),
                 ),
                 const SizedBox(width: 12),

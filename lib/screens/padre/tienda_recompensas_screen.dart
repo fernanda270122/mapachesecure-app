@@ -261,7 +261,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                               ),
                               borderRadius: BorderRadius.circular(8),
                               color: icono == e
-                                  ? colorTema.withOpacity(0.1)
+                                  ? colorTema.withValues(alpha: 0.1)
                                   : Colors.white,
                             ),
                             child: Text(
@@ -510,10 +510,10 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.06),
+                                      color: Colors.black.withValues(alpha: 0.06),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.black.withOpacity(0.08),
+                                        color: Colors.black.withValues(alpha: 0.08),
                                       ),
                                     ),
                                     child: Row(
@@ -630,7 +630,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                                   child: SwitchListTile(
                                     secondary: CircleAvatar(
                                       backgroundColor: activa
-                                          ? color.withOpacity(0.15)
+                                          ? color.withValues(alpha: 0.15)
                                           : Colors.grey.shade100,
                                       child: Text(
                                         r['icono'] as String,
@@ -653,7 +653,7 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                                       ),
                                     ),
                                     value: activa,
-                                    activeColor: temaPadre.primary,
+                                    activeThumbColor: temaPadre.primary,
                                     onChanged: _confirmado
                                         ? null
                                         : (val) {

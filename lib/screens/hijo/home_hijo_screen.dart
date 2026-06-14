@@ -20,7 +20,6 @@ import 'package:mapachesecure_app/models/avatar_type.dart';
 import 'package:mapachesecure_app/screens/hijo/seleccion_avatar_screen.dart';
 import 'package:usage_stats/usage_stats.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter/services.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 
 class HomeHijoScreen extends StatefulWidget {
@@ -78,9 +77,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // 🔄 Si el estado es 'resumed', significa que el niño acaba de volver de los Ajustes a la app
     if (state == AppLifecycleState.resumed) {
-      print(
-        "🦝 MapacheSecure: El usuario regresó a la app. Evaluando siguiente permiso...",
-      );
+      debugPrint("🦝 MapacheSecure: El usuario regresó a la app. Evaluando siguiente permiso...");
       _activarGuardian(); // Volvemos a llamar a la secuencia inteligente
     }
   }
@@ -107,8 +104,8 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         final elegido = await Navigator.push<String>(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const SeleccionAvatarScreen(),
-            transitionsBuilder: (_, anim, __, child) =>
+            pageBuilder: (_, _, _) => const SeleccionAvatarScreen(),
+            transitionsBuilder: (_, anim, _, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 600),
           ),
@@ -140,11 +137,11 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
       await Navigator.push(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => VideoEvolucionScreen(
+          pageBuilder: (_, _, _) => VideoEvolucionScreen(
             videoPath: avatar.videoPath!,
             mensaje: mensaje,
           ),
-          transitionsBuilder: (_, anim, __, child) =>
+          transitionsBuilder: (_, anim, _, child) =>
               FadeTransition(opacity: anim, child: child),
           transitionDuration: const Duration(milliseconds: 600),
         ),
@@ -170,6 +167,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     // 1. Mostrar cartel explicativo SÓLO si falta algún permiso Y es la primera vez que entra
     if ((!usageGranted || !overlayGranted) && _mostrarCartelInicial) {
       _mostrarCartelInicial = false; // Nos aseguramos de apagarlo de inmediato
+      if (!mounted) return;
 
       bool? iniciarFlujo = await showDialog<bool>(
         context: context,
@@ -237,7 +235,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
     // 🏁 ¡CONTRATO CUMPLIDO! Si llegó aquí es porque tiene los 2 permisos activos.
     if (!isRunning) {
-      print("🚀 Levantando Guardián Raccu de inmediato...");
+      debugPrint("🚀 Levantando Guardián Raccu de inmediato...");
       await service.startService();
     }
   }
@@ -283,7 +281,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               .where((c) => c['validado'] == false)
               .map<String>((c) => c['desafio_id'].toString())
               .toSet();
-          print('pendientes: $_pendientes');
+          debugPrint('pendientes: $_pendientes');
         }
         _nombre = nombre;
         _avatarPath = avatarFinal;
@@ -345,7 +343,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         await _cerrarSesionPorExpiracion();
       }
     } catch (e) {
-      print("Error en Home: $e");
+      debugPrint("Error en Home: $e");
       if (mounted) {
         setState(() {
           _nombre = nombre;
@@ -403,7 +401,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               children: [
                 Text(
                   "Para cerrar sesión y desactivar el Guardián, un adulto debe ingresar sus datos.",
-                  style: TextStyle(color: tema.onBackground.withOpacity(0.7), fontSize: 13),
+                  style: TextStyle(color: tema.onBackground.withValues(alpha: 0.7), fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -414,12 +412,12 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                     labelText: "Correo del Adulto",
                     labelStyle: TextStyle(color: tema.accent),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: tema.onBackground.withOpacity(0.2)),
+                      borderSide: BorderSide(color: tema.onBackground.withValues(alpha: 0.2)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: tema.accent),
                     ),
-                    prefixIcon: Icon(Icons.email, color: tema.onBackground.withOpacity(0.5), size: 20),
+                    prefixIcon: Icon(Icons.email, color: tema.onBackground.withValues(alpha: 0.5), size: 20),
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -431,12 +429,12 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                     labelText: "Contraseña",
                     labelStyle: TextStyle(color: tema.accent),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: tema.onBackground.withOpacity(0.2)),
+                      borderSide: BorderSide(color: tema.onBackground.withValues(alpha: 0.2)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: tema.accent),
                     ),
-                    prefixIcon: Icon(Icons.lock, color: tema.onBackground.withOpacity(0.5), size: 20),
+                    prefixIcon: Icon(Icons.lock, color: tema.onBackground.withValues(alpha: 0.5), size: 20),
                   ),
                 ),
               ],
@@ -447,7 +445,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 "CANCELAR",
-                style: TextStyle(color: tema.onBackground.withOpacity(0.5)),
+                style: TextStyle(color: tema.onBackground.withValues(alpha: 0.5)),
               ),
             ),
             ElevatedButton(
@@ -499,13 +497,15 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                         }
                       } catch (e) {
                         setState(() => validando = false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Datos incorrectos o acceso denegado.",
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Datos incorrectos o acceso denegado.",
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       }
                     },
               child: validando
@@ -529,10 +529,11 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     const List<int> puntosNivel = [0, 500, 1100, 1900, 2900, 4100, 5500];
     int nivel = 0;
     for (int i = 1; i < puntosNivel.length; i++) {
-      if (puntos >= puntosNivel[i])
+      if (puntos >= puntosNivel[i]) {
         nivel = i;
-      else
+      } else {
         break;
+      }
     }
     int puntosActual = puntosNivel[nivel];
     int puntosNext = nivel < 6 ? puntosNivel[nivel + 1] : 5500;
@@ -633,7 +634,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                   Text(
                     'Nivel ${_calcularNivel(_puntos)['nivel']}',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                     ),
                   ),
@@ -765,7 +766,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                                   vertical: 5,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.1),
+                                  color: Colors.orange.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                                 child: Text(
@@ -790,8 +791,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                                 ),
                               );
                               _navegandoAvatar = false;
-                              if (result != null)
+                              if (result != null) {
                                 setState(() => _avatarPath = result);
+                              }
                             },
                             child: CircleAvatar(
                               radius: 35,
@@ -831,7 +833,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                                 child: Text(
                                   "No hay desafíos disponibles",
                                   style: TextStyle(
-                                    color: tema.onBackground.withOpacity(0.6),
+                                    color: tema.onBackground.withValues(alpha: 0.6),
                                   ),
                                 ),
                               ),
@@ -919,7 +921,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -1018,7 +1020,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               leading: CircleAvatar(
-                backgroundColor: color.withOpacity(0.1),
+                backgroundColor: color.withValues(alpha: 0.1),
                 child: Icon(icono, color: color),
               ),
               title: Padding(
@@ -1047,7 +1049,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

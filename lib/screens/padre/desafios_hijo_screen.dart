@@ -56,6 +56,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
       });
       _cargarDesafios();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al cambiar estado: $e')));
@@ -162,7 +163,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
                               margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? colorBoton.withOpacity(0.05)
+                                    ? colorBoton.withValues(alpha: 0.05)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -470,8 +471,8 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
       child: ExpansionTile(
         leading: CircleAvatar(
           backgroundColor: estaActivo
-              ? color.withOpacity(0.1)
-              : Colors.grey.withOpacity(0.1),
+              ? color.withValues(alpha: 0.1)
+              : Colors.grey.withValues(alpha: 0.1),
           child: Icon(icono, color: estaActivo ? color : Colors.grey),
         ),
         title: Text(
@@ -491,7 +492,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
         ),
         trailing: Switch(
           value: estaActivo,
-          activeColor: color,
+          activeThumbColor: color,
           onChanged: (val) => _actualizarEstadoMision(id, val),
         ),
         children: [

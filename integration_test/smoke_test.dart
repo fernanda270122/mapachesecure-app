@@ -28,7 +28,7 @@ Widget _app(Widget screen) => ScreenUtilInit(
       designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (_, __) => MultiProvider(
+      builder: (_, child) => MultiProvider(
         providers: [
           ChangeNotifierProvider(
               create: (_) => TemaPadreProvider()..cargarTemaPadre()),

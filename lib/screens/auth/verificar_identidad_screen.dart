@@ -37,6 +37,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
         setState(() => _imageFile = File(photo.path));
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al abrir la cámara: $e')));
@@ -102,6 +103,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al enviar la verificación: $e')),
       );
@@ -216,9 +218,7 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 15,
-            color: paleta.primary.withOpacity(
-              0.8,
-            ), // Texto legible sobre fondo claro
+            color: paleta.primary.withValues(alpha: 0.8), // Texto legible sobre fondo claro
             height: 1.4,
             fontWeight: FontWeight.w500,
           ),
@@ -234,14 +234,12 @@ class _VerificarIdentidadScreenState extends State<VerificarIdentidadScreen> {
         height: 260,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(
-            0.9,
-          ), // Fondo blanco semi-sólido premium
+          color: Colors.white.withValues(alpha: 0.9), // Fondo blanco semi-sólido premium
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: paleta.accent, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),

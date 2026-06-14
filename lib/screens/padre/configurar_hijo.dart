@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -127,7 +126,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
 
       return enHorario && appsEnRegla.contains(packageActual.trim());
     } catch (e) {
-      print("Error en evaluación con Zona Horaria Chile: $e");
+      debugPrint("Error en evaluación con Zona Horaria Chile: $e");
       return false;
     }
   }
@@ -197,7 +196,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
     try {
       final data = await _api.get('/bloqueos/${widget.hijo['id']}');
       setState(() => _bloqueos = data is List ? data : []);
-    } catch (e) {}
+    } catch (e) {
+      debugPrint('Error al cargar bloqueos: $e');
+    }
   }
 
   Future<void> _eliminarBloqueo(String id) async {
@@ -320,7 +321,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16.r),
             side: BorderSide(
-              color: temaPadre.primary.withOpacity(0.25),
+              color: temaPadre.primary.withValues(alpha: 0.25),
               width: 1.2,
             ),
           ),
@@ -515,7 +516,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
               _diasSeleccionados.remove(dia);
             }
           }),
-          selectedColor: AppColors.primary.withOpacity(0.2),
+          selectedColor: AppColors.primary.withValues(alpha: 0.2),
           checkmarkColor: AppColors.primary,
           labelStyle: TextStyle(
             color: seleccionado ? AppColors.primary : Colors.grey,
@@ -574,7 +575,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                         borderRadius: BorderRadius.circular(16.r),
                         side: BorderSide(
                           color: _hayBloqueoTotalActivo
-                              ? temaPadre.primary.withOpacity(0.5)
+                              ? temaPadre.primary.withValues(alpha: 0.5)
                               : Colors.grey.shade200,
                           width: 1.5,
                         ),
@@ -612,7 +613,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                                   : Colors.grey,
                             ),
                           ),
-                          activeColor: temaPadre.primary,
+                          activeThumbColor: temaPadre.primary,
                           value: _hayBloqueoTotalActivo,
                           onChanged: (val) => _toggleBloqueoTotal(val),
                         ),
@@ -738,7 +739,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                             ),
                           ),
                           value: estaCheckeada,
-                          activeColor: _hayBloqueoTotalActivo
+                          activeThumbColor: _hayBloqueoTotalActivo
                               ? Colors.red
                               : temaPadre.primary,
                           onChanged:
@@ -837,7 +838,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
           return packageBuscado.toUpperCase();
         }).toList();
       } catch (e) {
-        print("Error en formateo de apps: $e");
+        debugPrint("Error en formateo de apps: $e");
       }
     }
 
@@ -849,7 +850,7 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.r),
         side: BorderSide(
-          color: isTotal ? Colors.red.withOpacity(0.5) : Colors.transparent,
+          color: isTotal ? Colors.red.withValues(alpha: 0.5) : Colors.transparent,
         ),
       ),
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
@@ -862,8 +863,8 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
               children: [
                 CircleAvatar(
                   backgroundColor: isTotal
-                      ? Colors.red.withOpacity(0.2)
-                      : colorPrimario.withOpacity(0.1),
+                      ? Colors.red.withValues(alpha: 0.2)
+                      : colorPrimario.withValues(alpha: 0.1),
                   child: Icon(
                     icono,
                     color: isTotal ? Colors.red : colorPrimario,
@@ -947,9 +948,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                       vertical: 6.h,
                     ),
                     decoration: BoxDecoration(
-                      color: colorPrimario.withOpacity(0.12),
+                      color: colorPrimario.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: colorPrimario.withOpacity(0.3)),
+                      border: Border.all(color: colorPrimario.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       nombreApp,

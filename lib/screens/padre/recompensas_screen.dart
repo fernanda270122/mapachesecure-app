@@ -108,7 +108,7 @@ class _RecompensasScreenState extends State<RecompensasScreen> {
               child: SwitchListTile(
                 secondary: CircleAvatar(
                   backgroundColor: activa
-                      ? color.withOpacity(0.15)
+                      ? color.withValues(alpha: 0.15)
                       : Colors.grey.shade100,
                   child: Icon(
                     r['icono'] as IconData,
@@ -127,7 +127,7 @@ class _RecompensasScreenState extends State<RecompensasScreen> {
                   ),
                 ),
                 value: activa,
-                activeColor: temaPadre
+                activeThumbColor: temaPadre
                     .primary, // <-- CAMBIADO EL COLOR DEL INTERRUPTOR ACTIVO AL TUYO
                 onChanged: (val) => setState(() => _activas[i] = val),
               ),

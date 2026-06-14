@@ -472,7 +472,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
         ],
       ),
       child: Row(
@@ -534,7 +534,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: colorIcono.withOpacity(0.1),
+          backgroundColor: colorIcono.withValues(alpha: 0.1),
           child: Icon(icono, color: colorIcono),
         ),
         title: Text(
@@ -568,7 +568,7 @@ class _HomePadreScreenState extends State<HomePadreScreen> {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: colorIcono.withOpacity(0.1),
+              backgroundColor: colorIcono.withValues(alpha: 0.1),
               child: Icon(Icons.smartphone, color: colorIcono),
             ),
             const SizedBox(width: 12),

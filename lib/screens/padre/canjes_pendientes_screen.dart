@@ -47,6 +47,7 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
     try {
       final res = await http.post(Uri.parse('$_base/canjes/$tipo/$canjeId'));
       if (res.statusCode == 200) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Solicitud ${tipo}ada con éxito'),
@@ -56,6 +57,7 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
         _cargarCanjes();
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Error al procesar acción')));
@@ -140,7 +142,7 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
                           vertical: 8.h,
                         ),
                         leading: CircleAvatar(
-                          backgroundColor: temaPadre.primary.withOpacity(0.1),
+                          backgroundColor: temaPadre.primary.withValues(alpha: 0.1),
                           radius: 22.r,
                           child: Icon(
                             Icons.card_giftcard,

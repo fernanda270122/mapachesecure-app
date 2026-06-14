@@ -65,7 +65,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
         _cargando = false;
       });
     } catch (e) {
-      print("Error cargando desafíos: $e");
+      debugPrint("Error cargando desafíos: $e");
       setState(() => _cargando = false);
     }
   }
@@ -163,9 +163,10 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                                 String tipoRaw = (desafio['tipo'] ?? 'General')
                                     .toString()
                                     .toLowerCase();
-                                if (tipoRaw == 'cognitivo')
+                                if (tipoRaw == 'cognitivo') {
                                   tipoRaw = 'cognitiva';
-                                if (tipoRaw == 'fisico') tipoRaw = 'fisica';
+                                }
+                                if (tipoRaw == 'fisico') { tipoRaw = 'fisica'; }
 
                                 final String tipoActual =
                                     tipoRaw; // Ahora tipoActual es consistente
@@ -181,13 +182,16 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
                                               '')
                                           .toString()
                                           .toLowerCase();
-                                  if (tipoAnterior == 'cognitivo')
+                                  if (tipoAnterior == 'cognitivo') {
                                     tipoAnterior = 'cognitiva';
-                                  if (tipoAnterior == 'fisico')
+                                  }
+                                  if (tipoAnterior == 'fisico') {
                                     tipoAnterior = 'fisica';
+                                  }
 
-                                  if (tipoActual != tipoAnterior)
+                                  if (tipoActual != tipoAnterior) {
                                     mostrarEncabezado = true;
+                                  }
                                 }
 
                                 return Column(
@@ -241,7 +245,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
         ],
       ),
       child: Row(
@@ -296,7 +300,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
               bottom: 10,
             ),
             leading: CircleAvatar(
-              backgroundColor: color.withOpacity(0.1),
+              backgroundColor: color.withValues(alpha: 0.1),
               child: Icon(icono, color: color),
             ),
             title: Padding(

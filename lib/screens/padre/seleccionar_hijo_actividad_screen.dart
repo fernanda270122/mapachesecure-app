@@ -125,7 +125,7 @@ class _SeleccionarHijoActividadScreenState
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
         leading: CircleAvatar(
-          backgroundColor: colorTema.withOpacity(0.1),
+          backgroundColor: colorTema.withValues(alpha: 0.1),
           radius: 20.r,
           child: Icon(Icons.analytics_outlined, color: colorTema, size: 20.r),
         ),

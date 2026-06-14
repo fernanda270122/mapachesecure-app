@@ -133,9 +133,7 @@ class _DesafiosScreenState extends State<DesafiosScreen> {
           vertical: 4.h,
         ), // <-- RESPONSIVO
         leading: CircleAvatar(
-          backgroundColor: colorTema.withOpacity(
-            0.1,
-          ), // <-- MATIZ DEL COLOR DEL PADRE
+          backgroundColor: colorTema.withValues(alpha: 0.1), // <-- MATIZ DEL COLOR DEL PADRE
           radius: 20.r, // <-- RESPONSIVO
           child: Icon(
             Icons.child_care,

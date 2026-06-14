@@ -69,46 +69,54 @@ class _ActividadHijoScreenState extends State<ActividadHijoScreen> {
     final lower = packageName.toLowerCase();
 
     // Mapeo manual de las más populares
-    if (lower.contains('whatsapp'))
+    if (lower.contains('whatsapp')) {
       return {'nombre': 'WhatsApp', 'icon': Icons.chat, 'color': Colors.green};
-    if (lower.contains('facebook') || lower.contains('katana'))
+    }
+    if (lower.contains('facebook') || lower.contains('katana')) {
       return {
         'nombre': 'Facebook',
         'icon': Icons.facebook,
         'color': Colors.blue,
       };
-    if (lower.contains('instagram'))
+    }
+    if (lower.contains('instagram')) {
       return {
         'nombre': 'Instagram',
         'icon': Icons.camera_alt,
         'color': Colors.purple,
       };
-    if (lower.contains('youtube'))
+    }
+    if (lower.contains('youtube')) {
       return {
         'nombre': 'YouTube',
         'icon': Icons.play_circle_filled,
         'color': Colors.red,
       };
-    if (lower.contains('tiktok') || lower.contains('zhiliao'))
+    }
+    if (lower.contains('tiktok') || lower.contains('zhiliao')) {
       return {
         'nombre': 'TikTok',
         'icon': Icons.music_note,
         'color': Colors.black87,
       };
-    if (lower.contains('chrome'))
+    }
+    if (lower.contains('chrome')) {
       return {
         'nombre': 'Chrome',
         'icon': Icons.public,
         'color': Colors.blueAccent,
       };
-    if (lower.contains('discord'))
+    }
+    if (lower.contains('discord')) {
       return {'nombre': 'Discord', 'icon': Icons.forum, 'color': Colors.indigo};
-    if (lower.contains('roblox'))
+    }
+    if (lower.contains('roblox')) {
       return {
         'nombre': 'Roblox',
         'icon': Icons.videogame_asset,
         'color': Colors.green,
       };
+    }
 
     // Si es una app desconocida, sacamos un nombre presentable
     final partes = packageName.split('.');
@@ -266,7 +274,7 @@ class _ActividadHijoScreenState extends State<ActividadHijoScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10.r),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10.r),
         ],
       ),
       child: Column(
@@ -298,7 +306,7 @@ class _ActividadHijoScreenState extends State<ActividadHijoScreen> {
             child: LinearProgressIndicator(
               value: porcentaje,
               minHeight: 12.h,
-              backgroundColor: primaryColor.withOpacity(0.2),
+              backgroundColor: primaryColor.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
             ),
           ),
@@ -321,7 +329,7 @@ class _ActividadHijoScreenState extends State<ActividadHijoScreen> {
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
         leading: CircleAvatar(
-          backgroundColor: colorIcono.withOpacity(0.1),
+          backgroundColor: colorIcono.withValues(alpha: 0.1),
           radius: 20.r,
           child: Icon(icon, color: colorIcono, size: 20.r),
         ),
@@ -337,7 +345,7 @@ class _ActividadHijoScreenState extends State<ActividadHijoScreen> {
             SizedBox(height: 6.h),
             LinearProgressIndicator(
               value: progress,
-              backgroundColor: colorIcono.withOpacity(0.1),
+              backgroundColor: colorIcono.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(colorIcono),
             ),
           ],

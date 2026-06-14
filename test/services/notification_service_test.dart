@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mapachesecure_app/services/notification_service.dart';
 
@@ -22,18 +23,18 @@ class TestNotificationService implements NotificationService {
   Future<void> registrarToken() async {
     try {
       final token = tokenSimulado;
-      print('[FCM Test] Token simulado obtenido: $token');
+      debugPrint('[FCM Test] Token simulado obtenido: $token');
       if (token != null) {
         if (simularErrorApi) throw Exception('Error 500 de Render');
         datosEnviadosAlBackend = {'fcm_token': token};
-        print(
+        debugPrint(
           '[FCM Test] Token registrado en backend correctamente (Simulado)',
         );
       } else {
-        print('[FCM Test] Token es null — no se pudo obtener');
+        debugPrint('[FCM Test] Token es null — no se pudo obtener');
       }
     } catch (e) {
-      print('[FCM Test] Error al registrar token: $e');
+      debugPrint('[FCM Test] Error al registrar token: $e');
       rethrow;
     }
   }

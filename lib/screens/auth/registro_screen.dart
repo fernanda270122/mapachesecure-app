@@ -174,7 +174,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   'Únete a la familia Raccu',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: paleta.primary.withOpacity(0.7),
+                    color: paleta.primary.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -218,7 +218,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     hintText: 'Fecha de Nacimiento',
                     hintStyle: const TextStyle(color: Colors.black54),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.9),
+                    fillColor: Colors.white.withValues(alpha: 0.9),
                     prefixIcon: Icon(
                       Icons.cake_outlined,
                       color: paleta.primary,
@@ -294,7 +294,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
         hintText: label,
         hintStyle: const TextStyle(color: Colors.black54),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.9),
+        fillColor: Colors.white.withValues(alpha: 0.9),
         prefixIcon: Icon(icon, color: paleta.primary),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),

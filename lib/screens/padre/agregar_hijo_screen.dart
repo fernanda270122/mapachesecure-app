@@ -312,7 +312,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                                 }
                               });
                             },
-                            selectedColor: temaPadre.primary.withOpacity(0.2),
+                            selectedColor: temaPadre.primary.withValues(alpha: 0.2),
                             checkmarkColor: temaPadre.primary,
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
@@ -396,7 +396,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
     required Color colorBordeFocus,
   }) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       dropdownColor: Colors.white,
       decoration: _inputDecor(label, icon, colorBordeFocus),
       items: opciones
@@ -420,7 +420,7 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       labelStyle: TextStyle(color: Colors.black54, fontSize: 13.sp),
       prefixIcon: Icon(icon, color: colorFocus, size: 20.r),
       filled: true,
-      fillColor: Colors.white.withOpacity(0.6),
+      fillColor: Colors.white.withValues(alpha: 0.6),
       contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
       enabledBorder: OutlineInputBorder(

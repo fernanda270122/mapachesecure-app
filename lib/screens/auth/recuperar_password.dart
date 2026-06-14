@@ -27,6 +27,7 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
       setState(() => _enviado = true);
     } catch (e) {
       debugPrint('ERROR RECUPERAR PASSWORD: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -72,7 +73,7 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -94,7 +95,7 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
                       Text(
                         'Ingresa tu correo y te enviaremos un link para recuperar tu contraseña.',
                         style: TextStyle(
-                          color: paleta.primary.withOpacity(0.8),
+                          color: paleta.primary.withValues(alpha: 0.8),
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
                         ),
@@ -110,7 +111,7 @@ class _RecuperarPasswordState extends State<RecuperarPassword> {
                           hintText: 'Correo electrónico',
                           hintStyle: const TextStyle(color: Colors.black54),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.9),
+                          fillColor: Colors.white.withValues(alpha: 0.9),
                           prefixIcon: Icon(Icons.email, color: paleta.primary),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),

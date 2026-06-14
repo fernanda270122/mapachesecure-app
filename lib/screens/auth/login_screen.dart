@@ -72,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ? homeScreen
           : OnboardingScreen(rol: rol, destino: homeScreen, userId: usuarioId);
 
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => destino),
@@ -132,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: Icon(
                     Icons.email_outlined,
-                    color: paleta.primary.withOpacity(0.7),
+                    color: paleta.primary.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -147,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: const OutlineInputBorder(),
                   prefixIcon: Icon(
                     Icons.lock_outline,
-                    color: paleta.primary.withOpacity(0.7),
+                    color: paleta.primary.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -210,14 +211,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         }
                       } catch (e) {
                         setState(() => validando = false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Credenciales inválidas o permiso denegado.",
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Credenciales inválidas o permiso denegado.",
+                              ),
+                              backgroundColor: Colors.red,
                             ),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                          );
+                        }
                       }
                     },
               child: validando
@@ -282,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     hintText: 'Correo electrónico',
                     hintStyle: const TextStyle(color: Colors.black54),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.9),
+                    fillColor: Colors.white.withValues(alpha: 0.9),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: paleta.accent),
@@ -304,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     hintText: 'Contraseña',
                     hintStyle: const TextStyle(color: Colors.black54),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.9),
+                    fillColor: Colors.white.withValues(alpha: 0.9),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: paleta.accent),

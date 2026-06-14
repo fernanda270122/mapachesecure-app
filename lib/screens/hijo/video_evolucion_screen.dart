@@ -80,7 +80,7 @@ class _VideoEvolucionScreenState extends State<VideoEvolucionScreen> {
             opacity: _mostrandoMensaje ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 800),
             child: Container(
-              color: Colors.black.withOpacity(0.65),
+              color: Colors.black.withValues(alpha: 0.65),
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
