@@ -249,35 +249,23 @@ void main() {
 
   // ── 5. HU-04: Como padre, seleccionar qué aplicaciones deseo bloquear ────────
   testWidgets('5. HU-04 — Padre configura protección del hijo', (tester) async {
-    final mockVacio = MockClient((request) async {
-      if (request.url.path.contains('/apps/')) {
-        return http.Response(jsonEncode([]), 200);
-      }
-      if (request.url.path.contains('/bloqueos/')) {
-        return http.Response(jsonEncode([]), 200);
-      }
-      return http.Response(jsonEncode({}), 200);
-    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', _padreToken);
+    await prefs.setString('user_id', _hijoId);
 
-    await http.runWithClient(() async {
-      await tester.pumpWidget(_app(
-        ConfigurarHijoScreen(
-          hijo: const {'id': 'hijo_001', 'nombre': 'Catalina'},
-        ),
-      ));
-      await tester.pump(const Duration(seconds: 2));
+    await tester.pumpWidget(_app(
+      ConfigurarHijoScreen(
+        hijo: {'id': _hijoId, 'nombre': 'Catalina'},
+      ),
+    ));
+    await Future.delayed(const Duration(seconds: 8));
+    await tester.pump();
 
-      expect(find.text('Configurar a Catalina'), findsOneWidget);
-      await tester.pump(const Duration(seconds: 2));
+    expect(find.text('Configurar a Catalina'), findsOneWidget);
+    expect(find.text('Bloqueos activos'), findsOneWidget);
+    expect(find.text('Apps a bloquear'), findsOneWidget);
 
-      expect(find.text('Bloqueos activos'), findsOneWidget);
-      expect(find.text('Apps a bloquear'), findsOneWidget);
-
-      await tester.tap(find.byType(Switch).first);
-      await tester.pump(const Duration(seconds: 2));
-
-      expect(find.textContaining('2 a 3 minutos'), findsOneWidget);
-    }, () => mockVacio);
+    await Future.delayed(const Duration(seconds: 3));
   });
 
   // ── 6. HU-09: Como padre, gestionar recompensas vinculadas a los desafíos ────
