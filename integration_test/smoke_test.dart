@@ -5,7 +5,6 @@ import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
