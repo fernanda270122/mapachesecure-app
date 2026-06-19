@@ -28,7 +28,11 @@ class _VideoEvolucionScreenState extends State<VideoEvolucionScreen> {
 
   Future<void> _initVideo() async {
     _controller = VideoPlayerController.asset(widget.videoPath);
-    await _controller.initialize();
+    try {
+      await _controller.initialize();
+    } catch (_) {
+      return;
+    }
 
     if (!mounted) return;
     setState(() => _inicializado = true);
