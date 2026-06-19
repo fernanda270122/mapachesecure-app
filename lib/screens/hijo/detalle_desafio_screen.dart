@@ -31,9 +31,11 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
 
   // Configuración del motor de voz
   Future<void> _configurarTts() async {
-    await _flutterTts.setLanguage("es-CL"); // Acento chileno
-    await _flutterTts.setSpeechRate(0.5); // Velocidad pausada para niños
-    await _flutterTts.setPitch(1.0); // Tono amigable
+    try {
+      await _flutterTts.setLanguage("es-CL");
+      await _flutterTts.setSpeechRate(0.5);
+      await _flutterTts.setPitch(1.0);
+    } catch (_) {}
   }
 
   // Función para activar la voz

@@ -26,7 +26,7 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
-    _tts.setLanguage('es-MX');
+    _tts.setLanguage('es-MX').catchError((_) {});
   }
 
   Future<void> _cargarDatos() async {
