@@ -10,7 +10,11 @@ class ApiService {
   static const String _baseUrl = 'https://mapachesecure-backend.onrender.com';
   final http.Client _client;
 
-  ApiService({http.Client? client}) : _client = client ?? http.Client();
+  // Test-only: set a global mock client to avoid real network calls in unit tests.
+  // Has no effect in production (stays null).
+  static http.Client? testClient;
+
+  ApiService({http.Client? client}) : _client = client ?? testClient ?? http.Client();
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
