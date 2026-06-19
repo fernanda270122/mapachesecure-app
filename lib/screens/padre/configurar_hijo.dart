@@ -66,6 +66,7 @@ class ConfigurarHijoScreen extends StatefulWidget {
 
 class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   final ApiService _api = ApiService();
+  Timer? _relojTimer;
   List<dynamic> _appsBlockeadas = [];
   bool _cargando = true;
   List<dynamic> _bloqueos = [];
@@ -135,9 +136,15 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
   void initState() {
     super.initState();
     _cargarDatos();
-    Timer.periodic(const Duration(minutes: 1), (timer) {
+    _relojTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) setState(() {});
     });
+  }
+
+  @override
+  void dispose() {
+    _relojTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _cargarDatos() async {

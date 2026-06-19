@@ -29,7 +29,7 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
   void initState() {
     super.initState();
     _cargarDesafios();
-    _tts.setLanguage('es-MX');
+    _tts.setLanguage('es-MX').catchError((_) {});
   }
 
   Future<void> _cargarDesafios() async {

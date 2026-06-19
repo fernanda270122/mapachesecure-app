@@ -50,11 +50,13 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _cargarDatos();
-    NotificationService().registrarToken();
-    _tts.setLanguage('es-MX');
+    try {
+      NotificationService().registrarToken().catchError((_) {});
+    } catch (_) {}
+    _tts.setLanguage('es-MX').catchError((_) {});
 
     // Llamamos a la validación secuencial inteligente
-    _activarGuardian();
+    _activarGuardian().catchError((_) {});
 
     _floatController = AnimationController(
       vsync: this,
