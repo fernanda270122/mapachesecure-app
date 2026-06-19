@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class AuthService {
-  final ApiService _api = ApiService();
+  final ApiService _api;
+  AuthService({ApiService? api}) : _api = api ?? ApiService();
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await _api.post('/auth/login', {

@@ -7,8 +7,10 @@ class ApiUnauthorizedException implements Exception {
 }
 
 class ApiService {
-  // URL de producción — no cambiar a 'http://10.0.2.2:8000'; (solo funciona en emulador)
   static const String _baseUrl = 'https://mapachesecure-backend.onrender.com';
+  final http.Client _client;
+
+  ApiService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,7 +27,7 @@ class ApiService {
   }
 
   Future<dynamic> get(String endpoint) async {
-    final response = await http.get(
+    final response = await _client.get(
       Uri.parse('$_baseUrl$endpoint'),
       headers: await _headers(),
     );
@@ -42,7 +44,7 @@ class ApiService {
     Map<String, dynamic> body, {
     bool auth = true,
   }) async {
-    final response = await http.post(
+    final response = await _client.post(
       Uri.parse('$_baseUrl$endpoint'),
       headers: await _headers(auth: auth),
       body: jsonEncode(body),
@@ -57,7 +59,7 @@ class ApiService {
   }
 
   Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
-    final response = await http.put(
+    final response = await _client.put(
       Uri.parse('$_baseUrl$endpoint'),
       headers: await _headers(),
       body: jsonEncode(body),
@@ -71,7 +73,7 @@ class ApiService {
   }
 
   Future<dynamic> delete(String endpoint) async {
-    final response = await http.delete(
+    final response = await _client.delete(
       Uri.parse('$_baseUrl$endpoint'),
       headers: await _headers(),
     );

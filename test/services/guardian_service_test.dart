@@ -181,5 +181,150 @@ void main() {
         expect(resultado, true); // Bloqueo preventivo exitoso
       },
     );
+
+    test(
+      '6. ReglaBloqueo constructor directo debe exponer sus propiedades correctamente',
+      () {
+        final regla = ReglaBloqueo(
+          inicio: '09:00',
+          fin: '17:00',
+          dias: [0, 1, 2, 3, 4],
+          appsAfectadas: ['com.instagram.android', 'com.tiktok.android'],
+        );
+
+        expect(regla.inicio, '09:00');
+        expect(regla.fin, '17:00');
+        expect(regla.dias.length, 5);
+        expect(regla.appsAfectadas, contains('com.tiktok.android'));
+      },
+    );
+
+    test(
+      '7. ReglaBloqueo.fromJson con package_names null debe resultar en lista vacía',
+      () {
+        final json = {
+          'hora_inicio': '08:00',
+          'hora_fin': '20:00',
+          'dias_semana': '[0]',
+          'package_names': null,
+        };
+
+        final regla = ReglaBloqueo.fromJson(json);
+
+        expect(regla.appsAfectadas, isEmpty);
+      },
+    );
+
+    test(
+      '8. ReglaBloqueo.fromJson con una sola app debe parsear correctamente',
+      () {
+        final json = {
+          'hora_inicio': '15:00',
+          'hora_fin': '22:00',
+          'dias_semana': '[5, 6]',
+          'package_names': 'com.whatsapp',
+        };
+
+        final regla = ReglaBloqueo.fromJson(json);
+
+        expect(regla.appsAfectadas.length, 1);
+        expect(regla.appsAfectadas.first, 'com.whatsapp');
+        expect(regla.dias, containsAll([5, 6]));
+      },
+    );
+
+    test(
+      '9. estaEnHorarioProhibido debe retornar TRUE en el borde exacto de inicio',
+      () {
+        final utils = TestGuardianUtils();
+        final regla = ReglaBloqueo(
+          inicio: '10:00',
+          fin: '12:00',
+          dias: [0], // Lunes
+          appsAfectadas: ['com.juego'],
+        );
+
+        // Lunes a las 10:00 exactas (borde de inicio)
+        final lunes10 = DateTime(2026, 6, 15, 10, 0); // 15 jun 2026 = Lunes
+        expect(utils.evaluarHorarioProhibido(regla, lunes10), true);
+      },
+    );
+
+    test(
+      '10. estaEnHorarioProhibido debe retornar TRUE en el borde exacto de fin',
+      () {
+        final utils = TestGuardianUtils();
+        final regla = ReglaBloqueo(
+          inicio: '10:00',
+          fin: '12:00',
+          dias: [0], // Lunes
+          appsAfectadas: ['com.juego'],
+        );
+
+        // Lunes a las 12:00 exactas (borde de fin)
+        final lunes12 = DateTime(2026, 6, 15, 12, 0);
+        expect(utils.evaluarHorarioProhibido(regla, lunes12), true);
+      },
+    );
+
+    test(
+      '11. App en lista negra que no está en zona segura debe bloquearse',
+      () {
+        final utils = TestGuardianUtils();
+
+        final resultado = utils.evaluarSiDebeBloquear(
+          appActual: 'com.roblox.client',
+          appsEnListaNegra: ['com.roblox.client'],
+          reglasProgramadas: [],
+          momentoSimulado: DateTime.now(),
+          miPropiaApp: 'com.mapachesecure.mapachesecure_app',
+        );
+
+        expect(resultado, true);
+      },
+    );
+
+    test(
+      '12. App no listada en ninguna regla ni lista negra no debe bloquearse',
+      () {
+        final utils = TestGuardianUtils();
+
+        final resultado = utils.evaluarSiDebeBloquear(
+          appActual: 'com.app.segura',
+          appsEnListaNegra: ['com.roblox.client'],
+          reglasProgramadas: [],
+          momentoSimulado: DateTime.now(),
+          miPropiaApp: 'com.mapachesecure.mapachesecure_app',
+        );
+
+        expect(resultado, false);
+      },
+    );
+
+    test(
+      '13. App incluida en una regla de horario activa debe bloquearse',
+      () {
+        final utils = TestGuardianUtils();
+        // Regla activa un Lunes de 00:00 a 23:59
+        final regla = ReglaBloqueo(
+          inicio: '00:00',
+          fin: '23:59',
+          dias: [0], // Lunes (weekday=1 → weekday-1=0)
+          appsAfectadas: ['com.juego.peligroso'],
+        );
+
+        final lunes = DateTime(2026, 6, 15, 14, 0); // Lunes a las 14:00
+
+        final resultado = utils.evaluarSiDebeBloquear(
+          appActual: 'com.juego.peligroso',
+          appsEnListaNegra: [],
+          reglasProgramadas: [regla],
+          momentoSimulado: lunes,
+          miPropiaApp: 'com.mapachesecure.mapachesecure_app',
+        );
+
+        expect(resultado, true);
+      },
+    );
   });
 }
