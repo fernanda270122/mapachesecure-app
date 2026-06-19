@@ -35,8 +35,13 @@ class _SeleccionAvatarScreenState extends State<SeleccionAvatarScreen> {
 
     final avatar = AvatarTypes.todos[indice];
     final controller = VideoPlayerController.asset(avatar.videoPath!);
-    await controller.initialize();
-    await controller.setLooping(true);
+    try {
+      await controller.initialize();
+      await controller.setLooping(true);
+    } catch (_) {
+      controller.dispose();
+      return;
+    }
 
     if (!mounted) {
       controller.dispose();
