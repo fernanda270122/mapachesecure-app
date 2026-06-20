@@ -211,5 +211,132 @@ void main() {
       expect(find.text('Confirmar'), findsWidgets); // botón en el diálogo
       expect(find.textContaining('recompensa'), findsWidgets);
     });
+
+    testWidgets('16. Con 0 recompensas activas Confirmar muestra SnackBar de error', (tester) async {
+      await cargar(tester);
+      await tester.tap(find.text('Confirmar'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Debes activar al menos una recompensa'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+    });
+
+    testWidgets('17. cargarRecompensasActivas pre-activa recompensas del backend', (tester) async {
+      var recompensasCalled = false;
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/recompensas/hijo1')) {
+          recompensasCalled = true;
+          return http.Response(
+            '[{"titulo":"🎬 Elegir la película"}]',
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (path.contains('/hijos')) return http.Response(_hijoJson, 200);
+        return http.Response('[]', 200);
+      });
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_wrap());
+      // Cadena: _cargarHijos → _cargarRecompensasActivas (dos rondas de runAsync para la cadena secuencial)
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 300)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 300)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(recompensasCalled, true);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Confirmar'), findsNothing);
+      final switches = tester.widgetList<Switch>(find.byType(Switch));
+      expect(switches.any((s) => s.value == true), true);
+    });
+
+    testWidgets('18. Recompensas de comunidad muestran _tarjetaComunidad', (tester) async {
+      ApiService.testClient = MockClient((req) async {
+        if (req.url.path.contains('/catalogo')) {
+          return http.Response('[{"id":"c1","nombre":"Karaoke familiar","icono":"microfono","descripcion":"Cantar","puntos_sugeridos":200,"creado_por":"padre1"}]', 200);
+        }
+        return http.Response('[]', 200);
+      });
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_wrap());
+      // En el entorno fake-async, los futuros de MockClient se procesan con pump()
+      // sin necesidad de runAsync, ya que el cliente devuelve Future.value() (microtask)
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.textContaining('Aún no hay'), findsNothing, reason: '_comunidad debe tener items');
+      expect(find.text('Karaoke familiar'), findsOneWidget);
+    });
+
+    testWidgets('19. Activar 3 recompensas y luego una cuarta muestra SnackBar de límite', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await cargar(tester);
+      final switches = find.byType(Switch);
+      // Activamos 3
+      await tester.tap(switches.at(0)); await tester.pump();
+      await tester.tap(switches.at(1)); await tester.pump();
+      await tester.tap(switches.at(2)); await tester.pump();
+      // Intentamos activar la 4ta
+      await tester.tap(switches.at(3));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Puedes activar máximo 3 recompensas'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+    });
+
+    testWidgets('20. Guardar recompensas desde dialogo llama a la API y muestra éxito', (tester) async {
+      var postCount = 0;
+      ApiService.testClient = MockClient((req) async {
+        if (req.method == 'POST' && req.url.path.contains('/recompensas/')) {
+          postCount++;
+          return http.Response('{"id":"new"}', 200);
+        }
+        if (req.url.path.contains('/hijos')) return http.Response(_hijoJson, 200);
+        return http.Response('[]', 200);
+      });
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 300)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      // Activamos una recompensa
+      await tester.tap(find.byType(Switch).first);
+      await tester.pump();
+      // Tap Confirmar → abre diálogo
+      await tester.tap(find.text('Confirmar'));
+      await tester.pumpAndSettle();
+      // Tap en el botón Confirmar del diálogo (ElevatedButton)
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Confirmar'));
+      await tester.pumpAndSettle();
+      expect(postCount, greaterThan(0));
+    });
+
+    testWidgets('21. Formulario nueva recompensa con nombre y hijo guarda exitosamente', (tester) async {
+      ApiService.testClient = MockClient((req) async {
+        if (req.method == 'POST' && req.url.path.contains('/recompensas/')) {
+          return http.Response('{"id":"new"}', 200);
+        }
+        if (req.url.path.contains('/hijos')) return http.Response(_hijoJson, 200);
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 300)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Mi recompensa especial');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Agregar'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Recompensa personalizada'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+    });
   });
 }
