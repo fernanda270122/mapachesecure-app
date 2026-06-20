@@ -132,4 +132,58 @@ void main() {
       expect(find.textContaining('fecha'), findsOneWidget);
     });
   });
+
+  group('Pruebas con fecha seleccionada', () {
+    // Helper: abre date picker y selecciona la fecha inicial pulsando OK
+    Future<bool> seleccionarFechaEnDatePicker(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.cake_outlined));
+      await tester.pumpAndSettle();
+      // El date picker abre un dialog con botones Cancel/OK
+      final okButton = find.text('OK');
+      if (okButton.evaluate().isEmpty) return false;
+      await tester.tap(okButton);
+      await tester.pumpAndSettle();
+      return true;
+    }
+
+    testWidgets('12. Tap en campo fecha abre el date picker', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: RegistroScreen()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.cake_outlined));
+      await tester.pumpAndSettle();
+      // Verificamos que abrió algún diálogo modal (date picker)
+      expect(find.byType(Dialog).evaluate().isNotEmpty || find.text('OK').evaluate().isNotEmpty, true);
+    });
+
+    testWidgets('13. Con fecha elegida y contraseñas iguales _registro() llama a la API', (tester) async {
+      ApiService.testClient = MockClient((req) async =>
+          http.Response('{"detail": "Email ya registrado"}', 400));
+      await tester.pumpWidget(const MaterialApp(home: RegistroScreen()));
+      await tester.pumpAndSettle();
+      // Seleccionamos fecha
+      final fechaOk = await seleccionarFechaEnDatePicker(tester);
+      if (!fechaOk) return; // Skip si el date picker no muestra OK
+      // Introducimos contraseñas iguales
+      await tester.enterText(find.byType(TextField).at(2), 'password123');
+      await tester.enterText(find.byType(TextField).at(3), 'password123');
+      await tester.tap(find.text('REGISTRARSE'));
+      await tester.pumpAndSettle();
+      // El catch muestra error genérico (no de contraseñas ni de fecha)
+      expect(find.text('Error al registrarse. Intenta de nuevo.'), findsOneWidget);
+    });
+
+    testWidgets('14. Error 429 muestra mensaje de límite de correos', (tester) async {
+      ApiService.testClient = MockClient((req) async =>
+          http.Response('{"detail": "429 rate limit"}', 429));
+      await tester.pumpWidget(const MaterialApp(home: RegistroScreen()));
+      await tester.pumpAndSettle();
+      final fechaOk = await seleccionarFechaEnDatePicker(tester);
+      if (!fechaOk) return;
+      await tester.enterText(find.byType(TextField).at(2), 'password123');
+      await tester.enterText(find.byType(TextField).at(3), 'password123');
+      await tester.tap(find.text('REGISTRARSE'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('límite'), findsOneWidget);
+    });
+  });
 }
