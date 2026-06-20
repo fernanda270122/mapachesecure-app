@@ -204,5 +204,44 @@ void main() {
         expect(find.text('Crea tu cuenta'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '9. Tap en Olvidé mi contraseña navega a recuperar contraseña',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(crearEntornoSeguro(const LoginScreen()));
+        await tester.tap(find.text('Olvidé mi contraseña'));
+        await tester.pumpAndSettle();
+        expect(find.text('Recuperar contraseña'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '10. DESACTIVAR GUARDIÁN con credenciales padre navega exitosamente',
+      (WidgetTester tester) async {
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/auth/login')) {
+            return http.Response(
+              '{"access_token":"t","refresh_token":"r","user_id":"p1","perfil":{"rol":"padre","nombre":"Papa"}}',
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }
+          return http.Response('{}', 200);
+        });
+        await tester.pumpWidget(crearEntornoSeguro(const LoginScreen()));
+        final loginState = tester.state(find.byType(LoginScreen)) as dynamic;
+        tester.runAsync(() async {
+          loginState.intentarCerrarSesion(loginState.context);
+        });
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).first, 'padre@test.com');
+        await tester.enterText(find.byType(TextField).last, 'pass123');
+        await tester.tap(find.text('DESACTIVAR GUARDIÁN'));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.textContaining('Credenciales inválidas'), findsNothing);
+        expect(find.byType(LoginScreen), findsWidgets);
+      },
+    );
   });
 }
