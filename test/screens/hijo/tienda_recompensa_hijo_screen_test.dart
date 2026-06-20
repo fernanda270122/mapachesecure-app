@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/testing.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/tienda_recompensa_hijo_screen.dart';
+import 'package:mapachesecure_app/services/api_service.dart';
 
 Widget _wrap() => ChangeNotifierProvider(
       create: (_) => TemaProvider(),
@@ -15,6 +18,11 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({'user_id': 'test-uid'});
+    ApiService.testClient = MockClient((request) async => http.Response('[]', 200));
+  });
+
+  tearDown(() {
+    ApiService.testClient = null;
   });
 
   group('Pruebas para TiendaRecompensasHijoScreen', () {
