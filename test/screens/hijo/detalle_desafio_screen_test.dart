@@ -14,11 +14,10 @@ const _desafioTest = {
   'esta_activo': true,
 };
 
-Widget _wrap() => ChangeNotifierProvider(
+Widget _wrap([Map<String, dynamic> desafio = _desafioTest]) =>
+    ChangeNotifierProvider(
       create: (_) => TemaProvider(),
-      child: const MaterialApp(
-        home: DetalleDesafioScreen(desafio: _desafioTest),
-      ),
+      child: MaterialApp(home: DetalleDesafioScreen(desafio: desafio)),
     );
 
 void main() {
@@ -82,6 +81,85 @@ void main() {
         await tester.pumpWidget(_wrap());
         await tester.pumpAndSettle();
         expect(find.text('ENVIAR DESAFÍO'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '7. Tap ENVIAR sin foto muestra SnackBar de advertencia',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ENVIAR DESAFÍO'));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(
+          find.text('¡Saca una foto para demostrar que cumpliste!'),
+          findsOneWidget,
+        );
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
+
+    testWidgets(
+      '8. Dificultad "facil" muestra badge verde con texto NIVEL: FACIL',
+      (tester) async {
+        await tester.pumpWidget(_wrap(const {
+          'id': '1',
+          'titulo': 'Reto fácil',
+          'descripcion': 'Descripción fácil.',
+          'tipo': 'cognitivo',
+          'puntos': 10,
+          'dificultad': 'facil',
+        }));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('NIVEL: FACIL'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '9. Dificultad "dificil" muestra badge rojo con texto NIVEL: DIFICIL',
+      (tester) async {
+        await tester.pumpWidget(_wrap(const {
+          'id': '2',
+          'titulo': 'Reto difícil',
+          'descripcion': 'Descripción difícil.',
+          'tipo': 'orden',
+          'puntos': 100,
+          'dificultad': 'dificil',
+        }));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('NIVEL: DIFICIL'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '10. Dificultad nula usa texto default "NORMAL" en el badge',
+      (tester) async {
+        await tester.pumpWidget(_wrap(const {
+          'id': '3',
+          'titulo': 'Reto sin dificultad',
+          'descripcion': 'Sin dificultad asignada.',
+          'tipo': 'general',
+          'puntos': 20,
+        }));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('NIVEL: NORMAL'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '11. Título nulo en desafio usa texto por defecto en AppBar',
+      (tester) async {
+        await tester.pumpWidget(_wrap(const {
+          'id': '4',
+          'descripcion': 'Sin título asignado.',
+          'tipo': 'general',
+          'puntos': 5,
+          'dificultad': 'medio',
+        }));
+        await tester.pumpAndSettle();
+        expect(find.text('Resolver Desafío'), findsOneWidget);
       },
     );
   });
