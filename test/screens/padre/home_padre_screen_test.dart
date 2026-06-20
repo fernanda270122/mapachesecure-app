@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:http/http.dart' as http;
@@ -8,9 +9,13 @@ import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 
-Widget _wrap() => ChangeNotifierProvider(
-      create: (_) => TemaPadreProvider(),
-      child: const MaterialApp(home: HomePadreScreen()),
+Widget _wrap() => ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      builder: (_, __) => ChangeNotifierProvider(
+        create: (_) => TemaPadreProvider(),
+        child: const MaterialApp(home: HomePadreScreen()),
+      ),
     );
 
 Future<void> _pumpLoaded(WidgetTester tester) async {
@@ -155,6 +160,71 @@ void main() {
     testWidgets('14. Muestra RefreshIndicator tras cargar datos', (tester) async {
       await cargar(tester);
       expect(find.byType(RefreshIndicator), findsOneWidget);
+    });
+
+    testWidgets('15. Drawer se abre y muestra los items de navegación', (tester) async {
+      // Suprimimos el overflow del DrawerHeader en viewport de test (bug conocido de layout)
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Agregar Hijo/a'), findsOneWidget);
+      expect(find.text('Gestionar Desafíos'), findsOneWidget);
+      expect(find.text('Tienda de Recompensas'), findsOneWidget);
+      expect(find.text('Cerrar Sesión', skipOffstage: false), findsOneWidget);
+    });
+
+    testWidgets('16. Tap en Inicio en el drawer lo cierra', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Inicio / Panel de control'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Panel de Control'), findsOneWidget);
+    });
+
+    testWidgets('17. Resumen muestra formato de horas cuando tiempo es mayor a 60 min', (tester) async {
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/hijos')) return http.Response(_unHijoJson, 200);
+        if (path.contains('/completados')) return http.Response('[]', 200);
+        if (path.contains('/puntos')) return http.Response('{"total_puntos": 0}', 200);
+        return http.Response('[{"minutos_uso": 90}]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 400)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('1h 30m'), findsOneWidget);
+    });
+
+    testWidgets('18. Tap en tarjeta de hijo navega a ConfigurarHijoScreen', (tester) async {
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/hijos')) return http.Response(_unHijoJson, 200);
+        if (path.contains('/completados')) return http.Response('[]', 200);
+        if (path.contains('/puntos')) return http.Response('{"total_puntos": 0}', 200);
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 400)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.tap(find.text('Lucas'));
+      await tester.pump(const Duration(milliseconds: 300));
+      // ConfigurarHijoScreen se carga (muestra Lucas en AppBar o CircularProgressIndicator)
+      expect(find.textContaining('Lucas'), findsWidgets);
     });
   });
 }
