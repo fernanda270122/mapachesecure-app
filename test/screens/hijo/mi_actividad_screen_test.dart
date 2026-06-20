@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:usage_stats/usage_stats.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/providers/actividad_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
@@ -10,6 +11,24 @@ import 'package:mapachesecure_app/screens/hijo/mi_actividad_screen.dart';
 class FakeActividadProvider extends ActividadProvider {
   @override
   Future<void> obtenerActividadDelDia() async {}
+}
+
+// Provider con apps en uso y más de 1 hora de pantalla
+class FakeActividadProviderConDatos extends ActividadProvider {
+  @override
+  Future<void> obtenerActividadDelDia() async {}
+
+  @override
+  List<UsageInfo> get listaUsoReal => [
+    UsageInfo(
+      packageName: 'com.google.android.youtube',
+      totalTimeInForeground: '3660000', // 61 minutos en ms
+    ),
+    UsageInfo(
+      packageName: 'com.app.desconocida',
+      totalTimeInForeground: '1800000', // 30 minutos
+    ),
+  ];
 }
 
 Widget _wrap({ActividadProvider? actividad}) => MultiProvider(
@@ -98,5 +117,47 @@ void main() {
         expect(find.text('Tiempo por Aplicación'), findsOneWidget);
       },
     );
+  });
+
+  group('Pruebas con datos de uso', () {
+    Widget _wrapConDatos() => MultiProvider(
+      providers: [
+        ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider()),
+        ChangeNotifierProvider<ActividadProvider>(
+          create: (_) => FakeActividadProviderConDatos(),
+        ),
+      ],
+      child: const MaterialApp(home: MiActividadScreen()),
+    );
+
+    testWidgets('8. Muestra tiempo en formato horas cuando supera 1 hora', (tester) async {
+      await tester.pumpWidget(_wrapConDatos());
+      await tester.pumpAndSettle();
+      expect(find.textContaining('h '), findsOneWidget);
+    });
+
+    testWidgets('9. Muestra tarjeta de app YouTube cuando está en la lista', (tester) async {
+      await tester.pumpWidget(_wrapConDatos());
+      await tester.pumpAndSettle();
+      expect(find.text('YouTube'), findsOneWidget);
+    });
+
+    testWidgets('10. Muestra tarjeta de app desconocida con nombre del paquete', (tester) async {
+      await tester.pumpWidget(_wrapConDatos());
+      await tester.pumpAndSettle();
+      expect(find.text('desconocida'), findsOneWidget);
+    });
+
+    testWidgets('11. Muestra tiempo de uso de YouTube en formato minutos', (tester) async {
+      await tester.pumpWidget(_wrapConDatos());
+      await tester.pumpAndSettle();
+      expect(find.textContaining('min'), findsWidgets);
+    });
+
+    testWidgets('12. No muestra mensaje de no hay registro cuando hay datos', (tester) async {
+      await tester.pumpWidget(_wrapConDatos());
+      await tester.pumpAndSettle();
+      expect(find.text('No hay registro de aplicaciones usadas hoy.'), findsNothing);
+    });
   });
 }

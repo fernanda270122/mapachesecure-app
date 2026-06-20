@@ -1,9 +1,9 @@
-// This is a basic Flutter widget test.
+// Prueba de widget básica de Flutter.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Para interactuar con un widget en tu test, usa WidgetTester
+// del paquete flutter_test. Por ejemplo, puedes enviar gestos de tap y scroll,
+// buscar widgets hijos en el árbol, leer texto y verificar
+// que los valores de las propiedades de los widgets sean correctos.
 
 import 'package:flutter_test/flutter_test.dart';
 

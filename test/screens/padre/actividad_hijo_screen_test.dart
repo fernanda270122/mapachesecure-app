@@ -56,7 +56,7 @@ void main() {
       '2. Muestra indicador de carga en estado inicial',
       (tester) async {
         await tester.pumpWidget(_wrap());
-        // Check loading state immediately, before async completes
+        // Verificamos el estado de carga inmediatamente, antes de que se completen las tareas asíncronas
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
       },
     );

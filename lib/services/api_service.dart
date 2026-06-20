@@ -10,8 +10,7 @@ class ApiService {
   static const String _baseUrl = 'https://mapachesecure-backend.onrender.com';
   final http.Client _client;
 
-  // Test-only: set a global mock client to avoid real network calls in unit tests.
-  // Has no effect in production (stays null).
+  // Solo para tests: cliente mock global para evitar llamadas HTTP reales. En producción siempre es null.
   static http.Client? testClient;
 
   ApiService({http.Client? client}) : _client = client ?? testClient ?? http.Client();
