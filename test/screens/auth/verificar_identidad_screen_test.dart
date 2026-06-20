@@ -131,5 +131,57 @@ void main() {
         expect(find.byIcon(Icons.face_retouching_natural_rounded), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '11. Botón de retroceso en AppBar navega hacia atrás',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            routes: {
+              '/': (ctx) => Scaffold(
+                body: Builder(
+                  builder: (c) => ElevatedButton(
+                    onPressed: () => Navigator.push(c, MaterialPageRoute(builder: (_) => const VerificarIdentidadScreen())),
+                    child: const Text('Ir'),
+                  ),
+                ),
+              ),
+            },
+          ),
+        );
+        await tester.tap(find.text('Ir'));
+        await tester.pumpAndSettle();
+        expect(find.byType(VerificarIdentidadScreen), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+        expect(find.byType(VerificarIdentidadScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '12. Tap en zona de captura llama a _tomarFotoRostro sin SnackBar de error',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(home: VerificarIdentidadScreen()),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(GestureDetector).first);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.textContaining('Error al abrir la cámara'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '13. Tap en botón Escanear Rostro llama a _tomarFotoRostro',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(home: VerificarIdentidadScreen()),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Escanear Rostro'));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(VerificarIdentidadScreen), findsOneWidget);
+      },
+    );
   });
 }
