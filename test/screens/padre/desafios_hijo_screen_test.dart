@@ -209,5 +209,138 @@ void main() {
         await tester.pump(const Duration(seconds: 5));
       },
     );
+
+    testWidgets(
+      '14. Tap en Switch exitoso actualiza estado sin SnackBar de error',
+      (tester) async {
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/actualizar_estado')) {
+            return http.Response('{"ok":true}', 200);
+          }
+          return http.Response(
+            '[{"id":"1","titulo":"Reto","descripcion":"Desc","tipo":"cognitiva","esta_activo":false,"dificultad":"facil","puntos":10}]',
+            200,
+          );
+        });
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.byType(Switch).first);
+        await _pumpLoaded(tester);
+        expect(find.textContaining('Error al cambiar estado'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '15. Generar IA exitoso muestra selector de misiones generadas',
+      (tester) async {
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/ia/generar')) {
+            return http.Response(
+              '{"desafios":[{"titulo":"Misión IA 1","descripcion":"Desc IA","puntos":15}]}',
+              200,
+            );
+          }
+          return http.Response('[]', 200);
+        });
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.text('Generar nuevos con IA'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Generar misiones'));
+        await _pumpLoaded(tester);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('Misión IA 1'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '16. Seleccionar misión IA y enviar llama a la API de asignación',
+      (tester) async {
+        var asignarCalled = false;
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/ia/generar')) {
+            return http.Response(
+              '{"desafios":[{"titulo":"Misión IA","descripcion":"Desc IA","puntos":10}]}',
+              200,
+            );
+          }
+          if (req.url.path.contains('/ia/asignar')) {
+            asignarCalled = true;
+            return http.Response('{"id":"new"}', 200);
+          }
+          return http.Response('[]', 200);
+        });
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.text('Generar nuevos con IA'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Generar misiones'));
+        await _pumpLoaded(tester);
+        await tester.pump(const Duration(milliseconds: 300));
+        // Seleccionar la misión IA en el selector
+        await tester.tap(find.byType(CheckboxListTile).first);
+        await tester.pump();
+        // Enviar
+        await tester.tap(find.textContaining('Enviar'));
+        await _pumpLoaded(tester);
+        expect(asignarCalled, true);
+        expect(find.textContaining('Misiones enviadas'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
+
+    testWidgets(
+      '17. Error al asignar misiones IA muestra SnackBar de error',
+      (tester) async {
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/ia/generar')) {
+            return http.Response(
+              '{"desafios":[{"titulo":"Misión IA","descripcion":"Desc IA","puntos":10}]}',
+              200,
+            );
+          }
+          if (req.url.path.contains('/ia/asignar')) {
+            return http.Response('{"detail":"Error al asignar"}', 400);
+          }
+          return http.Response('[]', 200);
+        });
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.text('Generar nuevos con IA'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Generar misiones'));
+        await _pumpLoaded(tester);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.byType(CheckboxListTile).first);
+        await tester.pump();
+        await tester.tap(find.textContaining('Enviar'));
+        await _pumpLoaded(tester);
+        expect(find.textContaining('Error'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
+
+    testWidgets(
+      '18. Expandir tarjeta de desafío muestra descripción',
+      (tester) async {
+        ApiService.testClient = MockClient((req) async => http.Response(
+          '[{"id":"1","titulo":"Reto expandible","descripcion":"Detalle completo del reto","tipo":"cognitiva","esta_activo":true,"dificultad":"facil","puntos":10}]',
+          200,
+        ));
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.byType(ExpansionTile).first);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('Detalle completo del reto'), findsOneWidget);
+      },
+    );
   });
 }
