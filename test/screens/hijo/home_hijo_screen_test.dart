@@ -1,17 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service_platform_interface/flutter_background_service_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mapachesecure_app/providers/actividad_provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/home_hijo_screen.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 
+class _FakeBgService extends FlutterBackgroundServicePlatform {
+  @override
+  Future<bool> configure({
+    required IosConfiguration iosConfiguration,
+    required AndroidConfiguration androidConfiguration,
+  }) async => true;
+  @override
+  Future<bool> start() async => true;
+  @override
+  Future<bool> isServiceRunning() async => false;
+  @override
+  void invoke(String method, [Map<String, dynamic>? args]) {}
+  @override
+  Stream<Map<String, dynamic>?> on(String method) => const Stream.empty();
+}
+
 const _desafioBase = '{"id":"1","titulo":"Reto prueba","descripcion":"Descripcion del reto","tipo":"cognitivo","esta_activo":true,"dificultad":"facil","puntos":10}';
 
-Widget _wrap() => ChangeNotifierProvider(
-      create: (_) => TemaProvider(),
+Widget _wrap() => MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => TemaProvider()),
+        ChangeNotifierProvider(create: (_) => ActividadProvider()),
+      ],
       child: const MaterialApp(home: HomeHijoScreen()),
     );
 
@@ -327,6 +348,136 @@ void main() {
               '[{"id":"1","titulo":"Reto general","descripcion":"Desc","tipo":"general","esta_activo":true,"dificultad":"facil","puntos":5}]',
         );
         expect(find.text('GENERAL', skipOffstage: false), findsOneWidget);
+      });
+
+      testWidgets('30. Error de API 500 no bloquea la pantalla y muestra nombre', (tester) async {
+        ApiService.testClient = MockClient(
+          (req) async => http.Response('{"detail":"error"}', 500),
+        );
+        await tester.pumpWidget(_wrap());
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.textContaining('¡Hola,'), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      });
+
+      testWidgets('31. Dificultad "medio" usa color naranja (badge visible)', (tester) async {
+        await cargar(
+          tester,
+          desafiosJson:
+              '[{"id":"1","titulo":"Reto medio","descripcion":"Desc","tipo":"cognitivo","esta_activo":true,"dificultad":"medio","puntos":15}]',
+        );
+        expect(find.text('MEDIO', skipOffstage: false), findsOneWidget);
+      });
+
+      testWidgets('32. Tap en avatar del header inicia navegación a AvatarScreen', (tester) async {
+        await cargar(tester);
+        await tester.tap(find.byType(CircleAvatar).first);
+        await tester.pump(const Duration(milliseconds: 200));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+    });
+
+    group('Drawer opciones adicionales', () {
+      Future<void> abrirDrawer(WidgetTester tester) async {
+        await cargar(tester);
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+
+      testWidgets('33. Tap en Tienda de recompensas en drawer navega', (tester) async {
+        await abrirDrawer(tester);
+        await tester.tap(find.text('Tienda de recompensas', skipOffstage: false));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+
+      testWidgets('34. Tap en Mis desafíos en drawer navega', (tester) async {
+        await abrirDrawer(tester);
+        await tester.tap(find.text('Mis desafíos', skipOffstage: false));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+
+      testWidgets('35. Tap en Mi Actividad en drawer navega', (tester) async {
+        await abrirDrawer(tester);
+        await tester.tap(find.text('Mi Actividad', skipOffstage: false));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+
+      testWidgets('36. Tap en Guía de la app en drawer navega', (tester) async {
+        await abrirDrawer(tester);
+        await tester.tap(find.text('Guía de la app', skipOffstage: false));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+
+      testWidgets('37. Tap en Colores en drawer navega', (tester) async {
+        await abrirDrawer(tester);
+        await tester.tap(find.text('Colores', skipOffstage: false));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+
+      testWidgets('38. Tap en Mi Avatar en drawer navega', (tester) async {
+        await abrirDrawer(tester);
+        await tester.tap(find.text('Mi Avatar', skipOffstage: false));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+    });
+
+    group('Escudo de sesión: login exitoso', () {
+      Future<void> abrirEscudo(WidgetTester tester) async {
+        await cargar(tester);
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.tap(find.text('Cerrar Sesión'));
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      testWidgets('39. Login exitoso con rol=padre navega al LoginScreen', (tester) async {
+        FlutterBackgroundServicePlatform.instance = _FakeBgService();
+        await abrirEscudo(tester);
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/auth/login')) {
+            return http.Response(
+              '{"access_token":"t","refresh_token":"r","user_id":"p1","perfil":{"rol":"padre","nombre":"Papa"}}',
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }
+          return http.Response('[]', 200);
+        });
+        await tester.enterText(find.byType(TextField).first, 'papa@test.com');
+        await tester.enterText(find.byType(TextField).last, 'pass123');
+        await tester.tap(find.text('DESACTIVAR Y SALIR'));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(HomeHijoScreen), findsNothing);
+      });
+
+      testWidgets('40. Login con rol no-padre lanza SnackBar de error', (tester) async {
+        await abrirEscudo(tester);
+        ApiService.testClient = MockClient((req) async {
+          if (req.url.path.contains('/auth/login')) {
+            return http.Response(
+              '{"access_token":"t","refresh_token":"r","user_id":"h1","perfil":{"rol":"hijo","nombre":"Lucas"}}',
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }
+          return http.Response('[]', 200);
+        });
+        await tester.enterText(find.byType(TextField).first, 'hijo@test.com');
+        await tester.enterText(find.byType(TextField).last, 'pass123');
+        await tester.tap(find.text('DESACTIVAR Y SALIR'));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('Datos incorrectos o acceso denegado.'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
       });
     });
   });
