@@ -114,5 +114,71 @@ void main() {
       expect(provider.tiempoTotalPantalla.inMilliseconds, 0);
     },
   );
+
+    test(
+      '5. obtenerActividadDelDia termina sin crash cuando UsageStats no está disponible',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final provider = ActividadProvider();
+        // UsageStats lanza MissingPluginException — el catch(e) lo absorbe
+        // Esto cubre las líneas de _cargando=true, DateTime, y el bloque finally
+        await provider.obtenerActividadDelDia();
+        expect(provider.cargando, false);
+        expect(provider.listaUsoReal.isEmpty, true);
+      },
+    );
+
+    test(
+      '6. sincronizarActividadConServidor con credenciales ausentes no hace petición HTTP',
+      () async {
+        SharedPreferences.setMockInitialValues({}); // Sin hijo_id ni auth_token
+        final provider = ActividadProvider();
+        var peticionHecha = false;
+        await http.runWithClient(() async {
+          await provider.sincronizarActividadConServidor();
+        }, () => MockClient((req) async {
+          peticionHecha = true;
+          return http.Response('{}', 200);
+        }));
+        expect(peticionHecha, false);
+      },
+    );
+
+    test(
+      '7. sincronizarActividadConServidor con respuesta HTTP 500 no lanza excepción',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'hijo_id': 'uid123',
+          'auth_token': 'tok456',
+        });
+        final provider = ActividadProvider();
+        provider.listaUsoReal.add(
+          UsageInfo(packageName: 'com.youtube', totalTimeInForeground: '3600000'),
+        );
+        // No debe lanzar excepción con respuesta de error
+        await http.runWithClient(() async {
+          await provider.sincronizarActividadConServidor();
+        }, () => MockClient((req) async => http.Response('{"error": "internal"}', 500)));
+        expect(provider.listaUsoReal.length, 1);
+      },
+    );
+
+    test(
+      '8. sincronizarActividadConServidor con error de red no lanza excepción',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'hijo_id': 'uid123',
+          'auth_token': 'tok456',
+        });
+        final provider = ActividadProvider();
+        provider.listaUsoReal.add(
+          UsageInfo(packageName: 'com.instagram.android', totalTimeInForeground: '120000'),
+        );
+        await http.runWithClient(() async {
+          await provider.sincronizarActividadConServidor();
+        }, () => MockClient((req) async => throw Exception('Network error')));
+        expect(provider.listaUsoReal.length, 1);
+      },
+    );
   });
 }
