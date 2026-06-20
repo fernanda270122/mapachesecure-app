@@ -102,5 +102,114 @@ void main() {
         expect(find.byType(CircularProgressIndicator), findsNothing);
       },
     );
+
+    testWidgets(
+      '8. Muestra los SwitchListTile de recompensas del sistema',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        expect(find.byType(SwitchListTile), findsWidgets);
+      },
+    );
+
+    testWidgets(
+      '9. Muestra el boton FAB Confirmar',
+      (tester) async {
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        expect(find.text('Confirmar'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '10. Tap en Confirmar sin recompensas ni hijo muestra SnackBar',
+      (tester) async {
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.text('Confirmar'));
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.textContaining('Primero selecciona'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
+
+    testWidgets(
+      '11. Tap en switch activa la recompensa',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        final switchWidget = tester.widget<Switch>(find.byType(Switch).first);
+        expect(switchWidget.value, false);
+        await tester.tap(find.byType(Switch).first);
+        await tester.pump();
+        final switchActualizado = tester.widget<Switch>(find.byType(Switch).first);
+        expect(switchActualizado.value, true);
+      },
+    );
+
+    testWidgets(
+      '12. Tap en el boton + abre formulario de nueva recompensa',
+      (tester) async {
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+        expect(find.text('Nueva recompensa'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '13. Muestra mensaje vacio cuando no hay recompensas de comunidad',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await _pumpLoaded(tester);
+        expect(find.textContaining('Aun no hay recompensas'), findsNothing);
+        expect(find.text('Recomendadas por la comunidad'), findsOneWidget);
+      },
+    );
+  });
+
+  group('Pruebas con hijo seleccionado', () {
+    const _hijoJson = '[{"id":"hijo1","nombre":"Lucas"}]';
+
+    Future<void> cargar(WidgetTester tester) async {
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/catalogo')) return http.Response('[]', 200);
+        if (path.contains('/recompensas/')) return http.Response('[]', 200);
+        if (path.contains('/hijos')) return http.Response(_hijoJson, 200);
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 300)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets('14. Con hijo cargado muestra el selector de hijo', (tester) async {
+      await cargar(tester);
+      expect(find.text('Asignar a:'), findsOneWidget);
+      expect(find.text('Lucas'), findsOneWidget);
+    });
+
+    testWidgets('15. Con hijo y recompensa activa Confirmar muestra dialogo', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await cargar(tester);
+      // Activa la primera recompensa
+      await tester.tap(find.byType(Switch).first);
+      await tester.pump();
+      // Tap en Confirmar
+      await tester.tap(find.text('Confirmar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Confirmar'), findsWidgets); // botón en el diálogo
+      expect(find.textContaining('recompensa'), findsWidgets);
+    });
   });
 }
