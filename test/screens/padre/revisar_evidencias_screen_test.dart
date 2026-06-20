@@ -25,6 +25,21 @@ void main() {
     ApiService.testClient = null;
   });
 
+  const _evidenciaJson =
+      '[{"id":"ev1","titulo":"Leer 30 minutos","hijo_nombre":"Lucas","url_evidencia":null}]';
+
+  Future<void> cargar(
+    WidgetTester tester, {
+    String evidenciasJson = _evidenciaJson,
+  }) async {
+    ApiService.testClient = MockClient((req) async {
+      if (req.method == 'PUT') return http.Response('{"ok": true}', 200);
+      return http.Response(evidenciasJson, 200);
+    });
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+  }
+
   group('Pruebas para RevisarEvidenciasScreen', () {
     testWidgets(
       '1. Muestra "Revisar Evidencias" en el AppBar',
@@ -65,5 +80,66 @@ void main() {
         expect(appBar.foregroundColor, Colors.white);
       },
     );
+  });
+
+  group('Pruebas con datos', () {
+    testWidgets('5. Muestra el titulo del desafio en la tarjeta', (tester) async {
+      await cargar(tester);
+      expect(find.text('Leer 30 minutos'), findsOneWidget);
+    });
+
+    testWidgets('6. Muestra el nombre del hijo en la tarjeta', (tester) async {
+      await cargar(tester);
+      expect(find.text('Hijo: Lucas'), findsOneWidget);
+    });
+
+    testWidgets('7. Muestra los botones Rechazar y Aprobar', (tester) async {
+      await cargar(tester);
+      expect(find.text('Rechazar'), findsOneWidget);
+      expect(find.text('Aprobar'), findsOneWidget);
+    });
+
+    testWidgets('8. Muestra icono de history_edu en la tarjeta', (tester) async {
+      await cargar(tester);
+      expect(find.byIcon(Icons.history_edu), findsOneWidget);
+    });
+
+    testWidgets('9. Tap en Rechazar muestra dialogo de confirmacion', (tester) async {
+      await cargar(tester);
+      await tester.tap(find.text('Rechazar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cancelar'), findsOneWidget);
+      expect(find.text('Sí, Rechazar'), findsOneWidget);
+    });
+
+    testWidgets('10. Tap en Aprobar muestra dialogo de confirmacion', (tester) async {
+      await cargar(tester);
+      await tester.tap(find.text('Aprobar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cancelar'), findsOneWidget);
+      expect(find.text('Sí, Aprobar'), findsOneWidget);
+    });
+
+    testWidgets('11. Cancelar en el dialogo cierra sin ejecutar accion', (tester) async {
+      await cargar(tester);
+      await tester.tap(find.text('Rechazar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sí, Rechazar'), findsNothing);
+    });
+
+    testWidgets('12. Confirmar Aprobar muestra snackbar de exito', (tester) async {
+      await cargar(tester);
+      await tester.tap(find.text('Aprobar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sí, Aprobar'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.textContaining('aprobado'), findsOneWidget);
+      // Avanza el tiempo para cerrar el SnackBar y evitar timers pendientes
+      await tester.pump(const Duration(seconds: 5));
+    });
   });
 }
