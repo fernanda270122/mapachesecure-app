@@ -68,4 +68,45 @@ void main() {
       },
     );
   });
+
+  group('Pruebas con datos', () {
+    const _hijoJson =
+        '[{"id":"hijo1","nombre":"Lucas","sexo":"masculino","edad":10}]';
+
+    Future<void> cargar(WidgetTester tester, {String hijosJson = _hijoJson}) async {
+      ApiService.testClient = MockClient((req) async => http.Response(hijosJson, 200));
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('5. Muestra el nombre del hijo cuando hay datos', (tester) async {
+      await cargar(tester);
+      expect(find.text('Lucas'), findsOneWidget);
+    });
+
+    testWidgets('6. Muestra el subtitulo Toca para ver sus desafios', (tester) async {
+      await cargar(tester);
+      expect(find.text('Toca para ver sus desafíos'), findsOneWidget);
+    });
+
+    testWidgets('7. Muestra el texto de instruccion al cargar hijos', (tester) async {
+      await cargar(tester);
+      expect(find.text('Selecciona un hijo para ver sus desafíos'), findsOneWidget);
+    });
+
+    testWidgets('8. Muestra icono de child_care en la tarjeta del hijo', (tester) async {
+      await cargar(tester);
+      expect(find.byIcon(Icons.child_care), findsOneWidget);
+    });
+
+    testWidgets('9. Muestra icono de flecha de navegacion en la tarjeta', (tester) async {
+      await cargar(tester);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+    });
+
+    testWidgets('10. Sin hijos muestra estado vacio', (tester) async {
+      await cargar(tester, hijosJson: '[]');
+      expect(find.text('No tienes hijos registrados'), findsOneWidget);
+    });
+  });
 }
