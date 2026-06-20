@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service_platform_interface/flutter_background_service_platform_interface.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
@@ -8,6 +9,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:mapachesecure_app/screens/padre/home_padre_screen.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
+
+class _FakeBgService extends FlutterBackgroundServicePlatform {
+  @override
+  Future<bool> configure({required IosConfiguration iosConfiguration, required AndroidConfiguration androidConfiguration}) async => true;
+  @override
+  Future<bool> start() async => true;
+  @override
+  Future<bool> isServiceRunning() async => false;
+  @override
+  void invoke(String method, [Map<String, dynamic>? args]) {}
+  @override
+  Stream<Map<String, dynamic>?> on(String method) => const Stream.empty();
+}
 
 Widget _wrap() => ScreenUtilInit(
       designSize: const Size(375, 812),
@@ -225,6 +239,166 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       // ConfigurarHijoScreen se carga (muestra Lucas en AppBar o CircularProgressIndicator)
       expect(find.textContaining('Lucas'), findsWidgets);
+    });
+
+    testWidgets('19. Error de API en carga activa catch y muestra pantalla vacía', (tester) async {
+      ApiService.testClient = MockClient((req) async {
+        throw Exception('error de red');
+      });
+      await tester.pumpWidget(_wrap());
+      await _pumpLoaded(tester);
+      expect(find.textContaining('No tienes hijos'), findsOneWidget);
+    });
+
+    testWidgets('20. Drawer → Gestionar Desafíos navega a la pantalla correcta', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Gestionar Desafíos'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Gestionar Desafíos', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('21. Drawer → Agregar Hijo/a navega a AgregarHijoScreen', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(); // frame para que el tap registre
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Agregar Hijo/a'));
+      await _pumpLoaded(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Agregar Hij@', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('22. Drawer → Revisar Evidencias navega a la pantalla correcta', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Revisar Evidencias'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Revisar Evidencias', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('23. Drawer → Tienda de Recompensas navega a la pantalla correcta', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Tienda de Recompensas'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Tienda de Recompensas', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('24. Drawer → Canjes Pendientes navega a la pantalla correcta', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Canjes Pendientes'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Canjes Pendientes', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('25. Drawer → Consejos para Padres navega a la pantalla correcta', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Consejos para Padres'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Consejos para Padres', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('26. Drawer → Cambiar Color del Panel navega a ColoresPadreScreen', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      // 800px de alto para que "Cambiar Color del Panel" (y≈570-626) quede dentro del viewport
+      await tester.binding.setSurfaceSize(const Size(800, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(); // frame para que el tap registre
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Cambiar Color del Panel'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Colores del Panel', skipOffstage: false), findsOneWidget);
+    });
+
+    testWidgets('27. Drawer → Actividad de Pantalla navega a la pantalla correcta', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      // Viewport más alto pero mismo ancho (800px) para que el tap del drawer funcione
+      await tester.binding.setSurfaceSize(const Size(800, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.text('Actividad de Pantalla'));
+      await _pumpLoaded(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Actividad de Pantalla', skipOffstage: false), findsWidgets);
+    });
+
+    testWidgets('28. Drawer → Cerrar Sesión navega al LoginScreen', (tester) async {
+      final prevOnError = FlutterError.onError;
+      FlutterError.onError = (d) {
+        if (d.exceptionAsString().contains('overflowed')) return;
+        prevOnError?.call(d);
+      };
+      addTearDown(() => FlutterError.onError = prevOnError);
+      // Mismo ancho (800px) para compatibilidad del tap + altura suficiente para y≈813 (Cerrar Sesión)
+      await tester.binding.setSurfaceSize(const Size(800, 950));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      FlutterBackgroundServicePlatform.instance = _FakeBgService();
+      await cargar(tester);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pump(); // frame para que el tap registre
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.text('Cerrar Sesión'));
+      await _pumpLoaded(tester);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Iniciar Sesión'), findsOneWidget);
     });
   });
 }
