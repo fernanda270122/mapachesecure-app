@@ -162,5 +162,60 @@ void main() {
         expect(find.text('Resolver Desafío'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '12. Tap en el botón de altavoz llama a _hablarInstrucciones',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.volume_up_rounded));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(DetalleDesafioScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '13. Tap en zona de cámara llama a _tomarFoto sin crash',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.camera_alt_rounded));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.text('Toca para sacar la foto de evidencia'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '14. Navegar fuera de la pantalla llama dispose sin crash',
+      (tester) async {
+        await tester.pumpWidget(
+          ChangeNotifierProvider(
+            create: (_) => TemaProvider(),
+            child: MaterialApp(
+              routes: {
+                '/': (ctx) => Scaffold(
+                  body: Builder(
+                    builder: (c) => ElevatedButton(
+                      onPressed: () => Navigator.push(c, MaterialPageRoute(builder: (_) => DetalleDesafioScreen(desafio: _desafioTest))),
+                      child: const Text('Ir'),
+                    ),
+                  ),
+                ),
+              },
+            ),
+          ),
+        );
+        await tester.tap(find.text('Ir'));
+        await tester.pumpAndSettle();
+        expect(find.byType(DetalleDesafioScreen), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+        expect(find.byType(DetalleDesafioScreen), findsNothing);
+      },
+    );
   });
 }
