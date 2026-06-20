@@ -99,4 +99,62 @@ void main() {
       },
     );
   });
+
+  group('Pruebas con datos', () {
+    const _unHijoJson = '[{"id":"h1","nombre":"Lucas","sexo":"masculino"}]';
+    const _dosHijosJson =
+        '[{"id":"h1","nombre":"Lucas","sexo":"masculino"},{"id":"h2","nombre":"Sofia","sexo":"femenino"}]';
+
+    Future<void> cargar(WidgetTester tester, {String hijosJson = _unHijoJson}) async {
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/hijos')) return http.Response(hijosJson, 200);
+        if (path.contains('/completados')) return http.Response('[{"id":"c1"}]', 200);
+        if (path.contains('/puntos')) return http.Response('{"total_puntos": 50}', 200);
+        return http.Response('[{"minutos_uso": 30}]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 400)));
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets('8. Muestra el nombre del hijo en la tarjeta', (tester) async {
+      await cargar(tester);
+      expect(find.text('Lucas'), findsOneWidget);
+    });
+
+    testWidgets('9. Muestra el subtitulo Toca para configurar con un hijo', (tester) async {
+      await cargar(tester);
+      expect(find.text('Toca para configurar'), findsOneWidget);
+    });
+
+    testWidgets('10. Muestra la seccion Actividad de hoy con un hijo', (tester) async {
+      await cargar(tester);
+      expect(find.text('Actividad de hoy'), findsOneWidget);
+    });
+
+    testWidgets('11. Muestra icono de tiempo en el resumen', (tester) async {
+      await cargar(tester);
+      expect(find.byIcon(Icons.access_time), findsWidgets);
+    });
+
+    testWidgets('12. Con 2 hijos muestra tarjeta con stats para cada hijo', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await cargar(tester, hijosJson: _dosHijosJson);
+      expect(find.text('Lucas'), findsOneWidget);
+      expect(find.text('Sofia'), findsOneWidget);
+    });
+
+    testWidgets('13. El carrusel contiene un PageView', (tester) async {
+      await cargar(tester);
+      expect(find.byType(PageView), findsOneWidget);
+    });
+
+    testWidgets('14. Muestra RefreshIndicator tras cargar datos', (tester) async {
+      await cargar(tester);
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+    });
+  });
 }
