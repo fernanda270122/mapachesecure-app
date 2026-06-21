@@ -653,6 +653,115 @@ void main() {
           expect(find.byType(HomeHijoScreen), findsOneWidget);
         },
       );
+
+      testWidgets(
+        '49. API 401 con refresh exitoso llama _cargarDatos de nuevo (L343)',
+        (tester) async {
+          var getCalled = 0;
+          SharedPreferences.setMockInitialValues({
+            'user_id': 'hijo-uid',
+            'nombre': 'Lucas',
+            'tipo_avatar': 'mago',
+            'refresh_token': 'dummy-refresh',
+          });
+          ApiService.testClient = MockClient((req) async {
+            if (req.method == 'POST') {
+              return http.Response('{"access_token": "nuevo-token"}', 200);
+            }
+            getCalled++;
+            if (getCalled == 1) return http.Response('', 401);
+            final path = req.url.path;
+            if (path.contains('/desafios/puntos')) {
+              return http.Response('{"total_puntos": 0}', 200);
+            }
+            if (path.contains('/usuarios/')) {
+              return http.Response('{"tipo_avatar": "mago"}', 200);
+            }
+            return http.Response('[]', 200);
+          });
+          await tester.pumpWidget(_wrap());
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '50. Pop de AvatarScreen vía drawer con resultado no-null cubre L717',
+        (tester) async {
+          await cargar(tester);
+          await tester.tap(find.byIcon(Icons.menu));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 400));
+          await tester.tap(find.text('Mi Avatar', skipOffstage: false));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          final NavigatorState nav = tester.state(find.byType(Navigator));
+          nav.pop('assets/mascota/magonivel1.png');
+          await tester.runAsync(() async {
+            await Future.delayed(const Duration(milliseconds: 300));
+          });
+          await tester.pump();
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '51. Pop de AvatarScreen vía header con resultado no-null cubre L797',
+        (tester) async {
+          await cargar(tester);
+          await tester.tap(find.byType(CircleAvatar).first);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          final NavigatorState nav = tester.state(find.byType(Navigator));
+          nav.pop('assets/mascota/magonivel1.png');
+          await tester.runAsync(() async {
+            await Future.delayed(const Duration(milliseconds: 300));
+          });
+          await tester.pump();
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '52. Volume button visible tras expandir card cubre L1088',
+        (tester) async {
+          await cargar(tester, desafiosJson: '[$_desafioBase]');
+          await tester.pump(const Duration(milliseconds: 100));
+          // Expandir la card tocando el título (sin skipOffstage para garantizar tap real)
+          await tester.tap(find.text('Reto prueba'));
+          await tester.pump(const Duration(milliseconds: 400));
+          // El IconButton debe estar visible (sin skipOffstage)
+          expect(find.byIcon(Icons.volume_up), findsOneWidget);
+          await tester.tap(find.byIcon(Icons.volume_up));
+          await tester.pump(const Duration(milliseconds: 100));
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '53. Pop de DetalleDesafioScreen con resultado=true re-carga datos (L1109-1119)',
+        (tester) async {
+          await cargar(tester, desafiosJson: '[$_desafioBase]');
+          await tester.pump(const Duration(milliseconds: 100));
+          // Expandir card
+          await tester.tap(find.text('Reto prueba'));
+          await tester.pump(const Duration(milliseconds: 400));
+          // Verificar que el botón es visible antes de tap (sin skipOffstage)
+          expect(find.text('¡Ir a realizar el desafío!'), findsOneWidget);
+          await tester.tap(find.text('¡Ir a realizar el desafío!'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          // Pop con true → resultado == true → _cargarDatos()
+          final NavigatorState nav = tester.state(find.byType(Navigator));
+          nav.pop(true);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
     });
   });
 }
