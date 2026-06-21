@@ -1,11 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 import 'package:mapachesecure_app/screens/hijo/video_evolucion_screen.dart';
+
+// Plataforma falsa que simula inicialización exitosa del video
+class _FakeVideoPlayerPlatform extends VideoPlayerPlatform {
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<int?> create(DataSource dataSource) async => 1;
+
+  @override
+  Future<void> dispose(int playerId) async {}
+
+  @override
+  Future<void> setLooping(int playerId, bool looping) async {}
+
+  @override
+  Future<void> play(int playerId) async {}
+
+  @override
+  Future<void> pause(int playerId) async {}
+
+  @override
+  Future<void> setVolume(int playerId, double volume) async {}
+
+  @override
+  Future<void> seekTo(int playerId, Duration position) async {}
+
+  @override
+  Future<void> setPlaybackSpeed(int playerId, double speed) async {}
+
+  @override
+  Future<Duration> getPosition(int playerId) async => Duration.zero;
+
+  @override
+  Future<void> setMixWithOthers(bool mixWithOthers) async {}
+
+  @override
+  Widget buildView(int playerId) => const SizedBox();
+
+  @override
+  Stream<VideoEvent> videoEventsFor(int playerId) => Stream.fromIterable([
+        VideoEvent(
+          eventType: VideoEventType.initialized,
+          size: const Size(640, 480),
+          duration: const Duration(seconds: 2),
+          rotationCorrection: 0,
+        ),
+      ]);
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Pruebas para VideoEvolucionScreen', () {
+  group('Pruebas para VideoEvolucionScreen (sin plataforma real)', () {
     testWidgets(
       '1. Mientras el video inicializa muestra CircularProgressIndicator',
       (tester) async {
@@ -16,7 +66,6 @@ void main() {
             ),
           ),
         );
-        // No esperamos settle — el video no puede inicializarse en tests
         await tester.pump(Duration.zero);
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
       },
@@ -94,12 +143,12 @@ void main() {
           ),
         );
         await tester.tap(find.text('Ir'));
-        await tester.pump(); // procesar tap
+        await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(find.byType(VideoEvolucionScreen), findsOneWidget);
         final NavigatorState nav = tester.state(find.byType(Navigator));
         nav.pop();
-        await tester.pump(); // iniciar animación de retorno
+        await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
         expect(find.byType(VideoEvolucionScreen), findsNothing);
       },
@@ -121,8 +170,46 @@ void main() {
           find.byType(AnimatedOpacity),
         );
         expect(animatedOpacity.opacity, 0.0);
-        // El mensaje está en el árbol pero invisible
         expect(find.text('Mensaje de prueba'), findsOneWidget);
+      },
+    );
+  });
+
+  group('Pruebas con FakeVideoPlayerPlatform (video inicializa correctamente)', () {
+    setUp(() {
+      // Reemplazamos la plataforma nativa con una falsa para que initialize() tenga éxito
+      VideoPlayerPlatform.instance = _FakeVideoPlayerPlatform();
+    });
+
+    testWidgets(
+      '7. Constructor no-const crea la pantalla correctamente (cubre L8)',
+      (tester) async {
+        final path = 'assets/videos/mago_evoluciona.mp4';
+        await tester.pumpWidget(MaterialApp(
+          home: VideoEvolucionScreen(videoPath: path),
+        ));
+        await tester.pump(Duration.zero);
+        expect(find.byType(VideoEvolucionScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '8. Con fake platform el video inicializa y muestra FittedBox (cubre L37-38, L55, L72-77)',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: VideoEvolucionScreen(
+              videoPath: 'assets/videos/mago_evoluciona.mp4',
+            ),
+          ),
+        );
+        // Pump para procesar initState + el Future de _initVideo
+        await tester.pump(Duration.zero);
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pumpAndSettle();
+        // Después de inicializar, _inicializado=true → FittedBox visible en lugar del spinner
+        expect(find.byType(FittedBox), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
       },
     );
   });
