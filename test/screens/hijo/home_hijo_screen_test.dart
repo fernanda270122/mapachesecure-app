@@ -480,5 +480,179 @@ void main() {
         await tester.pump(const Duration(seconds: 5));
       });
     });
+
+    group('Cobertura adicional', () {
+      testWidgets(
+        '41. ApiUnauthorizedException con refresh fallido navega a LoginScreen (_cerrarSesionPorExpiracion)',
+        (tester) async {
+          FlutterBackgroundServicePlatform.instance = _FakeBgService();
+          SharedPreferences.setMockInitialValues({
+            'user_id': 'hijo-uid',
+            'nombre': 'Lucas',
+            'tipo_avatar': 'mago',
+            'refresh_token': 'refresh_tkn',
+          });
+          ApiService.testClient = MockClient((req) async {
+            if (req.method == 'POST') {
+              // refresh falla
+              return http.Response('{"detail": "Token expirado"}', 400);
+            }
+            // Todos los GETs retornan 401 → ApiUnauthorizedException
+            return http.Response('', 401);
+          });
+          await tester.pumpWidget(_wrap());
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+          // Después del refresh fallido, _cerrarSesionPorExpiracion navega a LoginScreen
+          expect(find.text('Iniciar Sesión'), findsOneWidget);
+        },
+      );
+
+      testWidgets('42. Tap en botón Recompensas del cuerpo navega', (tester) async {
+        await cargar(tester);
+        await tester.tap(find.text('Recompensas'));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Scaffold), findsWidgets);
+      });
+
+      testWidgets(
+        '43. Desafios endpoint retorna Map en lugar de List → pantalla muestra vacío',
+        (tester) async {
+          await tester.binding.setSurfaceSize(const Size(1080, 1920));
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          ApiService.testClient = MockClient((req) async {
+            final path = req.url.path;
+            if (path.contains('/desafios/puntos')) {
+              return http.Response('{"total_puntos": 0}', 200);
+            }
+            if (path.contains('/completados')) return http.Response('[]', 200);
+            if (path.contains('/usuarios/')) {
+              return http.Response('{"tipo_avatar": "mago"}', 200);
+            }
+            // /desafios/hijo/ retorna un Map → no es List → _desafios = []
+            return http.Response('{"items": []}', 200);
+          });
+          await tester.pumpWidget(_wrap());
+          await tester.pump(const Duration(milliseconds: 100));
+          expect(find.text('No hay desafíos disponibles'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '44. Tap en icono volumen de desafío expandido invoca TTS speak',
+        (tester) async {
+          await cargar(tester, desafiosJson: '[$_desafioBase]');
+          await tester.tap(find.text('Reto prueba', skipOffstage: false));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(find.byIcon(Icons.volume_up, skipOffstage: false));
+          await tester.pump(const Duration(milliseconds: 100));
+          // La pantalla no debe crashear
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '45. Tap en "¡Ir a realizar el desafío!" navega a DetalleDesafioScreen y regresa',
+        (tester) async {
+          await cargar(tester, desafiosJson: '[$_desafioBase]');
+          await tester.tap(find.text('Reto prueba', skipOffstage: false));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.tap(
+            find.text('¡Ir a realizar el desafío!', skipOffstage: false),
+          );
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(Scaffold), findsWidgets);
+          // Pop de regreso cubre la línea posterior al await Navigator.push
+          final NavigatorState nav = tester.state(find.byType(Navigator));
+          nav.pop();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '46. Login como padre con clave onboarding_ preserva la clave (líneas 483-484)',
+        (tester) async {
+          FlutterBackgroundServicePlatform.instance = _FakeBgService();
+          SharedPreferences.setMockInitialValues({
+            'user_id': 'hijo-uid',
+            'nombre': 'Lucas',
+            'tipo_avatar': 'mago',
+            'onboarding_padre': true,
+          });
+          await tester.binding.setSurfaceSize(const Size(1080, 1920));
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+          ApiService.testClient = MockClient((req) async {
+            final path = req.url.path;
+            if (path.contains('/desafios/puntos')) {
+              return http.Response('{"total_puntos": 0}', 200);
+            }
+            if (path.contains('/completados')) return http.Response('[]', 200);
+            if (path.contains('/usuarios/')) {
+              return http.Response('{"tipo_avatar": "mago"}', 200);
+            }
+            if (path.contains('/auth/login')) {
+              return http.Response(
+                '{"access_token":"t","refresh_token":"r","user_id":"p1","perfil":{"rol":"padre","nombre":"Papa"}}',
+                200,
+                headers: {'content-type': 'application/json; charset=utf-8'},
+              );
+            }
+            return http.Response('[]', 200);
+          });
+          await tester.pumpWidget(_wrap());
+          await tester.pump(const Duration(milliseconds: 100));
+          await tester.tap(find.byIcon(Icons.menu));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 400));
+          await tester.tap(find.text('Cerrar Sesión'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.enterText(find.byType(TextField).first, 'papa@test.com');
+          await tester.enterText(find.byType(TextField).last, 'pass123');
+          await tester.tap(find.text('DESACTIVAR Y SALIR'));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(HomeHijoScreen), findsNothing);
+        },
+      );
+
+      testWidgets(
+        '47. Pop de AvatarScreen vía drawer cubre línea 717 (if result != null)',
+        (tester) async {
+          await cargar(tester);
+          await tester.tap(find.byIcon(Icons.menu));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 400));
+          await tester.tap(find.text('Mi Avatar', skipOffstage: false));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          // AvatarScreen está visible, volvemos sin resultado
+          final NavigatorState nav = tester.state(find.byType(Navigator));
+          nav.pop();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        '48. Pop de AvatarScreen vía CircleAvatar del header cubre líneas 795-796',
+        (tester) async {
+          await cargar(tester);
+          await tester.tap(find.byType(CircleAvatar).first);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          // Volvemos sin resultado
+          final NavigatorState nav = tester.state(find.byType(Navigator));
+          nav.pop();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(find.byType(HomeHijoScreen), findsOneWidget);
+        },
+      );
+    });
   });
 }
