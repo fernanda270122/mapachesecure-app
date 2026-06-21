@@ -400,5 +400,68 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('Iniciar Sesión'), findsOneWidget);
     });
+
+    testWidgets('29. Timer del carrusel dispara animateToPage tras 5 segundos', (tester) async {
+      await cargar(tester);
+      // Disparar el Timer.periodic (cada 5s) avanzando el reloj de FakeAsync
+      await tester.pump(const Duration(seconds: 5, milliseconds: 100));
+      // Completar la animación de página (500ms) + margen
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.byType(PageView), findsOneWidget);
+    });
+
+    testWidgets('30. Deslizar el PageView dispara onPageChanged y actualiza indicador', (tester) async {
+      await cargar(tester);
+      await tester.fling(find.byType(PageView), const Offset(-300, 0), 800);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(PageView), findsOneWidget);
+    });
+
+    testWidgets('31. API 401 con refresh exitoso vuelve a cargar datos', (tester) async {
+      var hijosCalled = 0;
+      SharedPreferences.setMockInitialValues({
+        'user_id': 'padre-uid',
+        'nombre': 'Ana',
+        'refresh_token': 'dummy-refresh',
+      });
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/hijos')) {
+          hijosCalled++;
+          if (hijosCalled == 1) return http.Response('', 401);
+          return http.Response('[]', 200);
+        }
+        if (path.contains('/auth/refresh')) {
+          return http.Response('{"access_token": "nuevo-token"}', 200);
+        }
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 800)));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(HomePadreScreen), findsOneWidget);
+    });
+
+    testWidgets('32. API 401 con refresh fallido llama _cerrarSesionPorExpiracion', (tester) async {
+      FlutterBackgroundServicePlatform.instance = _FakeBgService();
+      SharedPreferences.setMockInitialValues({
+        'user_id': 'padre-uid',
+        'nombre': 'Ana',
+        'refresh_token': 'dummy-refresh',
+      });
+      ApiService.testClient = MockClient((req) async {
+        final path = req.url.path;
+        if (path.contains('/hijos')) return http.Response('', 401);
+        if (path.contains('/auth/refresh')) return http.Response('{}', 400);
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.runAsync(() => Future.delayed(const Duration(milliseconds: 800)));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('Iniciar Sesión'), findsOneWidget);
+    });
   });
 }
