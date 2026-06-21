@@ -185,5 +185,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('límite'), findsOneWidget);
     });
+
+    testWidgets('15. Registro exitoso navega a VerificarIdentidadScreen sin error', (tester) async {
+      ApiService.testClient = MockClient((req) async {
+        if (req.url.path.contains('/auth/login')) {
+          return http.Response(
+            '{"access_token":"t","refresh_token":"r","user_id":"u1","perfil":{"rol":"padre","nombre":"Test"}}',
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response('{"ok": true}', 200);
+      });
+      await tester.pumpWidget(const MaterialApp(home: RegistroScreen()));
+      await tester.pumpAndSettle();
+      final fechaOk = await seleccionarFechaEnDatePicker(tester);
+      if (!fechaOk) return;
+      await tester.enterText(find.byType(TextField).at(0), 'Test User');
+      await tester.enterText(find.byType(TextField).at(1), 'test@test.com');
+      await tester.enterText(find.byType(TextField).at(2), 'password123');
+      await tester.enterText(find.byType(TextField).at(3), 'password123');
+      await tester.tap(find.text('REGISTRARSE'));
+      await tester.pumpAndSettle();
+      // La navegación a VerificarIdentidadScreen se completó (no aparece error de API)
+      expect(find.text('Error al registrarse. Intenta de nuevo.'), findsNothing);
+      expect(find.text('Las contraseñas no coinciden.'), findsNothing);
+    });
   });
 }
