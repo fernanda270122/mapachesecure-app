@@ -141,5 +141,64 @@ void main() {
       // Avanza el tiempo para cerrar el SnackBar y evitar timers pendientes
       await tester.pump(const Duration(seconds: 5));
     });
+
+    testWidgets(
+      '13. API retorna 500 en _fetchEvidencias muestra SnackBar de error',
+      (tester) async {
+        ApiService.testClient = MockClient((req) async {
+          if (req.method == 'GET') {
+            return http.Response('{"detail":"Error del servidor"}', 500);
+          }
+          return http.Response('[]', 200);
+        });
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Error:'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
+
+    testWidgets(
+      '14. PUT falla en _procesarEvidencia muestra SnackBar de error',
+      (tester) async {
+        ApiService.testClient = MockClient((req) async {
+          if (req.method == 'PUT') {
+            return http.Response('{"detail":"Error al validar"}', 500);
+          }
+          return http.Response(_evidenciaJson, 200);
+        });
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Aprobar'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Sí, Aprobar'));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.textContaining('Error:'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 6));
+      },
+    );
+
+    testWidgets(
+      '15. Muestra Image.network cuando url_evidencia no es null',
+      (tester) async {
+        // Silencia el error de carga de imagen de red (esperado en tests)
+        final originalOnError = FlutterError.onError;
+        FlutterError.onError = (details) {
+          if (details.library == 'image resource service') return;
+          originalOnError?.call(details);
+        };
+        addTearDown(() => FlutterError.onError = originalOnError);
+
+        const jsonConFoto =
+            '[{"id":"ev2","titulo":"Reto imagen","hijo_nombre":"Maria","url_evidencia":"https://example.com/foto.jpg"}]';
+        ApiService.testClient = MockClient((req) async {
+          if (req.method == 'PUT') return http.Response('{"ok":true}', 200);
+          return http.Response(jsonConFoto, 200);
+        });
+        await tester.pumpWidget(_wrap());
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(Image), findsOneWidget);
+      },
+    );
   });
 }
