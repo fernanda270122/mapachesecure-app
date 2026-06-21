@@ -1,7 +1,48 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mapachesecure_app/screens/auth/verificar_identidad_screen.dart';
+
+// Mock que devuelve un archivo exitosamente
+class _FakeImagePickerSuccess extends ImagePickerPlatform {
+  final String path;
+  _FakeImagePickerSuccess(this.path);
+
+  @override
+  Future<XFile?> getImage({
+    required ImageSource source,
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+  }) async => XFile(path);
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => XFile(path);
+}
+
+// Mock que lanza una excepción simulando error de cámara
+class _FakeImagePickerError extends ImagePickerPlatform {
+  @override
+  Future<XFile?> getImage({
+    required ImageSource source,
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+  }) async => throw Exception('Camera not available');
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => throw Exception('Camera not available');
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -180,6 +221,104 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Escanear Rostro'));
         await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(VerificarIdentidadScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '14. Mock ImagePicker éxito: establece _imageFile y muestra ClipRRect y "Tomar otra foto"',
+      (tester) async {
+        // Escritura síncrona: evita I/O asíncrono pendiente en FakeAsync
+        final tempFile = File('${Directory.systemTemp.path}/test_rostro.jpg');
+        tempFile.writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xE0]);
+        addTearDown(() {
+          try { tempFile.deleteSync(); } catch (_) {}
+        });
+
+        final originalPicker = ImagePickerPlatform.instance;
+        ImagePickerPlatform.instance = _FakeImagePickerSuccess(tempFile.path);
+        addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(const MaterialApp(home: VerificarIdentidadScreen()));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Escanear Rostro'));
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // runAsync: deja que FileImage termine la carga real antes de salir del test
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 300));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.byType(ClipRRect), findsWidgets);
+        expect(find.text('Tomar otra foto'), findsOneWidget);
+        expect(find.text('Enviar para Verificación'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '15. Mock ImagePicker error: muestra SnackBar "Error al abrir la cámara"',
+      (tester) async {
+        final originalPicker = ImagePickerPlatform.instance;
+        ImagePickerPlatform.instance = _FakeImagePickerError();
+        addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(const MaterialApp(home: VerificarIdentidadScreen()));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Escanear Rostro'));
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.textContaining('Error al abrir la cámara'), findsOneWidget);
+
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
+
+    testWidgets(
+      '16. Tap en "Tomar otra foto" llama _tomarFotoRostro de nuevo',
+      (tester) async {
+        final tempFile = File('${Directory.systemTemp.path}/test_rostro2.jpg');
+        tempFile.writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xE0]);
+        addTearDown(() {
+          try { tempFile.deleteSync(); } catch (_) {}
+        });
+
+        final originalPicker = ImagePickerPlatform.instance;
+        ImagePickerPlatform.instance = _FakeImagePickerSuccess(tempFile.path);
+        addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(const MaterialApp(home: VerificarIdentidadScreen()));
+        await tester.pumpAndSettle();
+
+        // Primera foto
+        await tester.tap(find.text('Escanear Rostro'));
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 300));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+
+        expect(find.text('Tomar otra foto'), findsOneWidget);
+
+        // Tap "Tomar otra foto" dispara _tomarFotoRostro de nuevo
+        await tester.tap(find.text('Tomar otra foto'));
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 300));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+
         expect(find.byType(VerificarIdentidadScreen), findsOneWidget);
       },
     );
