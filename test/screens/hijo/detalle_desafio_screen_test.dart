@@ -1,8 +1,31 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 import 'package:mapachesecure_app/screens/hijo/detalle_desafio_screen.dart';
+
+// Fake para interceptar las llamadas de ImagePicker en tests
+class _FakeImagePickerPlatform extends ImagePickerPlatform {
+  final String returnPath;
+  _FakeImagePickerPlatform(this.returnPath);
+
+  @override
+  Future<XFile?> getImage({
+    required ImageSource source,
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+  }) async => XFile(returnPath);
+
+  @override
+  Future<XFile?> getImageFromSource({
+    required ImageSource source,
+    ImagePickerOptions options = const ImagePickerOptions(),
+  }) async => XFile(returnPath);
+}
 
 const _desafioTest = {
   'id': 'test-id-123',
@@ -217,5 +240,42 @@ void main() {
         expect(find.byType(DetalleDesafioScreen), findsNothing);
       },
     );
+
+    testWidgets(
+      '15. Tap en zona de cámara con ImagePicker mockeado establece _evidencia y muestra imagen',
+      (tester) async {
+        // Escritura síncrona: evita I/O asíncrono pendiente en FakeAsync
+        final tempFile = File('${Directory.systemTemp.path}/test_evidencia.jpg');
+        tempFile.writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xE0]);
+        addTearDown(() {
+          try { tempFile.deleteSync(); } catch (_) {}
+        });
+
+        final originalPicker = ImagePickerPlatform.instance;
+        ImagePickerPlatform.instance = _FakeImagePickerPlatform(tempFile.path);
+        addTearDown(() => ImagePickerPlatform.instance = originalPicker);
+
+        await tester.binding.setSurfaceSize(const Size(1080, 1920));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.camera_alt_rounded));
+        // Pump procesa tap → _tomarFoto() completa (mock devuelve inmediatamente) → setState → Image.file
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // runAsync: deja que FileImage termine la carga real antes de salir del test
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 300));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // _evidencia fue asignada: ClipRRect visible, placeholder oculto
+        expect(find.byType(ClipRRect), findsWidgets);
+        expect(find.text('Toca para sacar la foto de evidencia'), findsNothing);
+      },
+    );
+
   });
 }
