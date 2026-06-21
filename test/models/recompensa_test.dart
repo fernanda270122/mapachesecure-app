@@ -113,5 +113,24 @@ void main() {
         expect(modificado.costoPuntos, 75); // Cambió
       },
     );
+
+    test('6. copyWith sin costoPuntos ni disponible usa los valores de la instancia', () {
+      final original = Recompensa(
+        id: '1',
+        titulo: 'Premio',
+        descripcion: 'D',
+        costoPuntos: 200,
+        disponible: false,
+      );
+      // Solo cambia titulo: costoPuntos y disponible quedan null → this.X evaluado
+      final clone = original.copyWith(titulo: 'Premio actualizado');
+      expect(clone.costoPuntos, 200);
+      expect(clone.disponible, false);
+    });
+
+    test('7. toString retorna representación con titulo y costo', () {
+      final r = Recompensa(id: '1', titulo: 'Helado', descripcion: 'D', costoPuntos: 100);
+      expect(r.toString(), contains('Helado'));
+    });
   });
 }

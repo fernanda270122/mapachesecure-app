@@ -119,5 +119,31 @@ void main() {
         expect(appClonada.packageName, 'com.roblox.client'); // Se mantuvo igual
       },
     );
+
+    test(
+      '6. copyWith sin nombreApp ni requiereDesafio usa los valores de la instancia',
+      () {
+        final app = AppBloqueada(
+          id: '1',
+          hijoId: 'hijo_x',
+          nombreApp: 'TikTok',
+          packageName: 'com.zhiliaoapp',
+        );
+        // Solo cambia hijoId: nombreApp y requiereDesafio quedan null → this.X evaluado
+        final clone = app.copyWith(hijoId: 'hijo_nuevo');
+        expect(clone.nombreApp, 'TikTok');
+        expect(clone.requiereDesafio, true);
+      },
+    );
+
+    test('7. toString retorna representación con nombreApp', () {
+      final app = AppBloqueada(
+        id: '1',
+        hijoId: 'h',
+        nombreApp: 'Instagram',
+        packageName: 'com.instagram.android',
+      );
+      expect(app.toString(), contains('Instagram'));
+    });
   });
 }
