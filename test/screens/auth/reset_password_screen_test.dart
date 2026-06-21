@@ -110,5 +110,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.text('Error al cambiar la contraseña'), findsOneWidget);
     });
+
+    testWidgets('9. Constructor no-const crea la pantalla correctamente', (tester) async {
+      // Instanciación sin const: el constructor se ejecuta en tiempo de ejecución y LCOV lo contabiliza
+      final token = 'runtime-token';
+      await tester.pumpWidget(MaterialApp(
+        home: ResetPasswordScreen(accessToken: token),
+      ));
+      await tester.pump();
+      expect(find.byType(ResetPasswordScreen), findsOneWidget);
+    });
   });
 }

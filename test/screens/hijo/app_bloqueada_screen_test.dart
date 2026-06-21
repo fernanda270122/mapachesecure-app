@@ -55,5 +55,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Pantalla Hijo'), findsOneWidget);
     });
+
+    testWidgets('7. Intento de pop invoca onPopInvokedWithResult con didPop=false', (tester) async {
+      await tester.pumpWidget(_wrap('YouTube'));
+      await tester.pumpAndSettle();
+      // maybePop con canPop=false dispara onPopInvokedWithResult(false, null) → cubre L13 y L17
+      final NavigatorState nav = tester.state(find.byType(Navigator));
+      await nav.maybePop();
+      await tester.pump();
+      expect(find.byType(AppBloqueadaScreen), findsOneWidget);
+    });
   });
 }

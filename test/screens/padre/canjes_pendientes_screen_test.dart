@@ -220,5 +220,29 @@ void main() {
         await tester.pump(const Duration(seconds: 5));
       },
     );
+
+    testWidgets(
+      '13. _accion con testClient=null usa http.Client real (cubre fallback ??)',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(800, 1200));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        // Cargamos la lista con MockClient para tener un canje visible
+        CanjesPendientesScreen.testClient = MockClient((req) async {
+          return http.Response(_canjesMasculino, 200);
+        });
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        // Ahora quitamos testClient → _accion usará http.Client() real (L50 fallback)
+        CanjesPendientesScreen.testClient = null;
+        await tester.tap(find.byIcon(Icons.check_circle));
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 500));
+        });
+        await tester.pump(const Duration(milliseconds: 300));
+        // El cliente real falla con error de red → catch → pantalla sigue visible
+        expect(find.byType(CanjesPendientesScreen), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
   });
 }

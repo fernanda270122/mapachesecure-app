@@ -160,4 +160,17 @@ void main() {
       expect(find.text('No hay registro de aplicaciones usadas hoy.'), findsNothing);
     });
   });
+
+  group('Pruebas de interacción', () {
+    testWidgets('13. Pull-to-refresh llama obtenerActividadDelDia (cubre L54)', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      // Arrastra hacia abajo sobre el SingleChildScrollView para activar el RefreshIndicator (L54)
+      await tester.drag(find.byType(SingleChildScrollView), const Offset(0, 300));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(find.byType(MiActividadScreen), findsOneWidget);
+    });
+  });
 }

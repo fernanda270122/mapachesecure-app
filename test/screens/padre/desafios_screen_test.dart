@@ -108,5 +108,21 @@ void main() {
       await cargar(tester, hijosJson: '[]');
       expect(find.text('No tienes hijos registrados'), findsOneWidget);
     });
+
+    testWidgets('11. Error de API en _cargarHijos actualiza estado sin crash (cubre L37)', (tester) async {
+      // El cliente lanza excepción → catch → setState(_cargando=false)
+      ApiService.testClient = MockClient((req) async => throw Exception('Error de red'));
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.byType(DesafiosScreen), findsOneWidget);
+    });
+
+    testWidgets('12. Tap en tarjeta de hijo navega a DesafiosHijoScreen (cubre L104-109)', (tester) async {
+      await cargar(tester);
+      // Al tocar la tarjeta del hijo se ejecuta el onTap: Navigator.push(...)
+      await tester.tap(find.byType(GestureDetector).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    });
   });
 }

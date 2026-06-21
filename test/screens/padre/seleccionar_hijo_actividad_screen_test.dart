@@ -108,5 +108,13 @@ void main() {
       await cargar(tester, hijosJson: '[]');
       expect(find.text('No tienes hijos registrados'), findsOneWidget);
     });
+
+    testWidgets('11. Error de API en _cargarHijos actualiza estado sin crash (cubre L42, L44)', (tester) async {
+      // El cliente lanza excepción → catch → if (!mounted) / setState(_cargando=false)
+      ApiService.testClient = MockClient((req) async => throw Exception('Error de red'));
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.byType(SeleccionarHijoActividadScreen), findsOneWidget);
+    });
   });
 }

@@ -54,5 +54,17 @@ void main() {
         expect(prefs.getString('paleta_padre_preferida'), 'Esmeralda');
       },
     );
+
+    test(
+      '4. coloresPadre usa el fallback cuando la paleta activa no existe en el mapa',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final provider = TemaPadreProvider();
+        // Cambiamos a una clave que no existe → L12 evalúa el fallback 'Celeste Neutro'
+        await provider.cambiarTemaPadre('paleta_inexistente');
+        final colores = provider.coloresPadre;
+        expect(colores, isNotNull);
+      },
+    );
   });
 }

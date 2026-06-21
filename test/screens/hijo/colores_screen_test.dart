@@ -82,5 +82,39 @@ void main() {
         // Si llegamos aquí sin excepción, el test pasa
       },
     );
+
+    testWidgets(
+      '7. Tap en flecha de regreso ejecuta Navigator.pop y regresa a la pantalla anterior',
+      (tester) async {
+        // Envolver ColoresScreen dentro de una ruta para que Navigator.pop funcione
+        await tester.pumpWidget(
+          ChangeNotifierProvider(
+            create: (_) => TemaProvider(),
+            child: MaterialApp(
+              home: Builder(
+                builder: (ctx) => ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChangeNotifierProvider(
+                        create: (_) => TemaProvider(),
+                        child: const ColoresScreen(),
+                      ),
+                    ),
+                  ),
+                  child: const Text('Abrir'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Abrir'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.arrow_back));
+        await tester.pumpAndSettle();
+        // Regresamos a la pantalla inicial
+        expect(find.text('Abrir'), findsOneWidget);
+      },
+    );
   });
 }
