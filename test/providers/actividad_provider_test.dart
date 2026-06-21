@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -178,6 +179,74 @@ void main() {
           await provider.sincronizarActividadConServidor();
         }, () => MockClient((req) async => throw Exception('Network error')));
         expect(provider.listaUsoReal.length, 1);
+      },
+    );
+
+    test(
+      '9. obtenerActividadDelDia con datos reales de UsageStats cubre filtrado, agrupado, ordenado y sincronización',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'hijo_id': 'uid_mapache',
+          'auth_token': 'tok_secreto',
+        });
+
+        // Mock del canal de UsageStats para que devuelva datos sin tirar MissingPluginException
+        const usageChannel = MethodChannel('usage_stats');
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(usageChannel, (call) async {
+          if (call.method == 'queryUsageStats') {
+            return [
+              // YouTube aparece dos veces → ejercita la rama de merge (línea 86)
+              {
+                'packageName': 'com.google.android.youtube',
+                'totalTimeInForeground': '3600000',
+              },
+              {
+                'packageName': 'com.google.android.youtube',
+                'totalTimeInForeground': '1800000',
+              },
+              // WhatsApp aparece una vez → rama else del merge (línea 88)
+              {
+                'packageName': 'com.whatsapp',
+                'totalTimeInForeground': '60000',
+              },
+              // SystemUI está en zonaSegura → se filtra (ejercita la condición de línea 77)
+              {
+                'packageName': 'com.android.systemui',
+                'totalTimeInForeground': '999999',
+              },
+            ];
+          }
+          return null;
+        });
+        addTearDown(() {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(usageChannel, null);
+        });
+
+        final provider = ActividadProvider();
+
+        // http.runWithClient intercepta la llamada HTTP de sincronizarActividadConServidor
+        await http.runWithClient(() async {
+          await provider.obtenerActividadDelDia();
+        }, () => MockClient((req) async => http.Response('{"ok": true}', 200)));
+
+        // YouTube debe estar agrupado: 3600000 + 1800000 = 5400000
+        final yt = provider.listaUsoReal.firstWhere(
+          (u) => u.packageName == 'com.google.android.youtube',
+          orElse: () => UsageInfo(packageName: '', totalTimeInForeground: '0'),
+        );
+        expect(yt.totalTimeInForeground, '5400000');
+        // SystemUI debe estar filtrado fuera
+        expect(
+          provider.listaUsoReal.any((u) => u.packageName == 'com.android.systemui'),
+          false,
+        );
+        // YouTube y WhatsApp deben estar en la lista
+        expect(provider.listaUsoReal.length, 2);
+        // YouTube tiene más tiempo → aparece primero (ordenado de mayor a menor)
+        expect(provider.listaUsoReal.first.packageName, 'com.google.android.youtube');
+        expect(provider.cargando, false);
       },
     );
   });
