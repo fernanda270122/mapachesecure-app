@@ -72,5 +72,58 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      '5. Dispose se llama sin crash al navegar fuera de la pantalla',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (ctx) => ElevatedButton(
+                onPressed: () => Navigator.push(
+                  ctx,
+                  MaterialPageRoute(
+                    builder: (_) => const VideoEvolucionScreen(
+                      videoPath: 'assets/videos/mago_evoluciona.mp4',
+                    ),
+                  ),
+                ),
+                child: const Text('Ir'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Ir'));
+        await tester.pump(); // procesar tap
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(VideoEvolucionScreen), findsOneWidget);
+        final NavigatorState nav = tester.state(find.byType(Navigator));
+        nav.pop();
+        await tester.pump(); // iniciar animación de retorno
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(find.byType(VideoEvolucionScreen), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '6. AnimatedOpacity está presente con opacidad 0 cuando el mensaje no se muestra',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: VideoEvolucionScreen(
+              videoPath: 'assets/videos/mago_evoluciona.mp4',
+              mensaje: 'Mensaje de prueba',
+            ),
+          ),
+        );
+        await tester.pump(Duration.zero);
+        final animatedOpacity = tester.widget<AnimatedOpacity>(
+          find.byType(AnimatedOpacity),
+        );
+        expect(animatedOpacity.opacity, 0.0);
+        // El mensaje está en el árbol pero invisible
+        expect(find.text('Mensaje de prueba'), findsOneWidget);
+      },
+    );
   });
 }
