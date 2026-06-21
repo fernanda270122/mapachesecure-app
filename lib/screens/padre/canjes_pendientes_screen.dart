@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class CanjesPendientesScreen extends StatefulWidget {
   const CanjesPendientesScreen({super.key});
+  static http.Client? testClient;
 
   @override
   State<CanjesPendientesScreen> createState() => _CanjesPendientesScreenState();
@@ -28,7 +29,8 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final padreId = prefs.getString('user_id') ?? '';
-      final res = await http.get(
+      final client = CanjesPendientesScreen.testClient ?? http.Client();
+      final res = await client.get(
         Uri.parse('$_base/canjes/pendientes/$padreId'),
       );
       if (res.statusCode == 200) {
@@ -45,7 +47,8 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
 
   Future<void> _accion(String canjeId, String tipo) async {
     try {
-      final res = await http.post(Uri.parse('$_base/canjes/$tipo/$canjeId'));
+      final client = CanjesPendientesScreen.testClient ?? http.Client();
+      final res = await client.post(Uri.parse('$_base/canjes/$tipo/$canjeId'));
       if (res.statusCode == 200) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
