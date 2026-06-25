@@ -279,6 +279,7 @@ void main() {
         // Seleccionar la misión IA en el selector
         await tester.tap(find.byType(CheckboxListTile).first);
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
         // Enviar
         await tester.tap(find.textContaining('Enviar'));
         await _pumpLoaded(tester);
@@ -314,6 +315,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.byType(CheckboxListTile).first);
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.tap(find.textContaining('Enviar'));
       await _pumpLoaded(tester);
       expect(find.textContaining('Error'), findsOneWidget);
