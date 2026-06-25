@@ -167,47 +167,50 @@ class _DesafiosHijoScreenState extends State<DesafiosHijoScreen> {
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: CheckboxListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                title: Text(
-                                  desafio['titulo'],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: (anchoPantalla * 0.038).clamp(
-                                      14.0,
-                                      17.0,
-                                    ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: CheckboxListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                ),
-                                subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    "${desafio['descripcion']}\n\n⭐ ${desafio['puntos']} pts",
+                                  title: Text(
+                                    desafio['titulo'],
                                     style: TextStyle(
-                                      fontSize: (anchoPantalla * 0.034).clamp(
-                                        12.0,
-                                        15.0,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: (anchoPantalla * 0.038).clamp(
+                                        14.0,
+                                        17.0,
                                       ),
-                                      color: Colors.black87,
                                     ),
                                   ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      "${desafio['descripcion']}\n\n⭐ ${desafio['puntos']} pts",
+                                      style: TextStyle(
+                                        fontSize: (anchoPantalla * 0.034).clamp(
+                                          12.0,
+                                          15.0,
+                                        ),
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  value: isSelected,
+                                  activeColor: colorBoton,
+                                  controlAffinity:
+                                      ListTileControlAffinity.trailing,
+                                  onChanged: (bool? value) {
+                                    setModalState(() {
+                                      if (value == true) {
+                                        seleccionados.add(index);
+                                      } else {
+                                        seleccionados.remove(index);
+                                      }
+                                    });
+                                  },
                                 ),
-                                value: isSelected,
-                                activeColor: colorBoton,
-                                controlAffinity:
-                                    ListTileControlAffinity.trailing,
-                                onChanged: (bool? value) {
-                                  setModalState(() {
-                                    if (value == true) {
-                                      seleccionados.add(index);
-                                    } else {
-                                      seleccionados.remove(index);
-                                    }
-                                  });
-                                },
                               ),
                             );
                           },
