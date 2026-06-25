@@ -127,112 +127,112 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
         elevation: 0,
       ),
       body: _cargando
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _cargarDatos,
-                child: Column(
-                  children: [
-                    _buildProgresoHeader(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Misiones activas',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: tema.onBackground,
-                          ),
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _cargarDatos,
+              child: Column(
+                children: [
+                  _buildProgresoHeader(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Misiones activas',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: tema.onBackground,
                         ),
                       ),
                     ),
-                    Expanded(
-                      child: _desafiosActivos.isEmpty
-                          ? const Center(
-                              child: Text("¡No tienes misiones pendientes! 🦝"),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(20),
-                              itemCount: _desafiosActivos.length,
-                              itemBuilder: (context, index) {
-                                final desafio = _desafiosActivos[index];
+                  ),
+                  Expanded(
+                    child: _desafiosActivos.isEmpty
+                        ? const Center(
+                            child: Text("¡No tienes misiones pendientes! 🦝"),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(20),
+                            itemCount: _desafiosActivos.length,
+                            itemBuilder: (context, index) {
+                              final desafio = _desafiosActivos[index];
 
-                                // --- NORMALIZACIÓN PARA ACOPLAR RAMAS ---
-                                // Convertimos a minúsculas y si es 'cognitivo' lo tratamos como 'cognitiva'
-                                String tipoRaw = (desafio['tipo'] ?? 'General')
-                                    .toString()
-                                    .toLowerCase();
-                                if (tipoRaw == 'cognitivo') {
-                                  tipoRaw = 'cognitiva';
+                              // --- NORMALIZACIÓN PARA ACOPLAR RAMAS ---
+                              // Convertimos a minúsculas y si es 'cognitivo' lo tratamos como 'cognitiva'
+                              String tipoRaw = (desafio['tipo'] ?? 'General')
+                                  .toString()
+                                  .toLowerCase();
+                              if (tipoRaw == 'cognitivo') {
+                                tipoRaw = 'cognitiva';
+                              }
+                              if (tipoRaw == 'fisico') {
+                                tipoRaw = 'fisica';
+                              }
+
+                              final String tipoActual =
+                                  tipoRaw; // Ahora tipoActual es consistente
+
+                              // --- LÓGICA DE ENCABEZADOS POR SECCIÓN ---
+                              bool mostrarEncabezado = false;
+                              if (index == 0) {
+                                mostrarEncabezado = true;
+                              } else {
+                                // También normalizamos el tipo anterior para comparar peras con peras
+                                String tipoAnterior =
+                                    (_desafiosActivos[index - 1]['tipo'] ?? '')
+                                        .toString()
+                                        .toLowerCase();
+                                if (tipoAnterior == 'cognitivo') {
+                                  tipoAnterior = 'cognitiva';
                                 }
-                                if (tipoRaw == 'fisico') { tipoRaw = 'fisica'; }
+                                if (tipoAnterior == 'fisico') {
+                                  tipoAnterior = 'fisica';
+                                }
 
-                                final String tipoActual =
-                                    tipoRaw; // Ahora tipoActual es consistente
-
-                                // --- LÓGICA DE ENCABEZADOS POR SECCIÓN ---
-                                bool mostrarEncabezado = false;
-                                if (index == 0) {
+                                if (tipoActual != tipoAnterior) {
                                   mostrarEncabezado = true;
-                                } else {
-                                  // También normalizamos el tipo anterior para comparar peras con peras
-                                  String tipoAnterior =
-                                      (_desafiosActivos[index - 1]['tipo'] ??
-                                              '')
-                                          .toString()
-                                          .toLowerCase();
-                                  if (tipoAnterior == 'cognitivo') {
-                                    tipoAnterior = 'cognitiva';
-                                  }
-                                  if (tipoAnterior == 'fisico') {
-                                    tipoAnterior = 'fisica';
-                                  }
-
-                                  if (tipoActual != tipoAnterior) {
-                                    mostrarEncabezado = true;
-                                  }
                                 }
+                              }
 
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (mostrarEncabezado)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 15,
-                                          bottom: 8,
-                                          left: 5,
-                                        ),
-                                        child: Text(
-                                          tipoActual
-                                              .toUpperCase(), // Se verá siempre igual (ej: COGNITIVA)
-                                          style: TextStyle(
-                                            color: _getColor(tipoActual),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            letterSpacing: 1.1,
-                                          ),
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (mostrarEncabezado)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        top: 15,
+                                        bottom: 8,
+                                        left: 5,
+                                      ),
+                                      child: Text(
+                                        tipoActual
+                                            .toUpperCase(), // Se verá siempre igual (ej: COGNITIVA)
+                                        style: TextStyle(
+                                          color: _getColor(tipoActual),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          letterSpacing: 1.1,
                                         ),
                                       ),
-                                    _buildDesafioCard(
-                                      context,
-                                      desafio['titulo'] ?? 'Sin título',
-                                      desafio['descripcion'] ??
-                                          'Sin descripción',
-                                      '${desafio['puntos']} pts',
-                                      _getIcono(tipoActual),
-                                      _getColor(tipoActual),
-                                      desafio,
                                     ),
-                                  ],
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
+                                  _buildDesafioCard(
+                                    context,
+                                    desafio['titulo'] ?? 'Sin título',
+                                    desafio['descripcion'] ?? 'Sin descripción',
+                                    '${desafio['puntos']} pts',
+                                    _getIcono(tipoActual),
+                                    _getColor(tipoActual),
+                                    desafio,
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                  ),
+                ],
               ),
+            ),
     );
   }
 
@@ -245,7 +245,10 @@ class _MisDesafiosScreenState extends State<MisDesafiosScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Row(

@@ -145,7 +145,9 @@ class _CanjesPendientesScreenState extends State<CanjesPendientesScreen> {
                           vertical: 8.h,
                         ),
                         leading: CircleAvatar(
-                          backgroundColor: temaPadre.primary.withValues(alpha: 0.1),
+                          backgroundColor: temaPadre.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           radius: 22.r,
                           child: Icon(
                             Icons.card_giftcard,

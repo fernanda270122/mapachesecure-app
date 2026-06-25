@@ -9,13 +9,13 @@ import 'package:mapachesecure_app/providers/tema_padre_provider.dart';
 import 'package:mapachesecure_app/screens/padre/canjes_pendientes_screen.dart';
 
 Widget _wrap() => ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      builder: (_, __) => ChangeNotifierProvider(
-        create: (_) => TemaPadreProvider(),
-        child: const MaterialApp(home: CanjesPendientesScreen()),
-      ),
-    );
+  designSize: const Size(375, 812),
+  minTextAdapt: true,
+  builder: (_, __) => ChangeNotifierProvider(
+    create: (_) => TemaPadreProvider(),
+    child: const MaterialApp(home: CanjesPendientesScreen()),
+  ),
+);
 
 const _canjesMasculino = '''[{
   "id": "canje-1",
@@ -65,87 +65,71 @@ void main() {
   });
 
   group('Pruebas para CanjesPendientesScreen', () {
-    testWidgets(
-      '1. Muestra "Canjes Pendientes" en el AppBar',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pump();
-        expect(find.text('Canjes Pendientes'), findsOneWidget);
-      },
-    );
+    testWidgets('1. Muestra "Canjes Pendientes" en el AppBar', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pump();
+      expect(find.text('Canjes Pendientes'), findsOneWidget);
+    });
 
-    testWidgets(
-      '2. Muestra mensaje de lista vacía cuando no hay canjes',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(
-          find.text('No hay canjes esperando aprobación'),
-          findsOneWidget,
-        );
-      },
-    );
+    testWidgets('2. Muestra mensaje de lista vacía cuando no hay canjes', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('No hay canjes esperando aprobación'), findsOneWidget);
+    });
 
-    testWidgets(
-      '3. Contiene un Scaffold como raíz de la pantalla',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pump();
-        expect(find.byType(Scaffold), findsOneWidget);
-      },
-    );
+    testWidgets('3. Contiene un Scaffold como raíz de la pantalla', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pump();
+      expect(find.byType(Scaffold), findsOneWidget);
+    });
 
-    testWidgets(
-      '4. Contiene SafeArea en el cuerpo',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.byType(SafeArea), findsAtLeastNWidgets(1));
-      },
-    );
+    testWidgets('4. Contiene SafeArea en el cuerpo', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.byType(SafeArea), findsAtLeastNWidgets(1));
+    });
   });
 
   group('Pruebas con datos', () {
-    testWidgets(
-      '5. Lista de canjes muestra la recompensa y los puntos',
-      (tester) async {
-        await cargar(tester);
-        expect(find.textContaining('Juguete'), findsOneWidget);
-        expect(find.textContaining('100 pts'), findsOneWidget);
-      },
-    );
+    testWidgets('5. Lista de canjes muestra la recompensa y los puntos', (
+      tester,
+    ) async {
+      await cargar(tester);
+      expect(find.textContaining('Juguete'), findsOneWidget);
+      expect(find.textContaining('100 pts'), findsOneWidget);
+    });
 
-    testWidgets(
-      '6. _genero con sexo masculino muestra "Hijo: Lucas"',
-      (tester) async {
-        await cargar(tester);
-        expect(find.text('Hijo: Lucas'), findsOneWidget);
-      },
-    );
+    testWidgets('6. _genero con sexo masculino muestra "Hijo: Lucas"', (
+      tester,
+    ) async {
+      await cargar(tester);
+      expect(find.text('Hijo: Lucas'), findsOneWidget);
+    });
 
-    testWidgets(
-      '7. _genero con sexo femenino muestra "Hija: Sofia"',
-      (tester) async {
-        await cargar(tester, json: _canjesFemenino);
-        expect(find.text('Hija: Sofia'), findsOneWidget);
-      },
-    );
+    testWidgets('7. _genero con sexo femenino muestra "Hija: Sofia"', (
+      tester,
+    ) async {
+      await cargar(tester, json: _canjesFemenino);
+      expect(find.text('Hija: Sofia'), findsOneWidget);
+    });
 
-    testWidgets(
-      '8. _genero con sexo null muestra "Menor: Alex"',
-      (tester) async {
-        await cargar(tester, json: _canjesOtro);
-        expect(find.text('Menor: Alex'), findsOneWidget);
-      },
-    );
+    testWidgets('8. _genero con sexo null muestra "Menor: Alex"', (
+      tester,
+    ) async {
+      await cargar(tester, json: _canjesOtro);
+      expect(find.text('Menor: Alex'), findsOneWidget);
+    });
 
-    testWidgets(
-      '9. Muestra ícono de tarjeta de regalo en la lista',
-      (tester) async {
-        await cargar(tester);
-        expect(find.byIcon(Icons.card_giftcard), findsOneWidget);
-      },
-    );
+    testWidgets('9. Muestra ícono de tarjeta de regalo en la lista', (
+      tester,
+    ) async {
+      await cargar(tester);
+      expect(find.byIcon(Icons.card_giftcard), findsOneWidget);
+    });
 
     testWidgets(
       '10. Tap en aprobar llama _accion y ejecuta el flujo de éxito',
@@ -199,27 +183,26 @@ void main() {
       },
     );
 
-    testWidgets(
-      '12. Error en _accion muestra SnackBar de error',
-      (tester) async {
-        await tester.binding.setSurfaceSize(const Size(800, 1200));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-        // El catch de _accion se dispara cuando el cliente lanza excepción
-        CanjesPendientesScreen.testClient = MockClient((req) async {
-          if (req.method == 'POST') throw Exception('Error de red');
-          return http.Response(_canjesMasculino, 200);
-        });
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        await tester.tap(find.byIcon(Icons.check_circle));
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 300));
-        });
-        await tester.pump(const Duration(milliseconds: 200));
-        expect(find.text('Error al procesar acción'), findsOneWidget);
-        await tester.pump(const Duration(seconds: 5));
-      },
-    );
+    testWidgets('12. Error en _accion muestra SnackBar de error', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      // El catch de _accion se dispara cuando el cliente lanza excepción
+      CanjesPendientesScreen.testClient = MockClient((req) async {
+        if (req.method == 'POST') throw Exception('Error de red');
+        return http.Response(_canjesMasculino, 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.check_circle));
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 300));
+      });
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Error al procesar acción'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+    });
 
     testWidgets(
       '13. _accion con testClient=null usa http.Client real (cubre fallback ??)',

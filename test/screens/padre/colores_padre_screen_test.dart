@@ -7,9 +7,9 @@ import 'package:mapachesecure_app/screens/padre/colores_padre_screen.dart';
 import 'package:mapachesecure_app/theme/app_paletas_padre.dart';
 
 Widget _wrap() => ChangeNotifierProvider(
-      create: (_) => TemaPadreProvider(),
-      child: const MaterialApp(home: ColoresPadreScreen()),
-    );
+  create: (_) => TemaPadreProvider(),
+  child: const MaterialApp(home: ColoresPadreScreen()),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,23 +19,19 @@ void main() {
   });
 
   group('Pruebas para ColoresPadreScreen', () {
-    testWidgets(
-      '1. Muestra "Colores del Panel" en el AppBar',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Colores del Panel'), findsOneWidget);
-      },
-    );
+    testWidgets('1. Muestra "Colores del Panel" en el AppBar', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Colores del Panel'), findsOneWidget);
+    });
 
-    testWidgets(
-      '2. Muestra el título "Configuración Visual (Padre)"',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Configuración Visual (Padre)'), findsOneWidget);
-      },
-    );
+    testWidgets('2. Muestra el título "Configuración Visual (Padre)"', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Configuración Visual (Padre)'), findsOneWidget);
+    });
 
     testWidgets(
       '3. Muestra una opción por cada paleta disponible en AppPaletasPadre',
@@ -48,27 +44,25 @@ void main() {
       },
     );
 
-    testWidgets(
-      '4. Botón "Aplicar colores de Padre" está visible',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Aplicar colores de Padre'), findsOneWidget);
-      },
-    );
+    testWidgets('4. Botón "Aplicar colores de Padre" está visible', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Aplicar colores de Padre'), findsOneWidget);
+    });
 
-    testWidgets(
-      '5. Tap en una paleta diferente muestra ícono de check',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
+    testWidgets('5. Tap en una paleta diferente muestra ícono de check', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
 
-        final segunda = AppPaletasPadre.paletas.keys.elementAt(1);
-        await tester.tap(find.text(segunda));
-        await tester.pumpAndSettle();
+      final segunda = AppPaletasPadre.paletas.keys.elementAt(1);
+      await tester.tap(find.text(segunda));
+      await tester.pumpAndSettle();
 
-        expect(find.byIcon(Icons.check_circle), findsOneWidget);
-      },
-    );
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    });
   });
 }

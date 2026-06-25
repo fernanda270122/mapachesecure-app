@@ -301,30 +301,27 @@ void main() {
       },
     );
 
-    test(
-      '13. App incluida en una regla de horario activa debe bloquearse',
-      () {
-        final utils = TestGuardianUtils();
-        // Regla activa un Lunes de 00:00 a 23:59
-        final regla = ReglaBloqueo(
-          inicio: '00:00',
-          fin: '23:59',
-          dias: [0], // Lunes (weekday=1 → weekday-1=0)
-          appsAfectadas: ['com.juego.peligroso'],
-        );
+    test('13. App incluida en una regla de horario activa debe bloquearse', () {
+      final utils = TestGuardianUtils();
+      // Regla activa un Lunes de 00:00 a 23:59
+      final regla = ReglaBloqueo(
+        inicio: '00:00',
+        fin: '23:59',
+        dias: [0], // Lunes (weekday=1 → weekday-1=0)
+        appsAfectadas: ['com.juego.peligroso'],
+      );
 
-        final lunes = DateTime(2026, 6, 15, 14, 0); // Lunes a las 14:00
+      final lunes = DateTime(2026, 6, 15, 14, 0); // Lunes a las 14:00
 
-        final resultado = utils.evaluarSiDebeBloquear(
-          appActual: 'com.juego.peligroso',
-          appsEnListaNegra: [],
-          reglasProgramadas: [regla],
-          momentoSimulado: lunes,
-          miPropiaApp: 'com.mapachesecure.mapachesecure_app',
-        );
+      final resultado = utils.evaluarSiDebeBloquear(
+        appActual: 'com.juego.peligroso',
+        appsEnListaNegra: [],
+        reglasProgramadas: [regla],
+        momentoSimulado: lunes,
+        miPropiaApp: 'com.mapachesecure.mapachesecure_app',
+      );
 
-        expect(resultado, true);
-      },
-    );
+      expect(resultado, true);
+    });
   });
 }

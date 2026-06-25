@@ -68,7 +68,8 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
     final bytes = await _evidencia!.readAsBytes();
     final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     const supabaseUrl = 'https://xmsiydjwqvuzyykaidgj.supabase.co';
-    const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtc2l5ZGp3cXZ1enl5a2FpZGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTY5NzIsImV4cCI6MjA5MTUzMjk3Mn0.rJxJfePDHTVXXj653Hy6Ue43qBIMQJXaK3kC9PMYz5Q';
+    const anonKey =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtc2l5ZGp3cXZ1enl5a2FpZGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5NTY5NzIsImV4cCI6MjA5MTUzMjk3Mn0.rJxJfePDHTVXXj653Hy6Ue43qBIMQJXaK3kC9PMYz5Q';
     final response = await http.post(
       Uri.parse('$supabaseUrl/storage/v1/object/evidencias/$filename'),
       headers: {
@@ -82,6 +83,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
     }
     throw Exception('Error al subir la foto: ${response.body}');
   }
+
   // Envío al backend
   Future<void> _enviarEvidencia() async {
     if (_evidencia == null) {
@@ -111,7 +113,7 @@ class _DetalleDesafioScreenState extends State<DetalleDesafioScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Colors.green,
-            content: Text('¡Desafío enviado al jefe! 🦝' ),
+            content: Text('¡Desafío enviado al jefe! 🦝'),
           ),
         );
       }

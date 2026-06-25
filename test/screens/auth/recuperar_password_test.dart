@@ -11,7 +11,9 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    ApiService.testClient = MockClient((req) async => http.Response('{"ok": true}', 200));
+    ApiService.testClient = MockClient(
+      (req) async => http.Response('{"ok": true}', 200),
+    );
   });
 
   tearDown(() {
@@ -56,7 +58,9 @@ void main() {
       expect(find.textContaining('¡Correo enviado!'), findsNothing);
     });
 
-    testWidgets('6. Con correo valido y API exitosa muestra confirmacion', (tester) async {
+    testWidgets('6. Con correo valido y API exitosa muestra confirmacion', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'test@test.com');
@@ -66,19 +70,26 @@ void main() {
       expect(find.textContaining('¡Correo enviado!'), findsOneWidget);
     });
 
-    testWidgets('7. Con correo valido y API fallida muestra SnackBar de error', (tester) async {
-      ApiService.testClient = MockClient((req) async => throw Exception('Sin conexion'));
-      await tester.pumpWidget(wrap());
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'test@test.com');
-      await tester.tap(find.text('ENVIAR CORREO'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.textContaining('Error'), findsWidgets);
-      await tester.pump(const Duration(seconds: 5));
-    });
+    testWidgets(
+      '7. Con correo valido y API fallida muestra SnackBar de error',
+      (tester) async {
+        ApiService.testClient = MockClient(
+          (req) async => throw Exception('Sin conexion'),
+        );
+        await tester.pumpWidget(wrap());
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'test@test.com');
+        await tester.tap(find.text('ENVIAR CORREO'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.textContaining('Error'), findsWidgets);
+        await tester.pump(const Duration(seconds: 5));
+      },
+    );
 
-    testWidgets('8. Contiene un Scaffold como raiz de la pantalla', (tester) async {
+    testWidgets('8. Contiene un Scaffold como raiz de la pantalla', (
+      tester,
+    ) async {
       await tester.pumpWidget(wrap());
       await tester.pump();
       expect(find.byType(Scaffold), findsOneWidget);

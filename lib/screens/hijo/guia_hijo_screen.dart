@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';                                                                                                                                                       
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mapachesecure_app/providers/tema_provider.dart';
 
@@ -11,15 +11,18 @@ class GuiaHijoScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: tema.background,
       appBar: AppBar(
-        title: const Text('Guía de la app',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Guía de la app',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: tema.primary,
         foregroundColor: Colors.white,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _seccion(context,
+          _seccion(
+            context,
             icono: Icons.waving_hand,
             titulo: '¡Bienvenido a Raccu!',
             pasos: [
@@ -27,7 +30,8 @@ class GuiaHijoScreen extends StatelessWidget {
               'Completa desafíos, gana puntos y haz crecer a tu mapache Raccu.',
             ],
           ),
-          _seccion(context,
+          _seccion(
+            context,
             icono: Icons.task_alt,
             titulo: '¿Cómo funcionan los desafíos?',
             pasos: [
@@ -37,7 +41,8 @@ class GuiaHijoScreen extends StatelessWidget {
               'Cuando tu papá o mamá apruebe la foto, ¡ganas puntos!',
             ],
           ),
-          _seccion(context,
+          _seccion(
+            context,
             icono: Icons.star,
             titulo: '¿Para qué sirven los puntos?',
             pasos: [
@@ -46,7 +51,8 @@ class GuiaHijoScreen extends StatelessWidget {
               'Las recompensas las elige tu papá o mamá especialmente para ti.',
             ],
           ),
-          _seccion(context,
+          _seccion(
+            context,
             icono: Icons.pets,
             titulo: 'Tu mascota Raccu',
             pasos: [
@@ -56,7 +62,8 @@ class GuiaHijoScreen extends StatelessWidget {
               '¡Cuídalo completando tus desafíos!',
             ],
           ),
-          _seccion(context,
+          _seccion(
+            context,
             icono: Icons.block,
             titulo: '¿Por qué están bloqueadas mis apps?',
             pasos: [
@@ -65,7 +72,8 @@ class GuiaHijoScreen extends StatelessWidget {
               'El bloqueo es para ayudarte a organizar mejor tu tiempo.',
             ],
           ),
-          _seccion(context,
+          _seccion(
+            context,
             icono: Icons.lightbulb_outline,
             titulo: 'Consejos',
             pasos: [
@@ -79,7 +87,8 @@ class GuiaHijoScreen extends StatelessWidget {
     );
   }
 
-  Widget _seccion(BuildContext context, {
+  Widget _seccion(
+    BuildContext context, {
     required IconData icono,
     required String titulo,
     required List<String> pasos,
@@ -101,31 +110,44 @@ class GuiaHijoScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(titulo,
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: primary)),
+                  child: Text(
+                    titulo,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            ...pasos.asMap().entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${e.key + 1}. ',
-                          style: TextStyle(
-                              color: primary,
-                              fontWeight: FontWeight.bold)),
-                      Expanded(
-                          child: Text(e.value,
-                              style: const TextStyle(
-                                  fontSize: 13, color: Colors.black87))),
-                    ],
-                  ),
-                )),
+            ...pasos.asMap().entries.map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${e.key + 1}. ',
+                      style: TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        e.value,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

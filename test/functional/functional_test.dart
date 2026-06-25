@@ -15,20 +15,17 @@ void main() {
   });
 
   group('Pruebas funcionales — MapacheSecure', () {
-    testWidgets(
-      '1. Login fallido muestra mensaje de error al usuario',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(home: LoginScreen()),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('1. Login fallido muestra mensaje de error al usuario', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.text('INGRESAR'));
-        await tester.pumpAndSettle();
+      await tester.tap(find.text('INGRESAR'));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Correo o contraseña incorrectos'), findsOneWidget);
-      },
-    );
+      expect(find.text('Correo o contraseña incorrectos'), findsOneWidget);
+    });
 
     testWidgets(
       '2. Seleccionar un avatar lo marca visualmente como seleccionado',
@@ -65,26 +62,24 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(
           const MaterialApp(
-            home: PantallaBloqueoScreen(
-              horaInicio: '20:00',
-              horaFin: '22:00',
-            ),
+            home: PantallaBloqueoScreen(horaInicio: '20:00', horaFin: '22:00'),
           ),
         );
         await tester.pumpAndSettle();
 
         expect(find.text('App bloqueada'), findsOneWidget);
         expect(find.text('Horario de bloqueo: 20:00 - 22:00'), findsOneWidget);
-        expect(find.text('Vuelve cuando termine el bloqueo 🦝'), findsOneWidget);
+        expect(
+          find.text('Vuelve cuando termine el bloqueo 🦝'),
+          findsOneWidget,
+        );
       },
     );
 
     testWidgets(
       '4. Flujo de recuperar contraseña navega a la pantalla correcta',
       (WidgetTester tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(home: LoginScreen()),
-        );
+        await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Olvidé mi contraseña'));

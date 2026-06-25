@@ -510,10 +510,14 @@ class _TiendaRecompensasScreenState extends State<TiendaRecompensasScreen> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.06),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.06,
+                                      ),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.black.withValues(alpha: 0.08),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.08,
+                                        ),
                                       ),
                                     ),
                                     child: Row(

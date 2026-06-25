@@ -79,7 +79,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // 🔄 Si el estado es 'resumed', significa que el niño acaba de volver de los Ajustes a la app
     if (state == AppLifecycleState.resumed) {
-      debugPrint("🦝 MapacheSecure: El usuario regresó a la app. Evaluando siguiente permiso...");
+      debugPrint(
+        "🦝 MapacheSecure: El usuario regresó a la app. Evaluando siguiente permiso...",
+      );
       _activarGuardian(); // Volvemos a llamar a la secuencia inteligente
     }
   }
@@ -117,7 +119,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           setState(() => _tipoAvatar = elegido);
           try {
             final api = ApiService();
-            await api.put('/usuarios/$hijoId/tipo-avatar', {'tipo_avatar': elegido});
+            await api.put('/usuarios/$hijoId/tipo-avatar', {
+              'tipo_avatar': elegido,
+            });
           } catch (_) {}
         } else {
           // El niño cerró la pantalla sin elegir — no avanzamos nivel
@@ -362,7 +366,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     await auth.logout();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tu sesión expiró. Inicia sesión nuevamente.')),
+      const SnackBar(
+        content: Text('Tu sesión expiró. Inicia sesión nuevamente.'),
+      ),
     );
     Navigator.pushAndRemoveUntil(
       context,
@@ -403,7 +409,10 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               children: [
                 Text(
                   "Para cerrar sesión y desactivar el Guardián, un adulto debe ingresar sus datos.",
-                  style: TextStyle(color: tema.onBackground.withValues(alpha: 0.7), fontSize: 13),
+                  style: TextStyle(
+                    color: tema.onBackground.withValues(alpha: 0.7),
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -414,12 +423,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                     labelText: "Correo del Adulto",
                     labelStyle: TextStyle(color: tema.accent),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: tema.onBackground.withValues(alpha: 0.2)),
+                      borderSide: BorderSide(
+                        color: tema.onBackground.withValues(alpha: 0.2),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: tema.accent),
                     ),
-                    prefixIcon: Icon(Icons.email, color: tema.onBackground.withValues(alpha: 0.5), size: 20),
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: tema.onBackground.withValues(alpha: 0.5),
+                      size: 20,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -431,12 +446,18 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                     labelText: "Contraseña",
                     labelStyle: TextStyle(color: tema.accent),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: tema.onBackground.withValues(alpha: 0.2)),
+                      borderSide: BorderSide(
+                        color: tema.onBackground.withValues(alpha: 0.2),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: tema.accent),
                     ),
-                    prefixIcon: Icon(Icons.lock, color: tema.onBackground.withValues(alpha: 0.5), size: 20),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: tema.onBackground.withValues(alpha: 0.5),
+                      size: 20,
+                    ),
                   ),
                 ),
               ],
@@ -447,7 +468,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
               onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 "CANCELAR",
-                style: TextStyle(color: tema.onBackground.withValues(alpha: 0.5)),
+                style: TextStyle(
+                  color: tema.onBackground.withValues(alpha: 0.5),
+                ),
               ),
             ),
             ElevatedButton(
@@ -472,7 +495,8 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
                           // 🛡️ PASO 2: LIMPIAR DATOS
                           final prefs = await SharedPreferences.getInstance();
-                          final onboardingKeys = prefs.getKeys()
+                          final onboardingKeys = prefs
+                              .getKeys()
                               .where((k) => k.startsWith('onboarding_'))
                               .toList();
                           final savedFlags = {
@@ -835,7 +859,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
                                 child: Text(
                                   "No hay desafíos disponibles",
                                   style: TextStyle(
-                                    color: tema.onBackground.withValues(alpha: 0.6),
+                                    color: tema.onBackground.withValues(
+                                      alpha: 0.6,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -923,7 +949,10 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Column(

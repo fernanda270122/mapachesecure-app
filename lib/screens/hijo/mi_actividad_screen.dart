@@ -160,7 +160,10 @@ class _MiActividadScreenState extends State<MiActividadScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Column(

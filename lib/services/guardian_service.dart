@@ -32,9 +32,9 @@ class ReglaBloqueo {
       // Decodificamos la lista de días [0,1,2...] que viene de Supabase
       dias: List<int>.from(jsonDecode(json['dias_semana'])),
       appsAfectadas: (json['package_names'] as String? ?? "")
-              .split(',')
-              .where((s) => s.isNotEmpty)
-              .toList(),
+          .split(',')
+          .where((s) => s.isNotEmpty)
+          .toList(),
     );
   }
 }
@@ -258,7 +258,9 @@ void onStart(ServiceInstance service) async {
 
     // Si no hay ID o el rol NO es hijo, el servicio se detiene físicamente
     if (userId == null || userId.isEmpty || rol != 'hijo') {
-      debugPrint("🛑 Guardian: Deteniendo servicio. Usuario: $userId, Rol: $rol");
+      debugPrint(
+        "🛑 Guardian: Deteniendo servicio. Usuario: $userId, Rol: $rol",
+      );
       timer.cancel();
       service.stopSelf();
       return;

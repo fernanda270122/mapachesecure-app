@@ -24,4 +24,3 @@ extension ResponsiveExtension on BuildContext {
     return size * (width / baseWidth);
   }
 }
-

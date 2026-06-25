@@ -274,7 +274,10 @@ class _ActividadHijoScreenState extends State<ActividadHijoScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10.r),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10.r,
+          ),
         ],
       ),
       child: Column(

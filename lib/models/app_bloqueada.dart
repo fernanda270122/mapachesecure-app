@@ -23,7 +23,8 @@ class AppBloqueada {
       hijoId: json['hijo_id']?.toString() ?? '',
       nombreApp: json['nombre_app'] ?? '',
       packageName: json['package_name'] ?? '',
-      requiereDesafio: json['requiere_desafio'] == true || json['requiere_desafio'] == 1,
+      requiereDesafio:
+          json['requiere_desafio'] == true || json['requiere_desafio'] == 1,
       fechaCreacion: json['fecha_creacion'] != null
           ? DateTime.tryParse(json['fecha_creacion'])
           : null,

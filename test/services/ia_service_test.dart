@@ -21,9 +21,30 @@ void main() {
           if (request.url.path.contains('/ia/generar')) {
             return http.Response(
               jsonEncode([
-                {'id': 'ia_1', 'titulo': 'Ordenar la pieza', 'descripcion': 'Recoge tu ropa', 'puntos': 10, 'categoria': 'hogar', 'estado': 'activo'},
-                {'id': 'ia_2', 'titulo': 'Leer 15 minutos', 'descripcion': 'Lee un libro', 'puntos': 20, 'categoria': 'educacion', 'estado': 'activo'},
-                {'id': 'ia_3', 'titulo': 'Hacer la cama', 'descripcion': 'Ordena tu cama', 'puntos': 15, 'categoria': 'hogar', 'estado': 'activo'},
+                {
+                  'id': 'ia_1',
+                  'titulo': 'Ordenar la pieza',
+                  'descripcion': 'Recoge tu ropa',
+                  'puntos': 10,
+                  'categoria': 'hogar',
+                  'estado': 'activo',
+                },
+                {
+                  'id': 'ia_2',
+                  'titulo': 'Leer 15 minutos',
+                  'descripcion': 'Lee un libro',
+                  'puntos': 20,
+                  'categoria': 'educacion',
+                  'estado': 'activo',
+                },
+                {
+                  'id': 'ia_3',
+                  'titulo': 'Hacer la cama',
+                  'descripcion': 'Ordena tu cama',
+                  'puntos': 15,
+                  'categoria': 'hogar',
+                  'estado': 'activo',
+                },
               ]),
               200,
             );
@@ -34,7 +55,10 @@ void main() {
         late dynamic resultado;
         await http.runWithClient(() async {
           final api = ApiService();
-          resultado = await api.post('/ia/generar', {'categoria': 'hogar', 'dificultad': 'facil'});
+          resultado = await api.post('/ia/generar', {
+            'categoria': 'hogar',
+            'dificultad': 'facil',
+          });
         }, () => mockClient);
 
         expect(resultado, isList);
@@ -95,10 +119,7 @@ void main() {
           'estado': null,
         };
 
-        expect(
-          () => Desafio.fromJson(jsonMinimo),
-          returnsNormally,
-        );
+        expect(() => Desafio.fromJson(jsonMinimo), returnsNormally);
       },
     );
   });

@@ -38,7 +38,7 @@ class PantallaBloqueoScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Vuelve cuando termine el bloqueo 🦝' ,
+                'Vuelve cuando termine el bloqueo 🦝',
                 style: TextStyle(fontSize: 14, color: Colors.white60),
               ),
             ],

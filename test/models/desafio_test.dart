@@ -137,36 +137,48 @@ void main() {
       },
     );
 
-    test('7. fromJson con fecha_completado no nula parsea la fecha correctamente', () {
-      final json = {
-        'id': '1',
-        'titulo': 'Reto',
-        'descripcion': 'D',
-        'categoria': 'fisica',
-        'puntos': 50,
-        'fecha_completado': '2026-05-10T12:00:00Z',
-      };
-      final desafio = Desafio.fromJson(json);
-      expect(desafio.fechaCompletado, isA<DateTime>());
-    });
+    test(
+      '7. fromJson con fecha_completado no nula parsea la fecha correctamente',
+      () {
+        final json = {
+          'id': '1',
+          'titulo': 'Reto',
+          'descripcion': 'D',
+          'categoria': 'fisica',
+          'puntos': 50,
+          'fecha_completado': '2026-05-10T12:00:00Z',
+        };
+        final desafio = Desafio.fromJson(json);
+        expect(desafio.fechaCompletado, isA<DateTime>());
+      },
+    );
 
-    test('8. copyWith sin puntos ni estado usa los valores de la instancia', () {
-      final original = Desafio(
-        id: '1',
-        titulo: 'T',
-        descripcion: 'D',
-        categoria: 'C',
-        puntos: 99,
-        estado: 'activo',
-      );
-      // Solo cambia titulo: puntos y estado quedan null → this.X evaluado
-      final clone = original.copyWith(titulo: 'Nuevo título');
-      expect(clone.puntos, 99);
-      expect(clone.estado, 'activo');
-    });
+    test(
+      '8. copyWith sin puntos ni estado usa los valores de la instancia',
+      () {
+        final original = Desafio(
+          id: '1',
+          titulo: 'T',
+          descripcion: 'D',
+          categoria: 'C',
+          puntos: 99,
+          estado: 'activo',
+        );
+        // Solo cambia titulo: puntos y estado quedan null → this.X evaluado
+        final clone = original.copyWith(titulo: 'Nuevo título');
+        expect(clone.puntos, 99);
+        expect(clone.estado, 'activo');
+      },
+    );
 
     test('9. toString retorna representación con titulo', () {
-      final d = Desafio(id: '1', titulo: 'Mi Desafío', descripcion: 'D', categoria: 'C', puntos: 10);
+      final d = Desafio(
+        id: '1',
+        titulo: 'Mi Desafío',
+        descripcion: 'D',
+        categoria: 'C',
+        puntos: 10,
+      );
       expect(d.toString(), contains('Mi Desafío'));
     });
   });

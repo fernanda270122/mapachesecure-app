@@ -857,7 +857,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15.r),
         side: BorderSide(
-          color: isTotal ? Colors.red.withValues(alpha: 0.5) : Colors.transparent,
+          color: isTotal
+              ? Colors.red.withValues(alpha: 0.5)
+              : Colors.transparent,
         ),
       ),
       margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
@@ -957,7 +959,9 @@ class _ConfigurarHijoScreenState extends State<ConfigurarHijoScreen> {
                     decoration: BoxDecoration(
                       color: colorPrimario.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: colorPrimario.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: colorPrimario.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       nombreApp,

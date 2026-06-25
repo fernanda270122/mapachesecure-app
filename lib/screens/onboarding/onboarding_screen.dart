@@ -6,7 +6,12 @@ class OnboardingScreen extends StatefulWidget {
   final String rol;
   final Widget destino;
   final String? userId;
-  const OnboardingScreen({super.key, required this.rol, required this.destino, this.userId});
+  const OnboardingScreen({
+    super.key,
+    required this.rol,
+    required this.destino,
+    this.userId,
+  });
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -24,37 +29,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'icono': Icons.shield,
       'color': Color(0xFF1A237E),
       'titulo': '¡Bienvenido a Raccu!',
-      'descripcion': 'Protege el tiempo digital de tus hijos de forma inteligente y positiva.',
+      'descripcion':
+          'Protege el tiempo digital de tus hijos de forma inteligente y positiva.',
     },
     {
       'icono': Icons.person_add,
       'color': Colors.purple,
       'titulo': 'Agrega a tus hijos',
-      'descripcion': 'Registra a cada hijo con su nombre y edad para personalizar su experiencia.',
+      'descripcion':
+          'Registra a cada hijo con su nombre y edad para personalizar su experiencia.',
     },
     {
       'icono': Icons.block,
       'color': Colors.red,
       'titulo': 'Configura bloqueos',
-      'descripcion': 'Define horarios, fechas o activa bloqueos inmediatos para las apps de tus hijos.',
+      'descripcion':
+          'Define horarios, fechas o activa bloqueos inmediatos para las apps de tus hijos.',
     },
     {
       'icono': Icons.emoji_events,
       'color': Colors.orange,
       'titulo': 'Asigna desafíos',
-      'descripcion': 'Motiva a tus hijos con desafíos cognitivos, físicos y del hogar para ganar puntos.',
+      'descripcion':
+          'Motiva a tus hijos con desafíos cognitivos, físicos y del hogar para ganar puntos.',
     },
     {
       'icono': Icons.install_mobile,
       'color': Colors.teal,
       'titulo': 'Instala la app en el celular de tu hijo',
-      'descripcion': 'Al registrar a tu hijo aparecerá un código QR. Que lo escanee con su cámara, descargue el archivo e instale la app. Si Android lo pide, activa "Instalar apps de fuentes desconocidas" en Ajustes.',
+      'descripcion':
+          'Al registrar a tu hijo aparecerá un código QR. Que lo escanee con su cámara, descargue el archivo e instale la app. Si Android lo pide, activa "Instalar apps de fuentes desconocidas" en Ajustes.',
     },
     {
       'icono': Icons.star,
       'color': Colors.green,
       'titulo': '¡Todo listo!',
-      'descripcion': 'Ya puedes empezar a usar Raccu. ¡Tu familia te lo agradecerá!',
+      'descripcion':
+          'Ya puedes empezar a usar Raccu. ¡Tu familia te lo agradecerá!',
     },
   ];
 
@@ -63,31 +74,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'icono': Icons.waving_hand,
       'color': Color(0xFF1A237E),
       'titulo': '¡Hola! Bienvenido a Raccu',
-      'descripcion': 'Tu app para organizar tu tiempo con el celular de forma divertida.',
+      'descripcion':
+          'Tu app para organizar tu tiempo con el celular de forma divertida.',
     },
     {
       'icono': Icons.task_alt,
       'color': Colors.purple,
       'titulo': 'Completa desafíos',
-      'descripcion': 'Tu papá o mamá te asignará tareas. ¡Completa las y sube una foto como evidencia!',
+      'descripcion':
+          'Tu papá o mamá te asignará tareas. ¡Completa las y sube una foto como evidencia!',
     },
     {
       'icono': Icons.star,
       'color': Colors.orange,
       'titulo': 'Gana puntos',
-      'descripcion': 'Cada desafío completado te da puntos que puedes canjear por recompensas.',
+      'descripcion':
+          'Cada desafío completado te da puntos que puedes canjear por recompensas.',
     },
     {
       'icono': Icons.pets,
       'color': Colors.brown,
       'titulo': 'Tu mascota Raccu',
-      'descripcion': 'Raccu es tu mapache personal. ¡Hazlo crecer acumulando más puntos!',
+      'descripcion':
+          'Raccu es tu mapache personal. ¡Hazlo crecer acumulando más puntos!',
     },
     {
       'icono': Icons.rocket_launch,
       'color': Colors.green,
       'titulo': '¡Comencemos!',
-      'descripcion': '¡Empieza tu aventura con Raccu y demuestra lo que puedes lograr!',
+      'descripcion':
+          '¡Empieza tu aventura con Raccu y demuestra lo que puedes lograr!',
     },
   ];
 
@@ -116,7 +132,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _terminar,
-                child: const Text('Saltar', style: TextStyle(color: Colors.grey)),
+                child: const Text(
+                  'Saltar',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
             ),
 
@@ -135,7 +154,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         CircleAvatar(
                           radius: 70,
-                          backgroundColor: (slide['color'] as Color).withValues(alpha: 0.1),
+                          backgroundColor: (slide['color'] as Color).withValues(
+                            alpha: 0.1,
+                          ),
                           child: Icon(
                             slide['icono'] as IconData,
                             size: 70,
@@ -156,7 +177,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           slide['descripcion'] as String,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 15, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -168,16 +192,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Indicadores de página
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_slides.length, (i) => AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: _paginaActual == i ? 24 : 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: _paginaActual == i ? AppColors.primary : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
+              children: List.generate(
+                _slides.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _paginaActual == i ? 24 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _paginaActual == i
+                        ? AppColors.primary
+                        : Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
-              )),
+              ),
             ),
 
             const SizedBox(height: 30),
@@ -202,11 +231,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: Text(
                     esUltima ? '¡Comenzar!' : 'Siguiente',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),

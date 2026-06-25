@@ -32,7 +32,11 @@ class FakeApiService extends ApiService {
       return refreshResp ?? {'access_token': 'token_renovado'};
     }
     if (endpoint == '/auth/registro') {
-      return {'id': 'uid_nuevo', 'email': body['email'], 'nombre': body['nombre']};
+      return {
+        'id': 'uid_nuevo',
+        'email': body['email'],
+        'nombre': body['nombre'],
+      };
     }
     return {};
   }
@@ -45,8 +49,10 @@ class AuthServiceTestable extends AuthService {
   @override
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    final onboardingKeys =
-        prefs.getKeys().where((k) => k.startsWith('onboarding_')).toList();
+    final onboardingKeys = prefs
+        .getKeys()
+        .where((k) => k.startsWith('onboarding_'))
+        .toList();
     final savedBools = {for (var k in onboardingKeys) k: prefs.getBool(k)};
     final savedPaleta = prefs.getString('paleta_padre_preferida');
     await prefs.clear();
@@ -284,7 +290,9 @@ void main() {
     test(
       '8. refreshToken() actualiza access_token y refresh_token cuando la API responde correctamente',
       () async {
-        SharedPreferences.setMockInitialValues({'refresh_token': 'refresh_actual'});
+        SharedPreferences.setMockInitialValues({
+          'refresh_token': 'refresh_actual',
+        });
         final auth = AuthServiceTestable(
           FakeApiService(
             refreshResp: {
@@ -306,7 +314,9 @@ void main() {
     test(
       '9. refreshToken() solo actualiza access_token cuando la API no devuelve nuevo refresh_token',
       () async {
-        SharedPreferences.setMockInitialValues({'refresh_token': 'viejo_refresh'});
+        SharedPreferences.setMockInitialValues({
+          'refresh_token': 'viejo_refresh',
+        });
         final auth = AuthServiceTestable(
           FakeApiService(refreshResp: {'access_token': 'token_nuevo'}),
         );
@@ -349,7 +359,12 @@ void main() {
       () async {
         final auth = AuthServiceTestable(FakeApiService());
 
-        final resultado = await auth.registro('nuevo@test.com', 'pass', 'María', 'padre');
+        final resultado = await auth.registro(
+          'nuevo@test.com',
+          'pass',
+          'María',
+          'padre',
+        );
 
         expect(resultado['email'], 'nuevo@test.com');
         expect(resultado['nombre'], 'María');

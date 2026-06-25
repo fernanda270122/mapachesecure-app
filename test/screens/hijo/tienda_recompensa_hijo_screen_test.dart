@@ -9,16 +9,18 @@ import 'package:mapachesecure_app/screens/hijo/tienda_recompensa_hijo_screen.dar
 import 'package:mapachesecure_app/services/api_service.dart';
 
 Widget _wrap() => ChangeNotifierProvider(
-      create: (_) => TemaProvider(),
-      child: const MaterialApp(home: TiendaRecompensasHijoScreen()),
-    );
+  create: (_) => TemaProvider(),
+  child: const MaterialApp(home: TiendaRecompensasHijoScreen()),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({'user_id': 'test-uid'});
-    ApiService.testClient = MockClient((request) async => http.Response('[]', 200));
+    ApiService.testClient = MockClient(
+      (request) async => http.Response('[]', 200),
+    );
   });
 
   tearDown(() {
@@ -26,41 +28,35 @@ void main() {
   });
 
   group('Pruebas para TiendaRecompensasHijoScreen', () {
-    testWidgets(
-      '1. Muestra "Tienda de Premios" en el AppBar',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pump();
-        expect(find.text('Tienda de Premios'), findsOneWidget);
-      },
-    );
+    testWidgets('1. Muestra "Tienda de Premios" en el AppBar', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pump();
+      expect(find.text('Tienda de Premios'), findsOneWidget);
+    });
 
-    testWidgets(
-      '2. Muestra "Tienes:" en el encabezado de puntos tras cargar',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Tienes:'), findsOneWidget);
-      },
-    );
+    testWidgets('2. Muestra "Tienes:" en el encabezado de puntos tras cargar', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Tienes:'), findsOneWidget);
+    });
 
-    testWidgets(
-      '3. Muestra "0" como puntos iniciales cuando la API falla',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('0'), findsOneWidget);
-      },
-    );
+    testWidgets('3. Muestra "0" como puntos iniciales cuando la API falla', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('0'), findsOneWidget);
+    });
 
-    testWidgets(
-      '4. Muestra ícono de estrellas en el encabezado',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.byIcon(Icons.stars), findsOneWidget);
-      },
-    );
+    testWidgets('4. Muestra ícono de estrellas en el encabezado', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.stars), findsOneWidget);
+    });
   });
 
   group('Pruebas con datos', () {
@@ -83,7 +79,11 @@ void main() {
       });
     }
 
-    Future<void> cargar(WidgetTester tester, {int puntos = 100, bool pendiente = false}) async {
+    Future<void> cargar(
+      WidgetTester tester, {
+      int puntos = 100,
+      bool pendiente = false,
+    }) async {
       await tester.binding.setSurfaceSize(const Size(1080, 1920));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       stubConRecompensa(puntos: puntos, pendiente: pendiente);
@@ -91,18 +91,28 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('5. Muestra recompensa con botón CANJEAR cuando tiene puntos suficientes', (tester) async {
-      await cargar(tester, puntos: 100);
-      expect(find.text('CANJEAR', skipOffstage: false), findsOneWidget);
-      expect(find.text('50 MapachePoints', skipOffstage: false), findsOneWidget);
-    });
+    testWidgets(
+      '5. Muestra recompensa con botón CANJEAR cuando tiene puntos suficientes',
+      (tester) async {
+        await cargar(tester, puntos: 100);
+        expect(find.text('CANJEAR', skipOffstage: false), findsOneWidget);
+        expect(
+          find.text('50 MapachePoints', skipOffstage: false),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('6. Muestra EN ESPERA cuando hay canje pendiente', (tester) async {
+    testWidgets('6. Muestra EN ESPERA cuando hay canje pendiente', (
+      tester,
+    ) async {
       await cargar(tester, puntos: 100, pendiente: true);
       expect(find.text('EN ESPERA', skipOffstage: false), findsOneWidget);
     });
 
-    testWidgets('7. Botón deshabilitado cuando no tiene puntos suficientes', (tester) async {
+    testWidgets('7. Botón deshabilitado cuando no tiene puntos suficientes', (
+      tester,
+    ) async {
       await cargar(tester, puntos: 10);
       final button = tester.widget<ElevatedButton>(
         find.widgetWithText(ElevatedButton, 'CANJEAR', skipOffstage: false),
@@ -110,7 +120,9 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('8. Tap en CANJEAR muestra diálogo de confirmación', (tester) async {
+    testWidgets('8. Tap en CANJEAR muestra diálogo de confirmación', (
+      tester,
+    ) async {
       await cargar(tester, puntos: 100);
       await tester.tap(find.text('CANJEAR', skipOffstage: false));
       await tester.pumpAndSettle();

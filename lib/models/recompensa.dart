@@ -47,7 +47,8 @@ class Recompensa {
       'icono': icono,
       'disponible': disponible,
       if (padreId != null) 'padre_id': padreId,
-      if (fechaCreacion != null) 'fecha_creacion': fechaCreacion!.toIso8601String(),
+      if (fechaCreacion != null)
+        'fecha_creacion': fechaCreacion!.toIso8601String(),
     };
   }
 
@@ -77,5 +78,6 @@ class Recompensa {
   bool puedesCanjear(int puntosHijo) => puntosHijo >= costoPuntos;
 
   @override
-  String toString() => 'Recompensa(id: $id, titulo: $titulo, costo: $costoPuntos pts)';
+  String toString() =>
+      'Recompensa(id: $id, titulo: $titulo, costo: $costoPuntos pts)';
 }

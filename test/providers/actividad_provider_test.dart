@@ -94,9 +94,7 @@ void main() {
       },
     );
 
-    test(
-    '4. La lista de actividad debe quedar vacía al limpiarla',
-    () {
+    test('4. La lista de actividad debe quedar vacía al limpiarla', () {
       SharedPreferences.setMockInitialValues({});
       final provider = ActividadProvider();
 
@@ -113,8 +111,7 @@ void main() {
 
       expect(provider.listaUsoReal.isEmpty, true);
       expect(provider.tiempoTotalPantalla.inMilliseconds, 0);
-    },
-  );
+    });
 
     test(
       '5. obtenerActividadDelDia termina sin crash cuando UsageStats no está disponible',
@@ -135,12 +132,15 @@ void main() {
         SharedPreferences.setMockInitialValues({}); // Sin hijo_id ni auth_token
         final provider = ActividadProvider();
         var peticionHecha = false;
-        await http.runWithClient(() async {
-          await provider.sincronizarActividadConServidor();
-        }, () => MockClient((req) async {
-          peticionHecha = true;
-          return http.Response('{}', 200);
-        }));
+        await http.runWithClient(
+          () async {
+            await provider.sincronizarActividadConServidor();
+          },
+          () => MockClient((req) async {
+            peticionHecha = true;
+            return http.Response('{}', 200);
+          }),
+        );
         expect(peticionHecha, false);
       },
     );
@@ -154,12 +154,20 @@ void main() {
         });
         final provider = ActividadProvider();
         provider.listaUsoReal.add(
-          UsageInfo(packageName: 'com.youtube', totalTimeInForeground: '3600000'),
+          UsageInfo(
+            packageName: 'com.youtube',
+            totalTimeInForeground: '3600000',
+          ),
         );
         // No debe lanzar excepción con respuesta de error
-        await http.runWithClient(() async {
-          await provider.sincronizarActividadConServidor();
-        }, () => MockClient((req) async => http.Response('{"error": "internal"}', 500)));
+        await http.runWithClient(
+          () async {
+            await provider.sincronizarActividadConServidor();
+          },
+          () => MockClient(
+            (req) async => http.Response('{"error": "internal"}', 500),
+          ),
+        );
         expect(provider.listaUsoReal.length, 1);
       },
     );
@@ -173,7 +181,10 @@ void main() {
         });
         final provider = ActividadProvider();
         provider.listaUsoReal.add(
-          UsageInfo(packageName: 'com.instagram.android', totalTimeInForeground: '120000'),
+          UsageInfo(
+            packageName: 'com.instagram.android',
+            totalTimeInForeground: '120000',
+          ),
         );
         await http.runWithClient(() async {
           await provider.sincronizarActividadConServidor();
@@ -194,31 +205,31 @@ void main() {
         const usageChannel = MethodChannel('usage_stats');
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(usageChannel, (call) async {
-          if (call.method == 'queryUsageStats') {
-            return [
-              // YouTube aparece dos veces → ejercita la rama de merge (línea 86)
-              {
-                'packageName': 'com.google.android.youtube',
-                'totalTimeInForeground': '3600000',
-              },
-              {
-                'packageName': 'com.google.android.youtube',
-                'totalTimeInForeground': '1800000',
-              },
-              // WhatsApp aparece una vez → rama else del merge (línea 88)
-              {
-                'packageName': 'com.whatsapp',
-                'totalTimeInForeground': '60000',
-              },
-              // SystemUI está en zonaSegura → se filtra (ejercita la condición de línea 77)
-              {
-                'packageName': 'com.android.systemui',
-                'totalTimeInForeground': '999999',
-              },
-            ];
-          }
-          return null;
-        });
+              if (call.method == 'queryUsageStats') {
+                return [
+                  // YouTube aparece dos veces → ejercita la rama de merge (línea 86)
+                  {
+                    'packageName': 'com.google.android.youtube',
+                    'totalTimeInForeground': '3600000',
+                  },
+                  {
+                    'packageName': 'com.google.android.youtube',
+                    'totalTimeInForeground': '1800000',
+                  },
+                  // WhatsApp aparece una vez → rama else del merge (línea 88)
+                  {
+                    'packageName': 'com.whatsapp',
+                    'totalTimeInForeground': '60000',
+                  },
+                  // SystemUI está en zonaSegura → se filtra (ejercita la condición de línea 77)
+                  {
+                    'packageName': 'com.android.systemui',
+                    'totalTimeInForeground': '999999',
+                  },
+                ];
+              }
+              return null;
+            });
         addTearDown(() {
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
               .setMockMethodCallHandler(usageChannel, null);
@@ -239,13 +250,18 @@ void main() {
         expect(yt.totalTimeInForeground, '5400000');
         // SystemUI debe estar filtrado fuera
         expect(
-          provider.listaUsoReal.any((u) => u.packageName == 'com.android.systemui'),
+          provider.listaUsoReal.any(
+            (u) => u.packageName == 'com.android.systemui',
+          ),
           false,
         );
         // YouTube y WhatsApp deben estar en la lista
         expect(provider.listaUsoReal.length, 2);
         // YouTube tiene más tiempo → aparece primero (ordenado de mayor a menor)
-        expect(provider.listaUsoReal.first.packageName, 'com.google.android.youtube');
+        expect(
+          provider.listaUsoReal.first.packageName,
+          'com.google.android.youtube',
+        );
         expect(provider.cargando, false);
       },
     );

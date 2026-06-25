@@ -24,17 +24,19 @@ void main() {
     });
 
     // A07: eliminar el token revoca el acceso de inmediato
-    test('eliminar el token cierra la sesión aunque la app siga abierta',
-        () async {
-      SharedPreferences.setMockInitialValues({'token': 'token_valido'});
-      final auth = AuthService();
-      expect(await auth.isLoggedIn(), true);
+    test(
+      'eliminar el token cierra la sesión aunque la app siga abierta',
+      () async {
+        SharedPreferences.setMockInitialValues({'token': 'token_valido'});
+        final auth = AuthService();
+        expect(await auth.isLoggedIn(), true);
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('token');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('token');
 
-      expect(await auth.isLoggedIn(), false);
-    });
+        expect(await auth.isLoggedIn(), false);
+      },
+    );
 
     // A01: un hijo no puede tener permisos de padre
     test('usuario con rol hijo no puede ser reconocido como padre', () {
@@ -51,14 +53,12 @@ void main() {
     });
 
     // A01: la pantalla de bloqueo no puede cerrarse con el botón de retroceso
-    testWidgets('PantallaBloqueoScreen no puede ser cerrada por el hijo',
-        (WidgetTester tester) async {
+    testWidgets('PantallaBloqueoScreen no puede ser cerrada por el hijo', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
-          home: PantallaBloqueoScreen(
-            horaInicio: '22:00',
-            horaFin: '23:59',
-          ),
+          home: PantallaBloqueoScreen(horaInicio: '22:00', horaFin: '23:59'),
         ),
       );
       await tester.pump(const Duration(seconds: 1));
@@ -85,19 +85,21 @@ void main() {
     });
 
     // A05: package name malicioso de una app bloqueada no rompe el modelo
-    test('package name con caracteres especiales se almacena como texto plano',
-        () {
-      final app = AppBloqueada.fromJson({
-        'id': 'app_001',
-        'hijo_id': 'hijo_001',
-        'nombre_app': 'App Peligrosa',
-        'package_name': "'; DROP TABLE apps; --",
-        'requiere_desafio': true,
-      });
+    test(
+      'package name con caracteres especiales se almacena como texto plano',
+      () {
+        final app = AppBloqueada.fromJson({
+          'id': 'app_001',
+          'hijo_id': 'hijo_001',
+          'nombre_app': 'App Peligrosa',
+          'package_name': "'; DROP TABLE apps; --",
+          'requiere_desafio': true,
+        });
 
-      expect(app.packageName, "'; DROP TABLE apps; --");
-      expect(app.packageName, isA<String>());
-    });
+        expect(app.packageName, "'; DROP TABLE apps; --");
+        expect(app.packageName, isA<String>());
+      },
+    );
 
     // A05: puntos negativos desde el servidor no crashean el PetModel
     test('puntos negativos del servidor no rompen el nivel de la mascota', () {

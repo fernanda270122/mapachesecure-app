@@ -13,7 +13,8 @@ class ApiService {
   // Solo para tests: cliente mock global para evitar llamadas HTTP reales. En producción siempre es null.
   static http.Client? testClient;
 
-  ApiService({http.Client? client}) : _client = client ?? testClient ?? http.Client();
+  ApiService({http.Client? client})
+    : _client = client ?? testClient ?? http.Client();
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,7 +38,9 @@ class ApiService {
     if (response.statusCode == 401) throw const ApiUnauthorizedException();
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final data = jsonDecode(response.body);
-      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+      throw Exception(
+        data['detail'] ?? 'Error del servidor (${response.statusCode})',
+      );
     }
     return jsonDecode(response.body);
   }
@@ -70,7 +73,9 @@ class ApiService {
     if (response.statusCode == 401) throw const ApiUnauthorizedException();
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final data = jsonDecode(response.body);
-      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+      throw Exception(
+        data['detail'] ?? 'Error del servidor (${response.statusCode})',
+      );
     }
     return jsonDecode(response.body);
   }
@@ -83,7 +88,9 @@ class ApiService {
     if (response.statusCode == 401) throw const ApiUnauthorizedException();
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final data = jsonDecode(response.body);
-      throw Exception(data['detail'] ?? 'Error del servidor (${response.statusCode})');
+      throw Exception(
+        data['detail'] ?? 'Error del servidor (${response.statusCode})',
+      );
     }
     return jsonDecode(response.body);
   }

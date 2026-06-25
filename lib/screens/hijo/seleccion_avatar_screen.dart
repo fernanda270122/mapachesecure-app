@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:mapachesecure_app/models/avatar_type.dart';
@@ -89,9 +88,7 @@ class _SeleccionAvatarScreenState extends State<SeleccionAvatarScreen> {
               ),
             )
           else
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
 
           // Degradado superior para el texto
           Positioned(

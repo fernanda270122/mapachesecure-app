@@ -209,7 +209,8 @@ class _SplashScreenState extends State<SplashScreen> {
         if (await service.isRunning()) {
           service.invoke("stopService");
         }
-        final onboardingVisto = prefs.getBool('onboarding_${userId}_padre_visto') ?? false;
+        final onboardingVisto =
+            prefs.getBool('onboarding_${userId}_padre_visto') ?? false;
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -224,7 +225,8 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         );
       } else if (rol == 'hijo') {
-        final onboardingVisto = prefs.getBool('onboarding_${userId}_hijo_visto') ?? false;
+        final onboardingVisto =
+            prefs.getBool('onboarding_${userId}_hijo_visto') ?? false;
         if (!mounted) return;
         Navigator.pushReplacement(
           context,

@@ -77,7 +77,9 @@ class _AvatarScreenState extends State<AvatarScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: seleccionado ? Colors.deepPurple : Colors.transparent,
+                    color: seleccionado
+                        ? Colors.deepPurple
+                        : Colors.transparent,
                     width: 4,
                   ),
                 ),

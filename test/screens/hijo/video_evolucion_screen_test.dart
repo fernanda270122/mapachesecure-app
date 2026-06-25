@@ -43,13 +43,13 @@ class _FakeVideoPlayerPlatform extends VideoPlayerPlatform {
 
   @override
   Stream<VideoEvent> videoEventsFor(int playerId) => Stream.fromIterable([
-        VideoEvent(
-          eventType: VideoEventType.initialized,
-          size: const Size(640, 480),
-          duration: const Duration(seconds: 2),
-          rotationCorrection: 0,
-        ),
-      ]);
+    VideoEvent(
+      eventType: VideoEventType.initialized,
+      size: const Size(640, 480),
+      duration: const Duration(seconds: 2),
+      rotationCorrection: 0,
+    ),
+  ]);
 }
 
 void main() {
@@ -71,21 +71,18 @@ void main() {
       },
     );
 
-    testWidgets(
-      '2. Widget usa fondo negro',
-      (tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: VideoEvolucionScreen(
-              videoPath: 'assets/videos/mago_evoluciona.mp4',
-            ),
+    testWidgets('2. Widget usa fondo negro', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: VideoEvolucionScreen(
+            videoPath: 'assets/videos/mago_evoluciona.mp4',
           ),
-        );
-        await tester.pump(Duration.zero);
-        final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
-        expect(scaffold.backgroundColor, Colors.black);
-      },
-    );
+        ),
+      );
+      await tester.pump(Duration.zero);
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, Colors.black);
+    });
 
     testWidgets(
       '3. Widget muestra el mensaje pasado como parámetro en el árbol',
@@ -104,23 +101,22 @@ void main() {
       },
     );
 
-    testWidgets(
-      '4. Sin parámetro mensaje usa el texto por defecto',
-      (tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: VideoEvolucionScreen(
-              videoPath: 'assets/videos/mago_evoluciona.mp4',
-            ),
+    testWidgets('4. Sin parámetro mensaje usa el texto por defecto', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: VideoEvolucionScreen(
+            videoPath: 'assets/videos/mago_evoluciona.mp4',
           ),
-        );
-        await tester.pump(Duration.zero);
-        expect(
-          find.textContaining('¡Surge ahora y obedece mi llamada!'),
-          findsOneWidget,
-        );
-      },
-    );
+        ),
+      );
+      await tester.pump(Duration.zero);
+      expect(
+        find.textContaining('¡Surge ahora y obedece mi llamada!'),
+        findsOneWidget,
+      );
+    });
 
     testWidgets(
       '5. Dispose se llama sin crash al navegar fuera de la pantalla',
@@ -185,9 +181,9 @@ void main() {
       '7. Constructor no-const crea la pantalla correctamente (cubre L8)',
       (tester) async {
         final path = 'assets/videos/mago_evoluciona.mp4';
-        await tester.pumpWidget(MaterialApp(
-          home: VideoEvolucionScreen(videoPath: path),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(home: VideoEvolucionScreen(videoPath: path)),
+        );
         await tester.pump(Duration.zero);
         expect(find.byType(VideoEvolucionScreen), findsOneWidget);
       },

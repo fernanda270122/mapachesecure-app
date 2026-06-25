@@ -24,18 +24,19 @@ String _hijoId = '03238377-e316-4b21-9fe2-07a47d09ab2a';
 String _padreToken = 'token_mock';
 
 Widget _app(Widget screen) => ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (_, child) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-              create: (_) => TemaPadreProvider()..cargarTemaPadre()),
-          ChangeNotifierProvider(create: (_) => TemaProvider()..cargar()),
-        ],
-        child: MaterialApp(home: screen),
+  designSize: const Size(375, 812),
+  minTextAdapt: true,
+  splitScreenMode: true,
+  builder: (_, child) => MultiProvider(
+    providers: [
+      ChangeNotifierProvider(
+        create: (_) => TemaPadreProvider()..cargarTemaPadre(),
       ),
-    );
+      ChangeNotifierProvider(create: (_) => TemaProvider()..cargar()),
+    ],
+    child: MaterialApp(home: screen),
+  ),
+);
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -124,8 +125,7 @@ void main() {
       for (final d in desafios) {
         try {
           await http.post(
-            Uri.parse(
-                'https://mapachesecure-backend.onrender.com/ia/asignar'),
+            Uri.parse('https://mapachesecure-backend.onrender.com/ia/asignar'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $_padreToken',
@@ -145,44 +145,48 @@ void main() {
   });
 
   // ── 1. HU-01: Como padre, quiero registrarme con mi correo y contraseña ─────
-  testWidgets('1. HU-01 — Padre crea cuenta: formulario visible y acepta datos',
-      (tester) async {
-    await tester.pumpWidget(_app(const RegistroScreen()));
-    await tester.pump(const Duration(seconds: 1));
+  testWidgets(
+    '1. HU-01 — Padre crea cuenta: formulario visible y acepta datos',
+    (tester) async {
+      await tester.pumpWidget(_app(const RegistroScreen()));
+      await tester.pump(const Duration(seconds: 1));
 
-    final campos = find.byType(TextField);
-    expect(campos, findsWidgets);
+      final campos = find.byType(TextField);
+      expect(campos, findsWidgets);
 
-    await tester.enterText(campos.at(0), 'María González');
-    await tester.enterText(campos.at(1), 'maria@gmail.com');
-    await tester.enterText(campos.at(2), 'clave1234');
-    await tester.pump(const Duration(milliseconds: 500));
+      await tester.enterText(campos.at(0), 'María González');
+      await tester.enterText(campos.at(1), 'maria@gmail.com');
+      await tester.enterText(campos.at(2), 'clave1234');
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('María González'), findsOneWidget);
-    expect(find.text('maria@gmail.com'), findsOneWidget);
-  });
+      expect(find.text('María González'), findsOneWidget);
+      expect(find.text('maria@gmail.com'), findsOneWidget);
+    },
+  );
 
   // ── 2. HU-03: Como hijo, quiero iniciar sesión con mis credenciales ──────────
   testWidgets(
-      '2. HU-03 — Hijo inicia sesión: campos de email y contraseña visibles',
-      (tester) async {
-    await tester.pumpWidget(_app(const LoginScreen()));
-    await tester.pump(const Duration(seconds: 1));
+    '2. HU-03 — Hijo inicia sesión: campos de email y contraseña visibles',
+    (tester) async {
+      await tester.pumpWidget(_app(const LoginScreen()));
+      await tester.pump(const Duration(seconds: 1));
 
-    final campos = find.byType(TextField);
-    expect(campos, findsWidgets);
+      final campos = find.byType(TextField);
+      expect(campos, findsWidgets);
 
-    await tester.enterText(campos.at(0), '3ratoncitasbellas@gmail.com');
-    await tester.enterText(campos.at(1), 'clave1234');
-    await tester.pump(const Duration(milliseconds: 500));
+      await tester.enterText(campos.at(0), '3ratoncitasbellas@gmail.com');
+      await tester.enterText(campos.at(1), 'clave1234');
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('3ratoncitasbellas@gmail.com'), findsOneWidget);
-    expect(find.byType(ElevatedButton), findsWidgets);
-  });
+      expect(find.text('3ratoncitasbellas@gmail.com'), findsOneWidget);
+      expect(find.byType(ElevatedButton), findsWidgets);
+    },
+  );
 
   // ── 3. HU-02: Como padre, quiero crear un perfil para mi hijo ───────────────
-  testWidgets('3. HU-02 — Padre registra un hijo: formulario completo',
-      (tester) async {
+  testWidgets('3. HU-02 — Padre registra un hijo: formulario completo', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app(const AgregarHijoScreen()));
     await tester.pump(const Duration(seconds: 1));
 
@@ -222,22 +226,22 @@ void main() {
   });
 
   // ── 4. HU-08: Como padre, generar desafíos para que el hijo no se quede sin misiones ──
-  testWidgets('4. HU-08 — Padre gestiona desafíos del hijo',
-      (tester) async {
+  testWidgets('4. HU-08 — Padre gestiona desafíos del hijo', (tester) async {
     // Token del padre para que el API acepte la petición de gestión
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', _padreToken);
     await prefs.setString('user_id', _hijoId);
 
-    await tester.pumpWidget(_app(
-      DesafiosHijoScreen(hijo: {'id': _hijoId, 'nombre': 'Catalina'}),
-    ));
+    await tester.pumpWidget(
+      _app(DesafiosHijoScreen(hijo: {'id': _hijoId, 'nombre': 'Catalina'})),
+    );
     await Future.delayed(const Duration(seconds: 8));
     await tester.pump();
 
     expect(find.text('Desafíos de Catalina'), findsOneWidget);
     expect(
-      find.text('No hay desafíos asignados.\nGenera algunos con IA.')
+      find
+              .text('No hay desafíos asignados.\nGenera algunos con IA.')
               .evaluate()
               .isNotEmpty ||
           find.byType(ExpansionTile).evaluate().isNotEmpty,
@@ -252,11 +256,9 @@ void main() {
     await prefs.setString('token', _padreToken);
     await prefs.setString('user_id', _hijoId);
 
-    await tester.pumpWidget(_app(
-      ConfigurarHijoScreen(
-        hijo: {'id': _hijoId, 'nombre': 'Catalina'},
-      ),
-    ));
+    await tester.pumpWidget(
+      _app(ConfigurarHijoScreen(hijo: {'id': _hijoId, 'nombre': 'Catalina'})),
+    );
     await Future.delayed(const Duration(seconds: 8));
     await tester.pump();
 
@@ -269,16 +271,17 @@ void main() {
 
   // ── 6. HU-09: Como padre, gestionar recompensas vinculadas a los desafíos ────
   testWidgets(
-      '6. HU-09 — Padre gestiona recompensas: tienda con costos en puntos',
-      (tester) async {
-    await tester.pumpWidget(_app(const RecompensasScreen()));
-    await tester.pump(const Duration(seconds: 3));
+    '6. HU-09 — Padre gestiona recompensas: tienda con costos en puntos',
+    (tester) async {
+      await tester.pumpWidget(_app(const RecompensasScreen()));
+      await tester.pump(const Duration(seconds: 3));
 
-    expect(find.text('Tienda de Recompensas'), findsOneWidget);
-    expect(find.text('Elegir la película'), findsOneWidget);
-    expect(find.text('150 MapachePoints'), findsOneWidget);
-    expect(find.byType(ListView), findsOneWidget);
-  });
+      expect(find.text('Tienda de Recompensas'), findsOneWidget);
+      expect(find.text('Elegir la película'), findsOneWidget);
+      expect(find.text('150 MapachePoints'), findsOneWidget);
+      expect(find.byType(ListView), findsOneWidget);
+    },
+  );
 
   // ── 7. HU-07: Como hijo, ver los desafíos pendientes asignados por el padre ──
   testWidgets('7. HU-07 — Hijo ve sus desafíos pendientes', (tester) async {
@@ -296,8 +299,9 @@ void main() {
   });
 
   // ── 8. HU-06: Como hijo, elegir mascota como recompensa ──────────────────────
-  testWidgets('8. HU-06 — Hijo elige su mascota como recompensa',
-      (tester) async {
+  testWidgets('8. HU-06 — Hijo elige su mascota como recompensa', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app(const SeleccionAvatarScreen()));
     await tester.pump(const Duration(seconds: 3));
 
@@ -306,8 +310,9 @@ void main() {
   });
 
   // ── 9. HU-05: Como hijo, ver pantalla de bloqueo al abrir app restringida ────
-  testWidgets('9. HU-05 — Hijo ve pantalla de bloqueo y no puede salir',
-      (tester) async {
+  testWidgets('9. HU-05 — Hijo ve pantalla de bloqueo y no puede salir', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: PantallaBloqueoScreen(horaInicio: '20:00', horaFin: '22:00'),

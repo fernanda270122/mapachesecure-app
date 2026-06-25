@@ -76,7 +76,9 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: const Text(
             '¡Hijo registrado!',
             textAlign: TextAlign.center,
@@ -130,8 +132,11 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
       final msg = e.toString();
       if (msg.contains('400')) {
         mensaje = 'El correo ya está registrado';
-      } else if (msg.contains('429') || msg.toLowerCase().contains('rate limit') || msg.contains('limite')) {
-        mensaje = 'Se alcanzó el límite de correos por hora. Intenta de nuevo en unos minutos.';
+      } else if (msg.contains('429') ||
+          msg.toLowerCase().contains('rate limit') ||
+          msg.contains('limite')) {
+        mensaje =
+            'Se alcanzó el límite de correos por hora. Intenta de nuevo en unos minutos.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(mensaje), backgroundColor: Colors.red),
@@ -312,7 +317,9 @@ class _AgregarHijoScreenState extends State<AgregarHijoScreen> {
                                 }
                               });
                             },
-                            selectedColor: temaPadre.primary.withValues(alpha: 0.2),
+                            selectedColor: temaPadre.primary.withValues(
+                              alpha: 0.2,
+                            ),
                             checkmarkColor: temaPadre.primary,
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(

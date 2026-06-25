@@ -150,7 +150,9 @@ class ConsejosPadresScreen extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: colorPrimario.withValues(alpha: 0.1), // <-- FONDO DEL ÍCONO DINÁMICO
+                  backgroundColor: colorPrimario.withValues(
+                    alpha: 0.1,
+                  ), // <-- FONDO DEL ÍCONO DINÁMICO
                   radius: 20.r, // <-- RESPONSIVO
                   child: Icon(
                     icono,

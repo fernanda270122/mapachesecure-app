@@ -122,22 +122,30 @@ void main() {
       },
     );
 
-    test('6. copyWith sin nombre ni tiempoLimiteMinutos usa los valores de la instancia', () {
-      final original = Usuario(
-        id: '1',
-        nombre: 'Pedro',
-        email: 'pedro@test.com',
-        rol: 'hijo',
-        tiempoLimiteMinutos: 90,
-      );
-      // Solo cambia email: nombre y tiempoLimiteMinutos quedan null → this.X evaluado
-      final clone = original.copyWith(email: 'nuevo@test.com');
-      expect(clone.nombre, 'Pedro');
-      expect(clone.tiempoLimiteMinutos, 90);
-    });
+    test(
+      '6. copyWith sin nombre ni tiempoLimiteMinutos usa los valores de la instancia',
+      () {
+        final original = Usuario(
+          id: '1',
+          nombre: 'Pedro',
+          email: 'pedro@test.com',
+          rol: 'hijo',
+          tiempoLimiteMinutos: 90,
+        );
+        // Solo cambia email: nombre y tiempoLimiteMinutos quedan null → this.X evaluado
+        final clone = original.copyWith(email: 'nuevo@test.com');
+        expect(clone.nombre, 'Pedro');
+        expect(clone.tiempoLimiteMinutos, 90);
+      },
+    );
 
     test('7. toString retorna representación con nombre y rol', () {
-      final u = Usuario(id: '1', nombre: 'Ana', email: 'ana@test.com', rol: 'padre');
+      final u = Usuario(
+        id: '1',
+        nombre: 'Ana',
+        email: 'ana@test.com',
+        rol: 'padre',
+      );
       expect(u.toString(), contains('Ana'));
     });
   });

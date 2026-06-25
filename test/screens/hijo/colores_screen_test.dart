@@ -7,9 +7,9 @@ import 'package:mapachesecure_app/screens/hijo/colores_screen.dart';
 import 'package:mapachesecure_app/theme/app_paletas.dart';
 
 Widget _wrap() => ChangeNotifierProvider(
-      create: (_) => TemaProvider(),
-      child: const MaterialApp(home: ColoresScreen()),
-    );
+  create: (_) => TemaProvider(),
+  child: const MaterialApp(home: ColoresScreen()),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,23 +19,19 @@ void main() {
   });
 
   group('Pruebas para ColoresScreen', () {
-    testWidgets(
-      '1. Muestra el título "Colores" en el AppBar',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Colores'), findsOneWidget);
-      },
-    );
+    testWidgets('1. Muestra el título "Colores" en el AppBar', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Colores'), findsOneWidget);
+    });
 
-    testWidgets(
-      '2. Muestra el texto "Elige un tema de colores"',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Elige un tema de colores'), findsOneWidget);
-      },
-    );
+    testWidgets('2. Muestra el texto "Elige un tema de colores"', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Elige un tema de colores'), findsOneWidget);
+    });
 
     testWidgets(
       '3. Muestra una opción por cada paleta disponible en AppPaletas',
@@ -48,14 +44,11 @@ void main() {
       },
     );
 
-    testWidgets(
-      '4. Botón "Aplicar tema" está visible',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(find.text('Aplicar tema'), findsOneWidget);
-      },
-    );
+    testWidgets('4. Botón "Aplicar tema" está visible', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(find.text('Aplicar tema'), findsOneWidget);
+    });
 
     testWidgets(
       '5. Tap en una paleta diferente cambia la selección (ícono check aparece)',
@@ -72,16 +65,13 @@ void main() {
       },
     );
 
-    testWidgets(
-      '6. Tap en "Aplicar tema" no lanza excepción',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Aplicar tema'));
-        await tester.pumpAndSettle();
-        // Si llegamos aquí sin excepción, el test pasa
-      },
-    );
+    testWidgets('6. Tap en "Aplicar tema" no lanza excepción', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Aplicar tema'));
+      await tester.pumpAndSettle();
+      // Si llegamos aquí sin excepción, el test pasa
+    });
 
     testWidgets(
       '7. Tap en flecha de regreso ejecuta Navigator.pop y regresa a la pantalla anterior',

@@ -7,15 +7,17 @@ import 'package:mapachesecure_app/screens/auth/reset_password_screen.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 
 Widget _wrap() => const MaterialApp(
-      home: ResetPasswordScreen(accessToken: 'token-de-prueba'),
-    );
+  home: ResetPasswordScreen(accessToken: 'token-de-prueba'),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    ApiService.testClient = MockClient((req) async => http.Response('{"ok": true}', 200));
+    ApiService.testClient = MockClient(
+      (req) async => http.Response('{"ok": true}', 200),
+    );
   });
 
   tearDown(() {
@@ -23,17 +25,24 @@ void main() {
   });
 
   group('Pruebas para ResetPasswordScreen', () {
-    testWidgets('1. Muestra el titulo Nueva contrasena en el AppBar', (tester) async {
+    testWidgets('1. Muestra el titulo Nueva contrasena en el AppBar', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
       // El hint del campo también dice "Nueva contraseña", por eso usamos descendant
       expect(
-        find.descendant(of: find.byType(AppBar), matching: find.text('Nueva contraseña')),
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Nueva contraseña'),
+        ),
         findsOneWidget,
       );
     });
 
-    testWidgets('2. Muestra los campos de nueva y confirmar contrasena', (tester) async {
+    testWidgets('2. Muestra los campos de nueva y confirmar contrasena', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
       expect(find.byType(TextField), findsNWidgets(2));
@@ -47,7 +56,9 @@ void main() {
       expect(find.text('CAMBIAR CONTRASEÑA'), findsOneWidget);
     });
 
-    testWidgets('4. Muestra SnackBar cuando las contrasenas no coinciden', (tester) async {
+    testWidgets('4. Muestra SnackBar cuando las contrasenas no coinciden', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'contrasena1');
@@ -57,17 +68,22 @@ void main() {
       expect(find.text('Las contraseñas no coinciden'), findsOneWidget);
     });
 
-    testWidgets('5. Muestra SnackBar cuando la contrasena tiene menos de 6 caracteres', (tester) async {
-      await tester.pumpWidget(_wrap());
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField).first, 'abc');
-      await tester.enterText(find.byType(TextField).last, 'abc');
-      await tester.tap(find.text('CAMBIAR CONTRASEÑA'));
-      await tester.pumpAndSettle();
-      expect(find.text('Mínimo 6 caracteres'), findsOneWidget);
-    });
+    testWidgets(
+      '5. Muestra SnackBar cuando la contrasena tiene menos de 6 caracteres',
+      (tester) async {
+        await tester.pumpWidget(_wrap());
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField).first, 'abc');
+        await tester.enterText(find.byType(TextField).last, 'abc');
+        await tester.tap(find.text('CAMBIAR CONTRASEÑA'));
+        await tester.pumpAndSettle();
+        expect(find.text('Mínimo 6 caracteres'), findsOneWidget);
+      },
+    );
 
-    testWidgets('6. Cambio exitoso muestra mensaje de confirmacion', (tester) async {
+    testWidgets('6. Cambio exitoso muestra mensaje de confirmacion', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'nueva123');
@@ -84,7 +100,9 @@ void main() {
       );
     });
 
-    testWidgets('7. Muestra icono de check al completar el cambio', (tester) async {
+    testWidgets('7. Muestra icono de check al completar el cambio', (
+      tester,
+    ) async {
       await tester.pumpWidget(_wrap());
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'nueva123');
@@ -111,12 +129,14 @@ void main() {
       expect(find.text('Error al cambiar la contraseña'), findsOneWidget);
     });
 
-    testWidgets('9. Constructor no-const crea la pantalla correctamente', (tester) async {
+    testWidgets('9. Constructor no-const crea la pantalla correctamente', (
+      tester,
+    ) async {
       // Instanciación sin const: el constructor se ejecuta en tiempo de ejecución y LCOV lo contabiliza
       final token = 'runtime-token';
-      await tester.pumpWidget(MaterialApp(
-        home: ResetPasswordScreen(accessToken: token),
-      ));
+      await tester.pumpWidget(
+        MaterialApp(home: ResetPasswordScreen(accessToken: token)),
+      );
       await tester.pump();
       expect(find.byType(ResetPasswordScreen), findsOneWidget);
     });

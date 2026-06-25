@@ -9,16 +9,18 @@ import 'package:mapachesecure_app/screens/padre/revisar_evidencias_screen.dart';
 import 'package:mapachesecure_app/services/api_service.dart';
 
 Widget _wrap() => ChangeNotifierProvider(
-      create: (_) => TemaPadreProvider(),
-      child: const MaterialApp(home: RevisarEvidenciasScreen()),
-    );
+  create: (_) => TemaPadreProvider(),
+  child: const MaterialApp(home: RevisarEvidenciasScreen()),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() {
     SharedPreferences.setMockInitialValues({'user_id': 'padre-uid'});
-    ApiService.testClient = MockClient((request) async => http.Response('[]', 200));
+    ApiService.testClient = MockClient(
+      (request) async => http.Response('[]', 200),
+    );
   });
 
   tearDown(() {
@@ -41,49 +43,43 @@ void main() {
   }
 
   group('Pruebas para RevisarEvidenciasScreen', () {
-    testWidgets(
-      '1. Muestra "Revisar Evidencias" en el AppBar',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pump();
-        expect(find.text('Revisar Evidencias'), findsOneWidget);
-      },
-    );
+    testWidgets('1. Muestra "Revisar Evidencias" en el AppBar', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pump();
+      expect(find.text('Revisar Evidencias'), findsOneWidget);
+    });
 
-    testWidgets(
-      '2. Muestra estado vacío cuando no hay evidencias pendientes',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pumpAndSettle();
-        expect(
-          find.text('No hay evidencias pendientes por ahora 👏'),
-          findsOneWidget,
-        );
-      },
-    );
+    testWidgets('2. Muestra estado vacío cuando no hay evidencias pendientes', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No hay evidencias pendientes por ahora 👏'),
+        findsOneWidget,
+      );
+    });
 
-    testWidgets(
-      '3. Contiene un Scaffold como raíz de la pantalla',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pump();
-        expect(find.byType(Scaffold), findsOneWidget);
-      },
-    );
+    testWidgets('3. Contiene un Scaffold como raíz de la pantalla', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pump();
+      expect(find.byType(Scaffold), findsOneWidget);
+    });
 
-    testWidgets(
-      '4. El AppBar usa el color del tema padre',
-      (tester) async {
-        await tester.pumpWidget(_wrap());
-        await tester.pump();
-        final appBar = tester.widget<AppBar>(find.byType(AppBar));
-        expect(appBar.foregroundColor, Colors.white);
-      },
-    );
+    testWidgets('4. El AppBar usa el color del tema padre', (tester) async {
+      await tester.pumpWidget(_wrap());
+      await tester.pump();
+      final appBar = tester.widget<AppBar>(find.byType(AppBar));
+      expect(appBar.foregroundColor, Colors.white);
+    });
   });
 
   group('Pruebas con datos', () {
-    testWidgets('5. Muestra el titulo del desafio en la tarjeta', (tester) async {
+    testWidgets('5. Muestra el titulo del desafio en la tarjeta', (
+      tester,
+    ) async {
       await cargar(tester);
       expect(find.text('Leer 30 minutos'), findsOneWidget);
     });
@@ -99,12 +95,16 @@ void main() {
       expect(find.text('Aprobar'), findsOneWidget);
     });
 
-    testWidgets('8. Muestra icono de history_edu en la tarjeta', (tester) async {
+    testWidgets('8. Muestra icono de history_edu en la tarjeta', (
+      tester,
+    ) async {
       await cargar(tester);
       expect(find.byIcon(Icons.history_edu), findsOneWidget);
     });
 
-    testWidgets('9. Tap en Rechazar muestra dialogo de confirmacion', (tester) async {
+    testWidgets('9. Tap en Rechazar muestra dialogo de confirmacion', (
+      tester,
+    ) async {
       await cargar(tester);
       await tester.tap(find.text('Rechazar'));
       await tester.pumpAndSettle();
@@ -112,7 +112,9 @@ void main() {
       expect(find.text('Sí, Rechazar'), findsOneWidget);
     });
 
-    testWidgets('10. Tap en Aprobar muestra dialogo de confirmacion', (tester) async {
+    testWidgets('10. Tap en Aprobar muestra dialogo de confirmacion', (
+      tester,
+    ) async {
       await cargar(tester);
       await tester.tap(find.text('Aprobar'));
       await tester.pumpAndSettle();
@@ -120,7 +122,9 @@ void main() {
       expect(find.text('Sí, Aprobar'), findsOneWidget);
     });
 
-    testWidgets('11. Cancelar en el dialogo cierra sin ejecutar accion', (tester) async {
+    testWidgets('11. Cancelar en el dialogo cierra sin ejecutar accion', (
+      tester,
+    ) async {
       await cargar(tester);
       await tester.tap(find.text('Rechazar'));
       await tester.pumpAndSettle();
@@ -129,7 +133,9 @@ void main() {
       expect(find.text('Sí, Rechazar'), findsNothing);
     });
 
-    testWidgets('12. Confirmar Aprobar muestra snackbar de exito', (tester) async {
+    testWidgets('12. Confirmar Aprobar muestra snackbar de exito', (
+      tester,
+    ) async {
       await cargar(tester);
       await tester.tap(find.text('Aprobar'));
       await tester.pumpAndSettle();
@@ -178,27 +184,26 @@ void main() {
       },
     );
 
-    testWidgets(
-      '15. Muestra Image.network cuando url_evidencia no es null',
-      (tester) async {
-        // Silencia el error de carga de imagen de red (esperado en tests)
-        final originalOnError = FlutterError.onError;
-        FlutterError.onError = (details) {
-          if (details.library == 'image resource service') return;
-          originalOnError?.call(details);
-        };
-        addTearDown(() => FlutterError.onError = originalOnError);
+    testWidgets('15. Muestra Image.network cuando url_evidencia no es null', (
+      tester,
+    ) async {
+      // Silencia el error de carga de imagen de red (esperado en tests)
+      final originalOnError = FlutterError.onError;
+      FlutterError.onError = (details) {
+        if (details.library == 'image resource service') return;
+        originalOnError?.call(details);
+      };
+      addTearDown(() => FlutterError.onError = originalOnError);
 
-        const jsonConFoto =
-            '[{"id":"ev2","titulo":"Reto imagen","hijo_nombre":"Maria","url_evidencia":"https://example.com/foto.jpg"}]';
-        ApiService.testClient = MockClient((req) async {
-          if (req.method == 'PUT') return http.Response('{"ok":true}', 200);
-          return http.Response(jsonConFoto, 200);
-        });
-        await tester.pumpWidget(_wrap());
-        await tester.pump(const Duration(milliseconds: 300));
-        expect(find.byType(Image), findsOneWidget);
-      },
-    );
+      const jsonConFoto =
+          '[{"id":"ev2","titulo":"Reto imagen","hijo_nombre":"Maria","url_evidencia":"https://example.com/foto.jpg"}]';
+      ApiService.testClient = MockClient((req) async {
+        if (req.method == 'PUT') return http.Response('{"ok":true}', 200);
+        return http.Response(jsonConFoto, 200);
+      });
+      await tester.pumpWidget(_wrap());
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(Image), findsOneWidget);
+    });
   });
 }

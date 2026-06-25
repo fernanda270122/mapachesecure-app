@@ -56,8 +56,10 @@ class Desafio {
       'tiempo_estimado_minutos': tiempoEstimadoMinutos,
       'estado': estado,
       if (hijoId != null) 'hijo_id': hijoId,
-      if (fechaCreacion != null) 'fecha_creacion': fechaCreacion!.toIso8601String(),
-      if (fechaCompletado != null) 'fecha_completado': fechaCompletado!.toIso8601String(),
+      if (fechaCreacion != null)
+        'fecha_creacion': fechaCreacion!.toIso8601String(),
+      if (fechaCompletado != null)
+        'fecha_completado': fechaCompletado!.toIso8601String(),
     };
   }
 
@@ -79,7 +81,8 @@ class Desafio {
       descripcion: descripcion ?? this.descripcion,
       categoria: categoria ?? this.categoria,
       puntos: puntos ?? this.puntos,
-      tiempoEstimadoMinutos: tiempoEstimadoMinutos ?? this.tiempoEstimadoMinutos,
+      tiempoEstimadoMinutos:
+          tiempoEstimadoMinutos ?? this.tiempoEstimadoMinutos,
       estado: estado ?? this.estado,
       hijoId: hijoId ?? this.hijoId,
       fechaCreacion: fechaCreacion ?? this.fechaCreacion,

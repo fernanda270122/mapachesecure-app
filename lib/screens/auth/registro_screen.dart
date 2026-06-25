@@ -85,7 +85,10 @@ class _RegistroScreenState extends State<RegistroScreen> {
         _nombreController.text,
         'padre',
       );
-      final loginResp = await auth.login(_emailController.text, _passwordController.text);
+      final loginResp = await auth.login(
+        _emailController.text,
+        _passwordController.text,
+      );
       final userId = loginResp['user_id']?.toString() ?? '';
 
       final prefs = await SharedPreferences.getInstance();
@@ -115,8 +118,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
     } catch (e) {
       final msg = e.toString();
       String errorMsg = 'Error al registrarse. Intenta de nuevo.';
-      if (msg.contains('429') || msg.toLowerCase().contains('rate limit') || msg.contains('limite')) {
-        errorMsg = 'Se alcanzó el límite de correos por hora. Intenta de nuevo en unos minutos.';
+      if (msg.contains('429') ||
+          msg.toLowerCase().contains('rate limit') ||
+          msg.contains('limite')) {
+        errorMsg =
+            'Se alcanzó el límite de correos por hora. Intenta de nuevo en unos minutos.';
       }
       setState(() => _error = errorMsg);
     } finally {

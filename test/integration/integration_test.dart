@@ -51,20 +51,17 @@ void main() {
       },
     );
 
-    test(
-      '3. TemaProvider persiste y recupera el tema correctamente',
-      () async {
-        SharedPreferences.setMockInitialValues({});
+    test('3. TemaProvider persiste y recupera el tema correctamente', () async {
+      SharedPreferences.setMockInitialValues({});
 
-        final provider = TemaProvider();
-        await provider.cambiar('Océano');
+      final provider = TemaProvider();
+      await provider.cambiar('Océano');
 
-        final provider2 = TemaProvider();
-        await provider2.cargar();
+      final provider2 = TemaProvider();
+      await provider2.cargar();
 
-        expect(provider2.paleta, 'Océano');
-      },
-    );
+      expect(provider2.paleta, 'Océano');
+    });
 
     test(
       '4. TemaProvider y TemaPadreProvider almacenan en claves independientes sin interferirse',

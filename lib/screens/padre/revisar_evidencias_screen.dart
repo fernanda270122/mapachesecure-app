@@ -48,13 +48,20 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
       await _api.put('/desafios/validar/$desafioId?aprobado=$aprobado', {});
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(aprobado ? '¡Desafío aprobado! 🎉' : 'Evidencia rechazada')),
+        SnackBar(
+          content: Text(
+            aprobado ? '¡Desafío aprobado! 🎉' : 'Evidencia rechazada',
+          ),
+        ),
       );
       _fetchEvidencias();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'), duration: const Duration(seconds: 6)),
+        SnackBar(
+          content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+          duration: const Duration(seconds: 6),
+        ),
       );
     }
   }
@@ -94,7 +101,9 @@ class _RevisarEvidenciasScreenState extends State<RevisarEvidenciasScreen> {
                 ? '¿Estás seguro de que deseas aprobar el desafío "$tituloDesafio"? El niño recibirá sus puntos correspondientes.'
                 : '¿Estás seguro de que deseas rechazar la evidencia de "$tituloDesafio"? Se le notificará al niño para que vuelva a intentarlo.',
             style: TextStyle(
-              color: colorPrimario.withValues(alpha: 0.9), // Texto adaptativo oscuro legible
+              color: colorPrimario.withValues(
+                alpha: 0.9,
+              ), // Texto adaptativo oscuro legible
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

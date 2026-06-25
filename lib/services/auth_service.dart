@@ -29,11 +29,9 @@ class AuthService {
     final refreshTkn = prefs.getString('refresh_token');
     if (refreshTkn == null) return false;
     try {
-      final response = await _api.post(
-        '/auth/refresh',
-        {'refresh_token': refreshTkn},
-        auth: false,
-      );
+      final response = await _api.post('/auth/refresh', {
+        'refresh_token': refreshTkn,
+      }, auth: false);
       if (response['access_token'] != null) {
         await prefs.setString('token', response['access_token']);
         if (response['refresh_token'] != null) {
@@ -69,14 +67,18 @@ class AuthService {
     }
     final prefs = await SharedPreferences.getInstance();
     // Preservar preferencias de onboarding y tema del padre entre sesiones
-    final onboardingKeys = prefs.getKeys().where((k) => k.startsWith('onboarding_')).toList();
+    final onboardingKeys = prefs
+        .getKeys()
+        .where((k) => k.startsWith('onboarding_'))
+        .toList();
     final savedBools = {for (var k in onboardingKeys) k: prefs.getBool(k)};
     final savedPaleta = prefs.getString('paleta_padre_preferida');
     await prefs.clear();
     for (final entry in savedBools.entries) {
       if (entry.value != null) await prefs.setBool(entry.key, entry.value!);
     }
-    if (savedPaleta != null) await prefs.setString('paleta_padre_preferida', savedPaleta);
+    if (savedPaleta != null)
+      await prefs.setString('paleta_padre_preferida', savedPaleta);
   }
 
   Future<String?> getRol() async {

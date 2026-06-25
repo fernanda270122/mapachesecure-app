@@ -130,20 +130,19 @@ void main() {
       },
     );
 
-    testWidgets(
-      '5. CANCELAR en diálogo de cierre lo cierra sin cambios',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(crearEntornoSeguro(const LoginScreen()));
-        final loginState = tester.state(find.byType(LoginScreen)) as dynamic;
-        tester.runAsync(() async {
-          loginState.intentarCerrarSesion(loginState.context);
-        });
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('CANCELAR'));
-        await tester.pumpAndSettle();
-        expect(find.text('Autorización Requerida'), findsNothing);
-      },
-    );
+    testWidgets('5. CANCELAR en diálogo de cierre lo cierra sin cambios', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(crearEntornoSeguro(const LoginScreen()));
+      final loginState = tester.state(find.byType(LoginScreen)) as dynamic;
+      tester.runAsync(() async {
+        loginState.intentarCerrarSesion(loginState.context);
+      });
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('CANCELAR'));
+      await tester.pumpAndSettle();
+      expect(find.text('Autorización Requerida'), findsNothing);
+    });
 
     testWidgets(
       '6. DESACTIVAR GUARDIÁN con credenciales incorrectas muestra SnackBar',
@@ -195,15 +194,14 @@ void main() {
       },
     );
 
-    testWidgets(
-      '8. Tap en CREAR CUENTA navega a la pantalla de registro',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(crearEntornoSeguro(const LoginScreen()));
-        await tester.tap(find.text('CREAR CUENTA'));
-        await tester.pumpAndSettle();
-        expect(find.text('Crea tu cuenta'), findsOneWidget);
-      },
-    );
+    testWidgets('8. Tap en CREAR CUENTA navega a la pantalla de registro', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(crearEntornoSeguro(const LoginScreen()));
+      await tester.tap(find.text('CREAR CUENTA'));
+      await tester.pumpAndSettle();
+      expect(find.text('Crea tu cuenta'), findsOneWidget);
+    });
 
     testWidgets(
       '9. Tap en Olvidé mi contraseña navega a recuperar contraseña',

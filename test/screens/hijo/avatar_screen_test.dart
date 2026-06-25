@@ -20,79 +20,75 @@ void main() {
     );
   }
 
-group('Pruebas unitarias para AvatarScreen (Foto de perfil)', () {
-      testWidgets(
-    '1. La galería debe mostrar exactamente 7 opciones de avatar disponibles',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(crearEntorno());
-      await tester.pumpAndSettle();
+  group('Pruebas unitarias para AvatarScreen (Foto de perfil)', () {
+    testWidgets(
+      '1. La galería debe mostrar exactamente 7 opciones de avatar disponibles',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(crearEntorno());
+        await tester.pumpAndSettle();
 
-      expect(find.byType(CircleAvatar), findsNWidgets(6));
-    },
-  );
-      testWidgets(
-    '2. Sin avatar guardado, el valor inicial debe ser nulo (ninguno seleccionado)',
-    (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
+        expect(find.byType(CircleAvatar), findsNWidgets(6));
+      },
+    );
+    testWidgets(
+      '2. Sin avatar guardado, el valor inicial debe ser nulo (ninguno seleccionado)',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({});
 
-      await tester.pumpWidget(crearEntorno());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(crearEntorno());
+        await tester.pumpAndSettle();
 
-      final containers = tester.widgetList<Container>(find.byType(Container));
-      final haySeleccionado = containers.any((c) {
-        final deco = c.decoration;
-        if (deco is BoxDecoration && deco.border != null) {
-          final border = deco.border as Border;
-          return border.top.color == Colors.deepPurple;
-        }
-        return false;
-      });
+        final containers = tester.widgetList<Container>(find.byType(Container));
+        final haySeleccionado = containers.any((c) {
+          final deco = c.decoration;
+          if (deco is BoxDecoration && deco.border != null) {
+            final border = deco.border as Border;
+            return border.top.color == Colors.deepPurple;
+          }
+          return false;
+        });
 
-      expect(haySeleccionado, false);
-    },
-  );
-      testWidgets(
-    '3. Al cargar con avatar previo guardado, debe marcarse como seleccionado',
-    (WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({
-        'avatar_hijo': 'assets/avatares/perfil2.jpeg',
-      });
+        expect(haySeleccionado, false);
+      },
+    );
+    testWidgets(
+      '3. Al cargar con avatar previo guardado, debe marcarse como seleccionado',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({
+          'avatar_hijo': 'assets/avatares/perfil2.jpeg',
+        });
 
-      await tester.pumpWidget(crearEntorno());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(crearEntorno());
+        await tester.pumpAndSettle();
 
-      final containers = tester.widgetList<Container>(find.byType(Container));
-      final haySeleccionado = containers.any((c) {
-        final deco = c.decoration;
-        if (deco is BoxDecoration && deco.border != null) {
-          final border = deco.border as Border;
-          return border.top.color == Colors.deepPurple;
-        }
-        return false;
-      });
+        final containers = tester.widgetList<Container>(find.byType(Container));
+        final haySeleccionado = containers.any((c) {
+          final deco = c.decoration;
+          if (deco is BoxDecoration && deco.border != null) {
+            final border = deco.border as Border;
+            return border.top.color == Colors.deepPurple;
+          }
+          return false;
+        });
 
-      expect(haySeleccionado, true);
-    },
-  );
+        expect(haySeleccionado, true);
+      },
+    );
 
-      testWidgets(
-        '4. Seleccionar un avatar debe persistirlo inmediatamente en SharedPreferences',
-        (WidgetTester tester) async {
-          SharedPreferences.setMockInitialValues({'user_id': 'hijo_test_123'});
+    testWidgets(
+      '4. Seleccionar un avatar debe persistirlo inmediatamente en SharedPreferences',
+      (WidgetTester tester) async {
+        SharedPreferences.setMockInitialValues({'user_id': 'hijo_test_123'});
 
-          await tester.pumpWidget(crearEntorno());
-          await tester.pumpAndSettle();
+        await tester.pumpWidget(crearEntorno());
+        await tester.pumpAndSettle();
 
-          await tester.tap(find.byType(GestureDetector).first);
-          await tester.pump();
+        await tester.tap(find.byType(GestureDetector).first);
+        await tester.pump();
 
-          final prefs = await SharedPreferences.getInstance();
-          expect(prefs.getString('avatar_hijo'), 'assets/avatares/perfil1.jpeg');
-        },
-      );
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('avatar_hijo'), 'assets/avatares/perfil1.jpeg');
+      },
+    );
   });
 }
-
-
-
-
