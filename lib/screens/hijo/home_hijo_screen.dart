@@ -44,6 +44,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   late AnimationController _floatController;
   late Animation<double> _floatAnimation;
   int _nivelMascotaVisto = -1;
+  bool _enEvolucion = false;
 
   @override
   void initState() {
@@ -77,12 +78,12 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // 🔄 Si el estado es 'resumed', significa que el niño acaba de volver de los Ajustes a la app
     if (state == AppLifecycleState.resumed) {
       debugPrint(
         "🦝 MapacheSecure: El usuario regresó a la app. Evaluando siguiente permiso...",
       );
-      _activarGuardian(); // Volvemos a llamar a la secuencia inteligente
+      _activarGuardian();
+      _cargarDatos(); // Actualiza puntos para detectar evolución pendiente
     }
   }
 
@@ -94,8 +95,14 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   }
 
   Future<void> _verificarEvolucion(int puntos) async {
+    if (_enEvolucion) return;
     final nivel = _calcularNivel(puntos)['nivel'] as int;
-    if (nivel < 1 || nivel <= _nivelMascotaVisto) return;
+    debugPrint('🔍 _verificarEvolucion: puntos=$puntos nivel=$nivel nivelVisto=$_nivelMascotaVisto');
+    if (nivel < 1 || nivel <= _nivelMascotaVisto) {
+      debugPrint('🔍 _verificarEvolucion: skip (nivel<1 o ya visto)');
+      return;
+    }
+    _enEvolucion = true;
 
     final prefs = await SharedPreferences.getInstance();
     final hijoId = prefs.getString('user_id') ?? '';
@@ -103,6 +110,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
     // Primera vez en nivel 1: selección de avatar
     if (_nivelMascotaVisto < 1) {
       final tipoGuardado = prefs.getString('tipo_avatar') ?? '';
+      debugPrint('🔍 _verificarEvolucion: tipoGuardado="$tipoGuardado"');
       if (tipoGuardado.isEmpty) {
         if (!mounted) return;
         final elegido = await Navigator.push<String>(
@@ -125,6 +133,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
           } catch (_) {}
         } else {
           // El niño cerró la pantalla sin elegir — no avanzamos nivel
+          _enEvolucion = false;
           return;
         }
       } else {
@@ -156,6 +165,7 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
 
     await prefs.setInt('nivel_mascota_visto', nivel);
     setState(() => _nivelMascotaVisto = nivel);
+    _enEvolucion = false;
   }
 
   // Variable para que el cartel explicativo aparezca SOLO la primera vez que se monta la pantalla
@@ -266,9 +276,11 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
       // tipo_avatar y foto_perfil del backend son fuente de verdad
       String tipoAvatarFinal = tipoAvatar;
       String? avatarFinal = avatar;
+      bool tieneAvatarEnBackend = false;
       if (perfilData is Map) {
         if (perfilData['tipo_avatar'] != null) {
           tipoAvatarFinal = perfilData['tipo_avatar'] as String;
+          tieneAvatarEnBackend = true;
           if (tipoAvatarFinal != tipoAvatar) {
             await prefs.setString('tipo_avatar', tipoAvatarFinal);
           }
@@ -322,9 +334,11 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
         _cargando = false;
       });
 
-      // Si ya tiene avatar en el backend, sincroniza nivel_mascota_visto para que
-      // al volver a iniciar sesión no se muestre la selección ni videos ya vistos
-      if (tipoAvatarFinal.isNotEmpty) {
+      // Si ya tiene avatar confirmado en el backend, sincroniza nivel_mascota_visto para que
+      // al volver a iniciar sesión no se muestre la selección ni videos ya vistos.
+      // IMPORTANTE: usar tieneAvatarEnBackend (no tipoAvatarFinal) porque el default
+      // local 'mago' haría que esto corriera antes de que el niño haya elegido avatar.
+      if (tieneAvatarEnBackend) {
         final nivelActual = _calcularNivel(nuevoPuntos)['nivel'] as int;
         final nivelVisto = prefs.getInt('nivel_mascota_visto') ?? -1;
         if (nivelVisto < nivelActual) {
