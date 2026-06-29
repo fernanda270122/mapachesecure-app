@@ -97,7 +97,9 @@ class _HomeHijoScreenState extends State<HomeHijoScreen>
   Future<void> _verificarEvolucion(int puntos) async {
     if (_enEvolucion) return;
     final nivel = _calcularNivel(puntos)['nivel'] as int;
-    debugPrint('🔍 _verificarEvolucion: puntos=$puntos nivel=$nivel nivelVisto=$_nivelMascotaVisto');
+    debugPrint(
+      '🔍 _verificarEvolucion: puntos=$puntos nivel=$nivel nivelVisto=$_nivelMascotaVisto',
+    );
     if (nivel < 1 || nivel <= _nivelMascotaVisto) {
       debugPrint('🔍 _verificarEvolucion: skip (nivel<1 o ya visto)');
       return;
